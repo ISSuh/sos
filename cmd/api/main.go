@@ -20,62 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package app
+package main
 
 import (
+	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/controller/rest/router"
-	"github.com/ISSuh/sos/internal/factory"
 	"github.com/ISSuh/sos/internal/logger"
-	"github.com/gin-gonic/gin"
+	"github.com/alexflint/go-arg"
 )
 
-type Api struct {
-	config   *config.SosConfig
-	logger   logger.Logger
-	handlers *factory.Handlers
-	engine   *gin.Engine
+type args struct {
+	Config string `arg:"-c,--config,required"`
 }
 
-func NewApi(c *config.SosConfig, l logger.Logger) (*Api, error) {
-	a := &Api{
-		config: c,
-		logger: l,
-		engine: gin.Default(),
-	}
-	return a, nil
-}
+func main() {
+	args := args{}
+	arg.MustParse(&args)
 
-func (a *Api) Run() error {
-	a.logger.Infof("[Api.Run]")
-	if err := a.init(); err != nil {
-		return err
-	}
-	return a.engine.Run(a.config.Api.Address.String())
-}
-
-func (a *Api) init() error {
-	var err error
-
-	if err = a.initHandler(); err != nil {
-		return err
+	config, err := config.NewConfig(args.Config)
+	if err != nil {
+		return
 	}
 
-	if err = router.Route(a.engine, a.handlers); err != nil {
-		return err
+	l := logger.NewZapLogger(config.Sos.Api.Log)
+
+	l.Infof("configure : %+v", *config)
+	api, err := app.NewApi(&config.Sos, l)
+	if err != nil {
+		return
 	}
 
-	return nil
-}
-
-func (a *Api) initHandler() error {
-	var err error
-	var handlers *factory.Handlers
-
-	if handlers, err = factory.NewHandlers(a.logger); err != nil {
-		return err
+	if err := api.Run(); err != nil {
+		return
 	}
-
-	a.handlers = handlers
-	return nil
 }

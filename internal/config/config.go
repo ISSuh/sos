@@ -29,10 +29,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type SosConfig struct {
 	Api     ApiConfig     `yaml:"api"`
 	Meta    MetaConfig    `yaml:"meta"`
 	Storage StorageConfig `yaml:"storage"`
+}
+
+type Config struct {
+	Sos SosConfig `yaml:"sos"`
 }
 
 func NewConfig(path string) (*Config, error) {

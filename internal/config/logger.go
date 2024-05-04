@@ -24,7 +24,8 @@ SOFTWARE.
 
 package config
 
-type Log struct {
+type Logger struct {
 	Level  string `yaml:"level"`
 	Format string `yaml:"format"`
+	Path   string `yaml:"path"`
 }

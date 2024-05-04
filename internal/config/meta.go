@@ -25,6 +25,6 @@ SOFTWARE.
 package config
 
 type MetaConfig struct {
-	Log     Log     `yaml:"log"`
+	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }

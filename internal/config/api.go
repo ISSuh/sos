@@ -23,6 +23,6 @@
 package config
 
 type ApiConfig struct {
-	Log     Log     `yaml:"log"`
+	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }

@@ -23,18 +23,22 @@
 package handler
 
 import (
+	"github.com/ISSuh/sos/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type DownloadHandler struct {
+	logger logger.Logger
 }
 
-func NewDownloadHandler() *DownloadHandler {
-	return &DownloadHandler{}
+func NewDownloadHandler(l logger.Logger) *DownloadHandler {
+	return &DownloadHandler{
+		logger: l,
+	}
 }
 
 func (h *DownloadHandler) Download() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		h.logger.Debugf("[DownloadHandler.Download]")
 	}
 }

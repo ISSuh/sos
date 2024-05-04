@@ -23,13 +23,25 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
+	"hash/crc32"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/alexflint/go-arg"
+)
+
+const (
+	CrcSize       = 4
+	BodySize      = 4092
+	BufferSize    = BodySize + CrcSize
+	ChunkEncoding = "chunked"
 )
 
 var args struct {
@@ -39,26 +51,100 @@ var args struct {
 	File      string `arg:"-f,--file,required"`
 }
 
+func fileReadAndWriteToChan(f *os.File, writer *io.PipeWriter) (bool, int, error) {
+	buf := make([]byte, BodySize)
+	n, err := f.Read(buf)
+	if err == io.EOF {
+		fmt.Printf("end of file")
+		return true, n, nil
+	}
+
+	if err != nil {
+		return false, 0, err
+	}
+
+	crc := crc32.ChecksumIEEE(buf)
+	buf = binary.LittleEndian.AppendUint32(buf, crc)
+
+	fmt.Printf("b : %d / %+v\n", len(buf), buf[BodySize:])
+
+	n, err = writer.Write(buf)
+	return false, n, err
+}
+
+func fileTask(file string, writer *io.PipeWriter, q <-chan struct{}, wg *sync.WaitGroup) {
+	f, err := os.Open(file)
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+	defer wg.Done()
+	defer writer.Close()
+
+	totalSize := 0
+	isEOF := false
+	for !isEOF {
+		select {
+		case <-q:
+			break
+		default:
+			n := 0
+			isEOF, n, err = fileReadAndWriteToChan(f, writer)
+			if err != nil {
+				panic(err)
+			}
+
+			totalSize += n
+		}
+	}
+
+	fmt.Printf("total size : %d", totalSize)
+	time.Sleep(1 * time.Second)
+}
+
 func main() {
 	arg.MustParse(&args)
 
 	// set url
 	fileName := filepath.Base(args.File)
-	urlStr := fmt.Sprint("%s/%s/%s/%s", args.Server, args.Group, args.Partition, fileName)
+	urlStr := fmt.Sprintf("http://%s/v1/%s/%s/%s", args.Server, args.Group, args.Partition, fileName)
 	u, err := url.Parse(urlStr)
 	if err != nil {
-		fmt.Errorf("err : %s\n", err.Error())
+		fmt.Printf("err : %s\n", err.Error())
 		return
 	}
 
-	// open file
-	f, err := os.Open(args.File)
+	// open pipe
+	reader, writer := io.Pipe()
 
 	req := &http.Request{
 		Method:           http.MethodPut,
 		URL:              u,
-		TransferEncoding: []string{"chunked"},
-		Body:             rd,
+		TransferEncoding: []string{ChunkEncoding},
+		Body:             reader,
 		Header:           make(map[string][]string),
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	q := make(chan struct{})
+	go fileTask(args.File, writer, q, &wg)
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	wg.Wait()
+
+	body, err := io.ReadAll(resp.Body)
+	if nil != err {
+		fmt.Println("error =>", err.Error())
+	} else {
+		fmt.Println(string(body))
 	}
 }

@@ -1,6 +1,6 @@
 sos:
   api:
-    log:
+    logger:
       level: debug
       format: text
     address:
@@ -9,9 +9,9 @@ sos:
   meta:
     address:
       ip: 127.0.0.1
-      port: 33221
+      port: 33222
   storage:
     address:
       ip: 127.0.0.1
-      port: 33221
+      port: 33223
 

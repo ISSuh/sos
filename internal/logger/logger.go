@@ -20,62 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package app
+package logger
 
-import (
-	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/controller/rest/router"
-	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/internal/logger"
-	"github.com/gin-gonic/gin"
-)
+type Fields map[string]interface{}
 
-type Api struct {
-	config   *config.SosConfig
-	logger   logger.Logger
-	handlers *factory.Handlers
-	engine   *gin.Engine
-}
-
-func NewApi(c *config.SosConfig, l logger.Logger) (*Api, error) {
-	a := &Api{
-		config: c,
-		logger: l,
-		engine: gin.Default(),
-	}
-	return a, nil
-}
-
-func (a *Api) Run() error {
-	a.logger.Infof("[Api.Run]")
-	if err := a.init(); err != nil {
-		return err
-	}
-	return a.engine.Run(a.config.Api.Address.String())
-}
-
-func (a *Api) init() error {
-	var err error
-
-	if err = a.initHandler(); err != nil {
-		return err
-	}
-
-	if err = router.Route(a.engine, a.handlers); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *Api) initHandler() error {
-	var err error
-	var handlers *factory.Handlers
-
-	if handlers, err = factory.NewHandlers(a.logger); err != nil {
-		return err
-	}
-
-	a.handlers = handlers
-	return nil
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalln(args ...interface{})
 }

@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/alexflint/go-arg v1.4.3
 	github.com/gin-gonic/gin v1.9.1
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -30,6 +31,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
