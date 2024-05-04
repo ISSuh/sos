@@ -1,0 +1,17 @@
+sos:
+  api:
+    log:
+      level: debug
+      format: text
+    address:
+      ip: 127.0.0.1
+      port: 33221
+  meta:
+    address:
+      ip: 127.0.0.1
+      port: 33221
+  storage:
+    address:
+      ip: 127.0.0.1
+      port: 33221
+
