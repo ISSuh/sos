@@ -24,10 +24,12 @@ package handler
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"hash/crc32"
 	"io"
 
 	"github.com/ISSuh/sos/internal/logger"
+	"github.com/ISSuh/sos/internal/object"
 	"github.com/gin-gonic/gin"
 )
 
@@ -51,6 +53,8 @@ func (h *UploadHandler) Upload() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h.logger.Debugf("[UploadHandler.Upload]")
 
+		needHeader := true
+
 		totalSize := 0
 		body := c.Request.Body
 		for {
@@ -63,6 +67,21 @@ func (h *UploadHandler) Upload() gin.HandlerFunc {
 				}
 				h.logger.Errorf("[UploadHandler.Upload] err : %s", err.Error())
 				return
+			}
+
+			if needHeader {
+				h.logger.Debugf("[UploadHandler.Upload] get header : %d / %d", len(buf), n)
+
+				buf = buf[0:n]
+				header := object.Metadata{}
+				if err := json.Unmarshal(buf, &header); err != nil {
+					h.logger.Errorf("[UploadHandler.Upload] can not unmarshal header")
+					break
+				}
+
+				h.logger.Debugf("[UploadHandler.Upload] header : %+v", header)
+				needHeader = false
+				continue
 			}
 
 			checksumByte := buf[BodySize:]

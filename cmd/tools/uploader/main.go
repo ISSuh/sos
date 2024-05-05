@@ -24,6 +24,7 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -34,6 +35,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ISSuh/sos/internal/object"
 	"github.com/alexflint/go-arg"
 )
 
@@ -130,7 +132,63 @@ func main() {
 	wg.Add(1)
 
 	q := make(chan struct{})
-	go fileTask(args.File, writer, q, &wg)
+	// go fileTask(args.File, writer, q, &wg)
+	go func() {
+		f, err := os.Open(args.File)
+		if err != nil {
+			panic(err)
+		}
+
+		defer f.Close()
+		defer wg.Done()
+		defer writer.Close()
+
+		time.Sleep(1 * time.Second)
+
+		stat, err := os.Stat(args.File)
+		if err != nil {
+			panic(err)
+		}
+
+		header := object.Metadata{
+			Name:      fileName,
+			Group:     args.Group,
+			Partition: args.Partition,
+			Size:      uint32(stat.Size()),
+		}
+
+		j, err := json.Marshal(header)
+		if err != nil {
+			panic(err)
+		}
+
+		n, err := writer.Write(j)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("write header len : %d, header : %+v\n", n, header)
+
+		totalSize := 0
+		isEOF := false
+		for !isEOF {
+			select {
+			case <-q:
+				break
+			default:
+				n := 0
+				isEOF, n, err = fileReadAndWriteToChan(f, writer)
+				if err != nil {
+					panic(err)
+				}
+
+				totalSize += n
+			}
+		}
+
+		fmt.Printf("total size : %d", totalSize)
+		time.Sleep(1 * time.Second)
+	}()
 
 	client := http.DefaultClient
 	resp, err := client.Do(req)
