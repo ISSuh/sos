@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/ISSuh/sos/internal/message";
+
+message Node {
+    string name = 1;
+}

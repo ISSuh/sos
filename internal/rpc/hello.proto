@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package rpc;
 
-option go_package = "github.com/ISSuh/raft/internal/rpc";
+option go_package = "github.com/ISSuh/sos/internal/rpc";
 
 service Greeter {
     rpc SayHello (HelloRequest) returns (HelloReply) {}

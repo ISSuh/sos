@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package message;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/ISSuh/sos/internal/message";
+
+message Block {
+    string id = 1;
+    uint64 index = 2;
+    uint64 size = 3;
+}
+
+message Object {
+    string id = 1;
+    string name = 2;
+    uint64 size = 3;
+    google.protobuf.Timestamp time = 4;
+    repeated Block blocks = 5;
+}
+
+message ObjectMetadata {
+    string name = 1;
+    string path = 2;
+    uint64 size = 3;
+}
