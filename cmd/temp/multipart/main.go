@@ -10,7 +10,9 @@ import (
 
 const boundary = "MachliJalKiRaniHaiJeevanUskaPaaniHai"
 
-func handle(w http.ResponseWriter, req *http.Request) {
+func handle(resp http.ResponseWriter, req *http.Request) {
+	req.ParseMultipartForm()
+
 	partReader := multipart.NewReader(req.Body, boundary)
 	buf := make([]byte, 256)
 	for {

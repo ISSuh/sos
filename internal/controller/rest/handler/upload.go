@@ -27,7 +27,9 @@ import (
 	"encoding/json"
 	"hash/crc32"
 	"io"
+	"net/http"
 
+	"github.com/ISSuh/sos/internal/entity/dto"
 	"github.com/ISSuh/sos/internal/logger"
 	"github.com/ISSuh/sos/internal/object"
 	"github.com/gin-gonic/gin"
@@ -99,5 +101,18 @@ func (h *UploadHandler) Upload() gin.HandlerFunc {
 		}
 
 		h.logger.Debugf("[UploadHandler.Upload] total file size : %d", totalSize)
+	}
+}
+
+func (h *UploadHandler) UploadMultiPart() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		h.logger.Debugf("[UploadHandler.UploadMultiPart]")
+
+		req := dto.Upload{}
+		if err := c.Bind(&req); err != nil {
+
+			c.Error(http.StatusBadRequest, err)
+			return
+		}
 	}
 }

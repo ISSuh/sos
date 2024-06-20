@@ -20,30 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package router
+package dto
 
-import (
-	"github.com/ISSuh/sos/internal/factory"
-	"github.com/gin-gonic/gin"
-)
-
-const (
-	Version1 = "v1"
-)
-
-func Route(e *gin.Engine, h *factory.Handlers) error {
-	// TODO: need regist middleware
-
-	// regist handler
-	v1 := e.Group(Version1)
-	{
-		api := v1.Group("")
-		api.GET("/:group/:partition/:filename", h.Downloader.Download())
-		api.PUT("/:group/:partition/:filename", h.Uploader.Upload())
-		api.PUT("/mul/:group/:partition/:filename", h.Uploader.UploadMultiPart())
-		// api.POST("/:group/:partition/:filename", h.Uploader.Upload())
-		// api.DELETE("/:group/:partition/:filename", h.Downloader.Download())
-	}
-
-	return nil
+type Property struct {
 }
