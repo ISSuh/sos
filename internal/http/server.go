@@ -20,7 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package controller
+package http
 
-type ObjectDownloader interface {
+import (
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
+
+type RouteItem struct {
+	URL     string
+	Method  string
+	Handler http.HandlerFunc
+}
+
+type RouteList []RouteItem
+
+type Server struct {
+	middlewares []MiddlewareFunc
+	router      *mux.Router
+}
+
+func NewServer() *Server {
+	return &Server{
+		router: mux.NewRouter(),
+	}
+}
+
+func (s *Server) Use(m MiddlewareFunc) {
+	s.middlewares = append(s.middlewares, m)
+}
+
+func (s *Server) Mux(pattern string, method string, handler http.HandlerFunc) {
+	h := http.HandlerFunc(handler)
+	for i := len(s.middlewares) - 1; i >= 0; i-- {
+		h = s.middlewares[i](h)
+	}
+
+	s.router.Handle(pattern, h).Methods(method)
+}
+
+func (s *Server) MuxAll(routeList RouteList) {
+	for _, item := range routeList {
+		h := http.HandlerFunc(item.Handler)
+		for i := len(s.middlewares) - 1; i >= 0; i-- {
+			h = s.middlewares[i](h)
+		}
+
+		s.router.Handle(item.URL, h).Methods(item.Method)
+	}
+}
+
+func (s *Server) Run(address string) error {
+	return http.ListenAndServe(address, s.router)
 }

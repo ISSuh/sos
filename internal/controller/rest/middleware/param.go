@@ -22,16 +22,26 @@
 
 package middleware
 
-// func ErrorHandler() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Next()
-// 		// for _, err := range c.Errors {
-// 		// 	switch e := err.Err.(type) {
-// 		// 	case error.http:
-// 		// 		c.AbortWithStatusJSON(e.StatusCode, e)
-// 		// 	default:
-// 		// 		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
-// 		// 	}
-// 		// }
-// 	}
-// }
+import (
+	"context"
+	gohttp "net/http"
+
+	"github.com/ISSuh/sos/internal/http"
+)
+
+func ParseParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		params := http.ParseParme(r)
+
+		group := params[http.GroupParamName]
+		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
+
+		partition := params[http.PartitionParamName]
+		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
+
+		objectName := params[http.ObjectParamName]
+		ctx = context.WithValue(ctx, http.ObjectContextKey, objectName)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}

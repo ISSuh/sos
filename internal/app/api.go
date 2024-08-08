@@ -26,22 +26,22 @@ import (
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/controller/rest/router"
 	"github.com/ISSuh/sos/internal/factory"
+	"github.com/ISSuh/sos/internal/http"
 	"github.com/ISSuh/sos/internal/logger"
-	"github.com/gin-gonic/gin"
 )
 
 type Api struct {
 	config   *config.SosConfig
 	logger   logger.Logger
 	handlers *factory.Handlers
-	engine   *gin.Engine
+	server   *http.Server
 }
 
 func NewApi(c *config.SosConfig, l logger.Logger) (*Api, error) {
 	a := &Api{
 		config: c,
 		logger: l,
-		engine: gin.Default(),
+		server: http.NewServer(),
 	}
 	return a, nil
 }
@@ -51,7 +51,7 @@ func (a *Api) Run() error {
 	if err := a.init(); err != nil {
 		return err
 	}
-	return a.engine.Run(a.config.Api.Address.String())
+	return a.server.Run(a.config.Api.Address.String())
 }
 
 func (a *Api) init() error {
@@ -61,10 +61,7 @@ func (a *Api) init() error {
 		return err
 	}
 
-	if err = router.Route(a.engine, a.handlers); err != nil {
-		return err
-	}
-
+	router.Route(a.server, a.handlers)
 	return nil
 }
 

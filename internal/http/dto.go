@@ -20,18 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package middleware
+package http
 
-// func ErrorHandler() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Next()
-// 		// for _, err := range c.Errors {
-// 		// 	switch e := err.Err.(type) {
-// 		// 	case error.http:
-// 		// 		c.AbortWithStatusJSON(e.StatusCode, e)
-// 		// 	default:
-// 		// 		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
-// 		// 	}
-// 		// }
-// 	}
-// }
+type DTO struct {
+}

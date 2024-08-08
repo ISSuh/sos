@@ -20,18 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package middleware
+package http
 
-// func ErrorHandler() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Next()
-// 		// for _, err := range c.Errors {
-// 		// 	switch e := err.Err.(type) {
-// 		// 	case error.http:
-// 		// 		c.AbortWithStatusJSON(e.StatusCode, e)
-// 		// 	default:
-// 		// 		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
-// 		// 	}
-// 		// }
-// 	}
-// }
+import (
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
+
+type ParamContextKey string
+
+const (
+	GroupParamName     = "group"
+	PartitionParamName = "partition"
+	ObjectParamName    = "object"
+
+	GroupParamContextKey ParamContextKey = "group"
+	PartitionContextKey  ParamContextKey = "partition"
+	ObjectContextKey     ParamContextKey = "object"
+
+	MultiPartUploadKey = "upload"
+)
+
+func ParseParme(r *http.Request) map[string]string {
+	return mux.Vars(r)
+}

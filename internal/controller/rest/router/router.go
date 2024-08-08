@@ -23,27 +23,38 @@
 package router
 
 import (
+	gohttp "net/http"
+
+	"github.com/ISSuh/sos/internal/controller/rest/middleware"
 	"github.com/ISSuh/sos/internal/factory"
-	"github.com/gin-gonic/gin"
+	"github.com/ISSuh/sos/internal/http"
 )
 
-const (
-	Version1 = "v1"
-)
+func Route(s *http.Server, h *factory.Handlers) {
+	s.Use(middleware.ParseParam)
 
-func Route(e *gin.Engine, h *factory.Handlers) error {
-	// TODO: need regist middleware
-
-	// regist handler
-	v1 := e.Group(Version1)
-	{
-		api := v1.Group("")
-		api.GET("/:group/:partition/:filename", h.Downloader.Download())
-		api.PUT("/:group/:partition/:filename", h.Uploader.Upload())
-		api.PUT("/mul/:group/:partition/:filename", h.Uploader.UploadMultiPart())
-		// api.POST("/:group/:partition/:filename", h.Uploader.Upload())
-		// api.DELETE("/:group/:partition/:filename", h.Downloader.Download())
+	routes := http.RouteList{
+		http.RouteItem{
+			URL:     "/v1/{group}/{partition}/{object}",
+			Method:  gohttp.MethodGet,
+			Handler: h.Downloader.Download,
+		},
+		http.RouteItem{
+			URL:     "/v1/{group}/{partition}/{object}/meta",
+			Method:  gohttp.MethodGet,
+			Handler: h.Downloader.Download,
+		},
+		http.RouteItem{
+			URL:     "/v1/{group}/{partition}/{object}",
+			Method:  gohttp.MethodPost,
+			Handler: h.Uploader.Upload,
+		},
+		http.RouteItem{
+			URL:     "/v1/{group}/{partition}/{object}",
+			Method:  gohttp.MethodDelete,
+			Handler: h.Downloader.Download,
+		},
 	}
 
-	return nil
+	s.MuxAll(routes)
 }

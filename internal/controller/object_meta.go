@@ -22,5 +22,8 @@
 
 package controller
 
+import "net/http"
+
 type ObjectMeatadata interface {
+	Find(w http.ResponseWriter, r *http.Request)
 }

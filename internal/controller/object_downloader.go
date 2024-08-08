@@ -20,18 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package middleware
+package controller
 
-// func ErrorHandler() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Next()
-// 		// for _, err := range c.Errors {
-// 		// 	switch e := err.Err.(type) {
-// 		// 	case error.http:
-// 		// 		c.AbortWithStatusJSON(e.StatusCode, e)
-// 		// 	default:
-// 		// 		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
-// 		// 	}
-// 		// }
-// 	}
-// }
+import "net/http"
+
+type ObjectDownloader interface {
+	Download(w http.ResponseWriter, r *http.Request)
+}

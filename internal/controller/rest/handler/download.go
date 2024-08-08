@@ -23,8 +23,9 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/ISSuh/sos/internal/logger"
-	"github.com/gin-gonic/gin"
 )
 
 type DownloadHandler struct {
@@ -37,8 +38,6 @@ func NewDownloadHandler(l logger.Logger) *DownloadHandler {
 	}
 }
 
-func (h *DownloadHandler) Download() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		h.logger.Debugf("[DownloadHandler.Download]")
-	}
+func (h *DownloadHandler) Download(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debugf("[DownloadHandler.Download]")
 }

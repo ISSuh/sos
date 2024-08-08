@@ -22,5 +22,9 @@
 
 package controller
 
+import "net/http"
+
 type ObjectUploader interface {
+	Upload(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
 }

@@ -23,16 +23,10 @@
 package handler
 
 import (
-	"encoding/binary"
-	"encoding/json"
-	"hash/crc32"
-	"io"
-	"net/http"
+	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/entity/dto"
+	"github.com/ISSuh/sos/internal/http"
 	"github.com/ISSuh/sos/internal/logger"
-	"github.com/ISSuh/sos/internal/object"
-	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -51,68 +45,54 @@ func NewUploadHandler(l logger.Logger) *UploadHandler {
 	}
 }
 
-func (h *UploadHandler) Upload() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		h.logger.Debugf("[UploadHandler.Upload]")
+func (h *UploadHandler) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
+	h.logger.Debugf("[UploadHandler.Upload]")
+	c := r.Context()
 
-		needHeader := true
+	group := c.Value(http.GroupParamContextKey)
+	partition := c.Value(http.PartitionContextKey)
+	objectName := c.Value(http.ObjectContextKey)
 
-		totalSize := 0
-		body := c.Request.Body
-		for {
-			buf := make([]byte, BufferSize)
-			n, err := body.Read(buf)
-			if err != nil {
-				if err == io.EOF {
-					h.logger.Debugf("[UploadHandler.Upload] end of file")
-					break
-				}
-				h.logger.Errorf("[UploadHandler.Upload] err : %s", err.Error())
-				return
-			}
+	h.logger.Debugf("[UploadHandler.Upload] group : %s, partition : %s, objectName : %s", group, partition, objectName)
 
-			if needHeader {
-				h.logger.Debugf("[UploadHandler.Upload] get header : %d / %d", len(buf), n)
-
-				buf = buf[0:n]
-				header := object.Metadata{}
-				if err := json.Unmarshal(buf, &header); err != nil {
-					h.logger.Errorf("[UploadHandler.Upload] can not unmarshal header")
-					break
-				}
-
-				h.logger.Debugf("[UploadHandler.Upload] header : %+v", header)
-				needHeader = false
-				continue
-			}
-
-			checksumByte := buf[BodySize:]
-			buf = buf[:BodySize]
-
-			checksum := binary.LittleEndian.Uint32(checksumByte)
-			crc := crc32.ChecksumIEEE(buf)
-			if checksum != crc {
-				h.logger.Errorf("[UploadHandler.Upload] checksum : %d/%d", checksum, crc)
-				return
-			}
-
-			h.logger.Debugf("[UploadHandler.Upload] read n : %d", n)
-			totalSize += n
-		}
-
-		h.logger.Debugf("[UploadHandler.Upload] total file size : %d", totalSize)
+	// 최대 메모리 사용량 설정 (32MB)
+	r.ParseMultipartForm(32 << 20)
+	// 파일을 가져옵니다.
+	file, handler, err := r.FormFile(http.MultiPartUploadKey)
+	if err != nil {
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
 	}
-}
+	defer file.Close()
 
-func (h *UploadHandler) UploadMultiPart() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		h.logger.Debugf("[UploadHandler.UploadMultiPart]")
-
-		req := dto.Upload{}
-		if err := c.Bind(&req); err != nil {
-
-			c.Error(http.StatusBadRequest, err)
-			return
-		}
+	tempFile := r.MultipartForm.File
+	for k, v := range tempFile {
+		h.logger.Debugf("tempFile => Key: %s, Value: %+v\n", k, v)
 	}
+
+	tempValue := r.MultipartForm.Value
+	for k, v := range tempValue {
+		h.logger.Debugf("tempValue => Key: %s, Value: %+v\n", k, v)
+	}
+
+	// 업로드된 파일 정보를 출력합니다.
+	h.logger.Debugf("Uploaded File: %+v\n", handler.Filename)
+	h.logger.Debugf("File Size: %+v\n", handler.Size)
+	h.logger.Debugf("MIME Header: %+v\n", handler.Header)
+
+	// // 파일을 서버에 저장합니다.
+	// dst, err := os.Create("./uploads/" + handler.Filename)
+	// if err != nil {
+	// 	gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+	// 	return
+	// }
+	// defer dst.Close()
+
+	// // 파일을 복사합니다.
+	// if _, err := io.Copy(dst, file); err != nil {
+	// 	gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+	// 	return
+	// }
+
+	h.logger.Debugf("Successfully Uploaded File\n")
 }
