@@ -21,3 +21,9 @@
 // SOFTWARE.
 
 package repository
+
+type ObjectStorage interface {
+	Store()
+	Delete()
+	Find()
+}

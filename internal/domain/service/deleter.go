@@ -20,33 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package factory
+package service
 
 import (
+	"fmt"
+
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
 	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type Repositories struct {
-	ObjectMetadata repository.ObjectMetadata
-	ObjectStorage  repository.ObjectStorage
+type Deleter interface {
 }
 
-func NewRepositories(l logger.Logger) (*Repositories, error) {
-	objectMetadata, err := database.NewLocalObjectMetadata(l)
-	if err != nil {
-		return nil, err
+type deleter struct {
+	logger logger.Logger
+
+	metadataRepository repository.ObjectMetadata
+	storageRepository  repository.ObjectStorage
+}
+
+func NewDeleter(
+	l logger.Logger, metadataRepository repository.ObjectMetadata, storageRepository repository.ObjectStorage,
+) (Deleter, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(metadataRepository):
+		return nil, fmt.Errorf("MetadataRepository is nil")
+	case validation.IsNil(storageRepository):
+		return nil, fmt.Errorf("StorageRepository is nil")
 	}
 
-	objectStorage, err := objectstorage.NewLocalObjectStorage(l)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Repositories{
-		ObjectMetadata: objectMetadata,
-		ObjectStorage:  objectStorage,
+	return &deleter{
+		logger:             l,
+		metadataRepository: metadataRepository,
+		storageRepository:  storageRepository,
 	}, nil
 }

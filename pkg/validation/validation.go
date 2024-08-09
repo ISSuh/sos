@@ -20,33 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package factory
+package validation
 
-import (
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
-	"github.com/ISSuh/sos/pkg/logger"
-)
-
-type Repositories struct {
-	ObjectMetadata repository.ObjectMetadata
-	ObjectStorage  repository.ObjectStorage
-}
-
-func NewRepositories(l logger.Logger) (*Repositories, error) {
-	objectMetadata, err := database.NewLocalObjectMetadata(l)
-	if err != nil {
-		return nil, err
-	}
-
-	objectStorage, err := objectstorage.NewLocalObjectStorage(l)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Repositories{
-		ObjectMetadata: objectMetadata,
-		ObjectStorage:  objectStorage,
-	}, nil
+func IsNil(v any) bool {
+	return v == nil
 }

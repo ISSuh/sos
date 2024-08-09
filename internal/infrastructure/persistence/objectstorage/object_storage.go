@@ -21,3 +21,31 @@
 // SOFTWARE.
 
 package objectstorage
+
+import (
+	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/logger"
+)
+
+type localObjectStorage struct {
+	logger logger.Logger
+}
+
+func NewLocalObjectStorage(l logger.Logger) (repository.ObjectStorage, error) {
+	return &localObjectStorage{
+			logger: l,
+		},
+		nil
+}
+
+func (s *localObjectStorage) Store() {
+
+}
+
+func (s *localObjectStorage) Delete() {
+
+}
+
+func (s *localObjectStorage) Find() {
+
+}

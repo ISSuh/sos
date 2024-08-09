@@ -20,10 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package controller
+package service
 
-import "net/http"
+import (
+	"fmt"
 
-type ObjectMeatadata interface {
-	Find(w http.ResponseWriter, r *http.Request)
+	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
+)
+
+type Uploader interface {
+}
+
+type uploader struct {
+	logger logger.Logger
+
+	metadataRepository repository.ObjectMetadata
+	storageRepository  repository.ObjectStorage
+}
+
+func NewUploader(
+	l logger.Logger, metadataRepository repository.ObjectMetadata, storageRepository repository.ObjectStorage,
+) (Uploader, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(metadataRepository):
+		return nil, fmt.Errorf("MetadataRepository is nil")
+	case validation.IsNil(storageRepository):
+		return nil, fmt.Errorf("StorageRepository is nil")
+	}
+
+	return &uploader{
+		logger:             l,
+		metadataRepository: metadataRepository,
+		storageRepository:  storageRepository,
+	}, nil
 }

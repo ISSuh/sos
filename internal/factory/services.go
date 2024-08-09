@@ -23,12 +23,42 @@
 package factory
 
 import (
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/pkg/logger"
 )
 
 type Services struct {
+	Uploader       service.Uploader
+	Downloader     service.Downloader
+	Deleter        service.Deleter
+	ObjectMetadata service.ObjectMetadata
 }
 
-func NewServices(l logger.Logger) (*Services, error) {
-	return nil, nil
+func NewServices(l logger.Logger, repositoryFacory *Repositories) (*Services, error) {
+	uploader, err := service.NewUploader(l)
+	if err != nil {
+		return nil, err
+	}
+
+	downloader, err := service.NewDownloader(l)
+	if err != nil {
+		return nil, err
+	}
+
+	deleter, err := service.NewDeleter(l)
+	if err != nil {
+		return nil, err
+	}
+
+	objectMetadata, err := service.NewObjectMetadata(l)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Services{
+		Uploader:       uploader,
+		Downloader:     downloader,
+		Deleter:        deleter,
+		ObjectMetadata: objectMetadata,
+	}, nil
 }

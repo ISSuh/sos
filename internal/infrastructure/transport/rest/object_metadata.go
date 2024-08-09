@@ -20,4 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package repository
+package rest
+
+import "net/http"
+
+type ObjectMeatadata interface {
+	Find(w http.ResponseWriter, r *http.Request)
+}

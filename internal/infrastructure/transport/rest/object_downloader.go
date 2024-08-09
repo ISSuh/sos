@@ -20,33 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package factory
+package rest
 
-import (
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
-	"github.com/ISSuh/sos/pkg/logger"
-)
+import "net/http"
 
-type Repositories struct {
-	ObjectMetadata repository.ObjectMetadata
-	ObjectStorage  repository.ObjectStorage
-}
-
-func NewRepositories(l logger.Logger) (*Repositories, error) {
-	objectMetadata, err := database.NewLocalObjectMetadata(l)
-	if err != nil {
-		return nil, err
-	}
-
-	objectStorage, err := objectstorage.NewLocalObjectStorage(l)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Repositories{
-		ObjectMetadata: objectMetadata,
-		ObjectStorage:  objectStorage,
-	}, nil
+type ObjectDownloader interface {
+	Download(w http.ResponseWriter, r *http.Request)
 }

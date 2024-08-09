@@ -20,10 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package rest
 
-import "github.com/ISSuh/sos/pkg/logger"
+import "net/http"
 
-type Upload struct {
-	logger logger.Logger
+type ObjectDeleter interface {
+	Upload(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
 }

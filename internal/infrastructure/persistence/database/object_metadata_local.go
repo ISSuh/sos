@@ -20,4 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package database
+
+import (
+	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/logger"
+)
+
+type localObjectMetadata struct {
+	logger logger.Logger
+}
+
+func NewLocalObjectMetadata(l logger.Logger) (repository.ObjectMetadata, error) {
+	return &localObjectMetadata{
+			logger: l,
+		},
+		nil
+}
+
+func (d *localObjectMetadata) Create() {
+
+}
+
+func (d *localObjectMetadata) Update() {
+
+}
+
+func (d *localObjectMetadata) Delete() {
+
+}
+
+func (d *localObjectMetadata) Find() {
+
+}
