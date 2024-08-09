@@ -25,8 +25,8 @@ package handler
 import (
 	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/http"
-	"github.com/ISSuh/sos/internal/logger"
+	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/pkg/logger"
 )
 
 const (
@@ -57,6 +57,7 @@ func (h *UploadHandler) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 	// 최대 메모리 사용량 설정 (32MB)
 	r.ParseMultipartForm(32 << 20)
+
 	// 파일을 가져옵니다.
 	file, handler, err := r.FormFile(http.MultiPartUploadKey)
 	if err != nil {

@@ -20,12 +20,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package object
-
-type Metadata struct {
-	Name      string `json:"name"`
-	Path      string `json:"path"`
-	Size      uint32 `json:"size"`
-	Group     string `json:"group"`
-	Partition string `json:"partition"`
-}
+package objectstorage

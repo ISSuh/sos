@@ -22,20 +22,11 @@
 
 package factory
 
-import (
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
-	"github.com/ISSuh/sos/pkg/logger"
-)
+import "github.com/ISSuh/sos/pkg/logger"
 
-type Handlers struct {
-	Uploader   *handler.UploadHandler
-	Downloader *handler.DownloadHandler
+type Repositories struct {
 }
 
-func NewHandlers(l logger.Logger) (*Handlers, error) {
-	h := &Handlers{
-		Uploader:   handler.NewUploadHandler(l),
-		Downloader: handler.NewDownloadHandler(l),
-	}
-	return h, nil
+func NewRepositories(l logger.Logger) (*Repositories, error) {
+	return nil, nil
 }

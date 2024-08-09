@@ -20,10 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package model
 
-import "github.com/ISSuh/sos/internal/logger"
-
-type Upload struct {
-	logger logger.Logger
-}
+type Chunk []byte

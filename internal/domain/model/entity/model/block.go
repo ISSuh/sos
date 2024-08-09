@@ -20,28 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package middleware
+package model
 
-import (
-	"context"
-	gohttp "net/http"
-
-	"github.com/ISSuh/sos/internal/http"
-)
-
-func ParseParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
-	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		params := http.ParseParme(r)
-
-		group := params[http.GroupParamName]
-		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
-
-		partition := params[http.PartitionParamName]
-		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
-
-		objectName := params[http.ObjectParamName]
-		ctx = context.WithValue(ctx, http.ObjectContextKey, objectName)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+type Block struct {
 }

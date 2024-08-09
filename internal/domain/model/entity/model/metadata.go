@@ -20,41 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package router
+package model
 
-import (
-	gohttp "net/http"
-
-	"github.com/ISSuh/sos/internal/controller/rest/middleware"
-	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/internal/http"
-)
-
-func Route(s *http.Server, h *factory.Handlers) {
-	s.Use(middleware.ParseParam)
-
-	routes := http.RouteList{
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
-			Method:  gohttp.MethodGet,
-			Handler: h.Downloader.Download,
-		},
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}/meta",
-			Method:  gohttp.MethodGet,
-			Handler: h.Downloader.Download,
-		},
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
-			Method:  gohttp.MethodPost,
-			Handler: h.Uploader.Upload,
-		},
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
-			Method:  gohttp.MethodDelete,
-			Handler: h.Downloader.Download,
-		},
-	}
-
-	s.MuxAll(routes)
+type Metadata struct {
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	Size      uint32 `json:"size"`
+	Group     string `json:"group"`
+	Partition string `json:"partition"`
 }

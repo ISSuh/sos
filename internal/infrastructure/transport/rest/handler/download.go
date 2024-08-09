@@ -20,22 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package factory
+package handler
 
 import (
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
+	"net/http"
+
 	"github.com/ISSuh/sos/pkg/logger"
 )
 
-type Handlers struct {
-	Uploader   *handler.UploadHandler
-	Downloader *handler.DownloadHandler
+type DownloadHandler struct {
+	logger logger.Logger
 }
 
-func NewHandlers(l logger.Logger) (*Handlers, error) {
-	h := &Handlers{
-		Uploader:   handler.NewUploadHandler(l),
-		Downloader: handler.NewDownloadHandler(l),
+func NewDownloadHandler(l logger.Logger) *DownloadHandler {
+	return &DownloadHandler{
+		logger: l,
 	}
-	return h, nil
+}
+
+func (h *DownloadHandler) Download(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debugf("[DownloadHandler.Download]")
 }

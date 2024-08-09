@@ -20,24 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package middleware
 
 import (
-	"net/http"
+	"context"
+	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/logger"
+	"github.com/ISSuh/sos/pkg/http"
 )
 
-type DownloadHandler struct {
-	logger logger.Logger
-}
+func ParseParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		params := http.ParseParme(r)
 
-func NewDownloadHandler(l logger.Logger) *DownloadHandler {
-	return &DownloadHandler{
-		logger: l,
-	}
-}
+		group := params[http.GroupParamName]
+		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
 
-func (h *DownloadHandler) Download(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debugf("[DownloadHandler.Download]")
+		partition := params[http.PartitionParamName]
+		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
+
+		objectName := params[http.ObjectParamName]
+		ctx = context.WithValue(ctx, http.ObjectContextKey, objectName)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

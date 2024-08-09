@@ -25,7 +25,8 @@ package main
 import (
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/logger"
+	"github.com/ISSuh/sos/pkg/logger"
+
 	"github.com/alexflint/go-arg"
 )
 
@@ -42,10 +43,10 @@ func main() {
 		return
 	}
 
-	l := logger.NewZapLogger(config.Sos.Api.Log)
+	l := logger.NewZapLogger(config.SOS.Api.Log)
 
 	l.Infof("configure : %+v", *config)
-	api, err := app.NewApi(&config.Sos, l)
+	api, err := app.NewApi(&config.SOS, l)
 	if err != nil {
 		return
 	}

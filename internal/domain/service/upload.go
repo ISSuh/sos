@@ -20,7 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package object
+package service
 
-type Block struct {
+import "github.com/ISSuh/sos/pkg/logger"
+
+type Upload struct {
+	logger logger.Logger
 }

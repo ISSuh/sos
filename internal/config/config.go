@@ -36,7 +36,7 @@ type SosConfig struct {
 }
 
 type Config struct {
-	Sos SosConfig `yaml:"sos"`
+	SOS SosConfig `yaml:"sos"`
 }
 
 func NewConfig(path string) (*Config, error) {

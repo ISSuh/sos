@@ -35,7 +35,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ISSuh/sos/internal/object"
+	"github.com/ISSuh/sos/internal/domain/model/entity/model"
 	"github.com/alexflint/go-arg"
 )
 
@@ -150,7 +150,7 @@ func main() {
 			panic(err)
 		}
 
-		header := object.Metadata{
+		header := model.Metadata{
 			Name:      fileName,
 			Group:     args.Group,
 			Partition: args.Partition,
