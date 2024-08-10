@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/alexflint/go-arg v1.4.3
+	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.63.2
