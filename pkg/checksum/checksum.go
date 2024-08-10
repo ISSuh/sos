@@ -20,7 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package model
+package checksum
 
-type Segment struct {
+import (
+	"crypto/sha256"
+	"encoding/hex"
+)
+
+func Calculate(data []byte) string {
+	hash := sha256.New()
+	hash.Write(data)
+	checksum := hex.EncodeToString(hash.Sum(nil))
+	return checksum
+}
+
+func Verify(expect string, data []byte) bool {
+	calculatedChecksum := Calculate(data)
+	return calculatedChecksum == expect
 }

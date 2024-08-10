@@ -29,11 +29,14 @@ import (
 
 type localObjectStorage struct {
 	logger logger.Logger
+
+	storage map[string][]byte
 }
 
 func NewLocalObjectStorage(l logger.Logger) (repository.ObjectStorage, error) {
 	return &localObjectStorage{
-			logger: l,
+			logger:  l,
+			storage: make(map[string][]byte),
 		},
 		nil
 }

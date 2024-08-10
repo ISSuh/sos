@@ -35,25 +35,25 @@ type Uploader interface {
 type uploader struct {
 	logger logger.Logger
 
-	metadataService ObjectMetadata
-	storageService  ObjectStorage
+	findService    Finder
+	storageService ObjectStorage
 }
 
 func NewUploader(
-	l logger.Logger, metadataService ObjectMetadata, storageService ObjectStorage,
+	l logger.Logger, findService Finder, storageService ObjectStorage,
 ) (Uploader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataService):
-		return nil, fmt.Errorf("ObjectMetadata is nil")
+	case validation.IsNil(findService):
+		return nil, fmt.Errorf("find service is nil")
 	case validation.IsNil(storageService):
-		return nil, fmt.Errorf("ObjectStorage is nil")
+		return nil, fmt.Errorf("object storage is nil")
 	}
 
 	return &uploader{
-		logger:          l,
-		metadataService: metadataService,
-		storageService:  storageService,
+		logger:         l,
+		findService:    findService,
+		storageService: storageService,
 	}, nil
 }

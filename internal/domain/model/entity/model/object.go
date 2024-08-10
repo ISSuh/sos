@@ -24,14 +24,12 @@ package model
 
 import "time"
 
-type Block struct {
-	ID        string
-	ObjectID  string
-	Index     int
-	Data      []byte
-	Checksum  string
-	Size      uint32
-	Timestamp time.Time
+type Object struct {
+	ID         string
+	Name       string
+	Size       int64
+	Segments   []Block
+	Metadata   Metadata
+	CreatedAt  time.Time
+	ModifiedAt time.Time
 }
-
-type Blocks []Block

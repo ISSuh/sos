@@ -20,18 +20,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package model
-
-import "time"
-
-type Block struct {
-	ID        string
-	ObjectID  string
-	Index     int
-	Data      []byte
-	Checksum  string
-	Size      uint32
-	Timestamp time.Time
-}
-
-type Blocks []Block
+package dto

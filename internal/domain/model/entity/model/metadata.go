@@ -23,9 +23,10 @@
 package model
 
 type Metadata struct {
-	Name      string `json:"name"`
-	Path      string `json:"path"`
-	Size      uint32 `json:"size"`
-	Group     string `json:"group"`
-	Partition string `json:"partition"`
+	ID        uint64
+	Group     string
+	Partition string
+	Name      string
+	Path      string
+	Size      uint32
 }

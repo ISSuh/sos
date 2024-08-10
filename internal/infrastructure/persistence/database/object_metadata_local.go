@@ -23,17 +23,21 @@
 package database
 
 import (
+	"github.com/ISSuh/sos/internal/domain/model/entity/model"
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/logger"
 )
 
 type localObjectMetadata struct {
 	logger logger.Logger
+
+	db map[string]model.Metadata
 }
 
 func NewLocalObjectMetadata(l logger.Logger) (repository.ObjectMetadata, error) {
 	return &localObjectMetadata{
 			logger: l,
+			db:     make(map[string]model.Metadata),
 		},
 		nil
 }

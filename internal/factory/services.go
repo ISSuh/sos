@@ -62,17 +62,17 @@ func NewAPIServices(
 		return nil, err
 	}
 
-	uploader, err := service.NewUploader(l, objectMetadata, objectStorage)
+	uploader, err := service.NewUploader(l, finder, objectStorage)
 	if err != nil {
 		return nil, err
 	}
 
-	downloader, err := service.NewDownloader(l, objectMetadata, objectStorage)
+	downloader, err := service.NewDownloader(l, finder, objectStorage)
 	if err != nil {
 		return nil, err
 	}
 
-	eraser, err := service.NewEraser(l, objectMetadata, objectStorage)
+	eraser, err := service.NewEraser(l, finder, objectStorage)
 	if err != nil {
 		return nil, err
 	}
