@@ -20,37 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package handler
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/internal/domain/service"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/pkg/logger"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type ObjectMetadata interface {
-}
-
-type objectMetadata struct {
+type eraser struct {
 	logger logger.Logger
 
-	metadataRepository repository.ObjectMetadata
+	eraserService service.Eraser
 }
 
-func NewObjectMetadata(
-	l logger.Logger, metadataRepository repository.ObjectMetadata,
-) (ObjectMetadata, error) {
+func NewEraser(l logger.Logger, eraserService service.Eraser) (rest.Eraser, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataRepository):
-		return nil, fmt.Errorf("MetadataRepository is nil")
+	case validation.IsNil(eraserService):
+		return nil, fmt.Errorf("erase service is nil")
 	}
 
-	return &objectMetadata{
-		logger:             l,
-		metadataRepository: metadataRepository,
+	return &eraser{
+		logger:        l,
+		eraserService: eraserService,
 	}, nil
+}
+
+func (h *eraser) Delete(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debugf("[eraser.Delete]")
 }

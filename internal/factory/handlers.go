@@ -23,19 +23,54 @@
 package factory
 
 import (
+	"fmt"
+
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
 	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Handlers struct {
-	Uploader   *handler.UploadHandler
-	Downloader *handler.DownloadHandler
+	Uploader   rest.Uploader
+	Downloader rest.Downloader
+	Finder     rest.Finder
+	Eraser     rest.Eraser
 }
 
-func NewHandlers(l logger.Logger) (*Handlers, error) {
+func NewHandlers(l logger.Logger, serviceFactory *APIServices) (*Handlers, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(serviceFactory):
+		return nil, fmt.Errorf("service factory is nil")
+	}
+
+	finder, err := handler.NewFinder(l, serviceFactory.Finder)
+	if err != nil {
+		return nil, err
+	}
+
+	uploader, err := handler.NewUploader(l, serviceFactory.Uploader)
+	if err != nil {
+		return nil, err
+	}
+
+	downloader, err := handler.NewDownloader(l, serviceFactory.Downloader)
+	if err != nil {
+		return nil, err
+	}
+
+	eraser, err := handler.NewEraser(l, serviceFactory.Eraser)
+	if err != nil {
+		return nil, err
+	}
+
 	h := &Handlers{
-		Uploader:   handler.NewUploadHandler(l),
-		Downloader: handler.NewDownloadHandler(l),
+		Finder:     finder,
+		Uploader:   uploader,
+		Downloader: downloader,
+		Eraser:     eraser,
 	}
 	return h, nil
 }

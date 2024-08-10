@@ -25,7 +25,6 @@ package service
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/logger"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -36,25 +35,25 @@ type Downloader interface {
 type downloader struct {
 	logger logger.Logger
 
-	metadataRepository repository.ObjectMetadata
-	storageRepository  repository.ObjectStorage
+	metadataService ObjectMetadata
+	storageService  ObjectStorage
 }
 
 func NewDownloader(
-	l logger.Logger, metadataRepository repository.ObjectMetadata, storageRepository repository.ObjectStorage,
+	l logger.Logger, metadataService ObjectMetadata, storageService ObjectStorage,
 ) (Downloader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataRepository):
-		return nil, fmt.Errorf("MetadataRepository is nil")
-	case validation.IsNil(storageRepository):
-		return nil, fmt.Errorf("StorageRepository is nil")
+	case validation.IsNil(metadataService):
+		return nil, fmt.Errorf("ObjectMetadata is nil")
+	case validation.IsNil(storageService):
+		return nil, fmt.Errorf("ObjectStorage is nil")
 	}
 
 	return &downloader{
-		logger:             l,
-		metadataRepository: metadataRepository,
-		storageRepository:  storageRepository,
+		logger:          l,
+		metadataService: metadataService,
+		storageService:  storageService,
 	}, nil
 }

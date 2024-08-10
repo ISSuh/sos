@@ -24,6 +24,6 @@ package rest
 
 import "net/http"
 
-type ObjectMeatadata interface {
-	Find(w http.ResponseWriter, r *http.Request)
+type Downloader interface {
+	Download(w http.ResponseWriter, r *http.Request)
 }

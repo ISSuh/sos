@@ -25,3 +25,7 @@ package validation
 func IsNil(v any) bool {
 	return v == nil
 }
+
+func IsEmpty(v string) bool {
+	return len(v) == 0
+}

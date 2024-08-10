@@ -20,10 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rest
+package service
 
-import "net/http"
+import (
+	"fmt"
 
-type ObjectDownloader interface {
-	Download(w http.ResponseWriter, r *http.Request)
+	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
+)
+
+type ObjectStorage interface {
+}
+
+type objectStorage struct {
+	logger logger.Logger
+
+	storageRepository repository.ObjectStorage
+}
+
+func NewObjectStorage(
+	l logger.Logger, storageRepository repository.ObjectStorage,
+) (ObjectStorage, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(storageRepository):
+		return nil, fmt.Errorf("StorageRepository is nil")
+	}
+
+	return &objectStorage{
+		logger:            l,
+		storageRepository: storageRepository,
+	}, nil
 }

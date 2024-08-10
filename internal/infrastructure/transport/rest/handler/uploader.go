@@ -23,10 +23,14 @@
 package handler
 
 import (
+	"fmt"
 	gohttp "net/http"
 
+	"github.com/ISSuh/sos/internal/domain/service"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
 const (
@@ -35,23 +39,33 @@ const (
 	BufferSize = BodySize + CrcSize
 )
 
-type UploadHandler struct {
+type uploader struct {
 	logger logger.Logger
+
+	uploadService service.Uploader
 }
 
-func NewUploadHandler(l logger.Logger) *UploadHandler {
-	return &UploadHandler{
-		logger: l,
+func NewUploader(l logger.Logger, uploadService service.Uploader) (rest.Uploader, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(uploadService):
+		return nil, fmt.Errorf("upload service is nil")
 	}
+
+	return &uploader{
+		logger:        l,
+		uploadService: uploadService,
+	}, nil
 }
 
-func (h *UploadHandler) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[UploadHandler.Upload]")
+func (h *uploader) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
+	h.logger.Debugf("[uploader.Upload]")
 	c := r.Context()
 
 	group := c.Value(http.GroupParamContextKey)
 	partition := c.Value(http.PartitionContextKey)
-	objectName := c.Value(http.ObjectContextKey)
+	objectName := c.Value(http.ObjectIDContextKey)
 
 	h.logger.Debugf("[UploadHandler.Upload] group : %s, partition : %s, objectName : %s", group, partition, objectName)
 
@@ -96,4 +110,8 @@ func (h *UploadHandler) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	// }
 
 	h.logger.Debugf("Successfully Uploaded File\n")
+}
+
+func (h *uploader) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
+	h.logger.Debugf("[uploader.Update]")
 }

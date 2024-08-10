@@ -27,6 +27,7 @@ package config
 import "strconv"
 
 type Address struct {
+	Host string `yaml:"host"`
 	Ip   string `yaml:"ip"`
 	Port int    `yaml:"port"`
 }

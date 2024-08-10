@@ -20,11 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rest
+package service
 
-import "net/http"
+import (
+	"fmt"
 
-type ObjectUploader interface {
-	Upload(w http.ResponseWriter, r *http.Request)
-	Update(w http.ResponseWriter, r *http.Request)
+	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
+)
+
+type Eraser interface {
+}
+
+type eraser struct {
+	logger logger.Logger
+
+	metadataService ObjectMetadata
+	storageService  ObjectStorage
+}
+
+func NewEraser(
+	l logger.Logger, metadataService ObjectMetadata, storageService ObjectStorage,
+) (Eraser, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(metadataService):
+		return nil, fmt.Errorf("ObjectMetadata is nil")
+	case validation.IsNil(storageService):
+		return nil, fmt.Errorf("ObjectStorage is nil")
+	}
+
+	return &eraser{
+		logger:          l,
+		metadataService: metadataService,
+		storageService:  storageService,
+	}, nil
 }

@@ -31,10 +31,14 @@ import (
 )
 
 type Api struct {
-	config   *config.SosConfig
-	logger   logger.Logger
-	handlers *factory.Handlers
-	server   *http.Server
+	logger logger.Logger
+
+	config *config.SosConfig
+	server *http.Server
+
+	repositories *factory.Repositories
+	services     *factory.APIServices
+	handlers     *factory.Handlers
 }
 
 func NewApi(c *config.SosConfig, l logger.Logger) (*Api, error) {
@@ -55,9 +59,15 @@ func (a *Api) Run() error {
 }
 
 func (a *Api) init() error {
-	var err error
+	if err := a.initRepository(); err != nil {
+		return err
+	}
 
-	if err = a.initHandler(); err != nil {
+	if err := a.initService(); err != nil {
+		return err
+	}
+
+	if err := a.initHandler(); err != nil {
 		return err
 	}
 
@@ -65,14 +75,35 @@ func (a *Api) init() error {
 	return nil
 }
 
-func (a *Api) initHandler() error {
+func (a *Api) initRepository() error {
 	var err error
-	var handlers *factory.Handlers
+	if a.repositories, err = factory.NewRepositories(a.logger); err != nil {
+		return err
+	}
+	return nil
+}
 
-	if handlers, err = factory.NewHandlers(a.logger); err != nil {
+func (a *Api) initService() error {
+	objectStorageService, err := factory.NewMetadataService(a.logger, a.repositories)
+	if err != nil {
 		return err
 	}
 
-	a.handlers = handlers
+	objectMetadataService, err := factory.NewStorageService(a.logger, a.repositories)
+	if err != nil {
+		return err
+	}
+
+	if a.services, err = factory.NewAPIServices(a.logger, objectMetadataService, objectStorageService); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Api) initHandler() error {
+	var err error
+	if a.handlers, err = factory.NewHandlers(a.logger, a.services); err != nil {
+		return err
+	}
 	return nil
 }

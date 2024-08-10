@@ -24,7 +24,6 @@ package rest
 
 import "net/http"
 
-type ObjectDeleter interface {
-	Upload(w http.ResponseWriter, r *http.Request)
-	Update(w http.ResponseWriter, r *http.Request)
+type Eraser interface {
+	Delete(w http.ResponseWriter, r *http.Request)
 }

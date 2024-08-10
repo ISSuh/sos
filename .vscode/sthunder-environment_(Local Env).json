@@ -1,0 +1,40 @@
+{
+    "clientName": "Thunder Client",
+    "environmentName": "(Local Env)",
+    "environmentId": "f1b15878-6903-49b8-8d00-89470a05db23",
+    "dateExported": "2024-08-10T07:43:25.522Z",
+    "version": "1.2",
+    "global": true,
+    "local": true,
+    "variables": [
+        {
+            "name": "API_HOST",
+            "value": "localhost:33221"
+        },
+        {
+            "name": "ACCESS_TOKEN",
+            "value": ""
+        },
+        {
+            "name": "GROUP",
+            "value": "aa"
+        },
+        {
+            "name": "PARTITION",
+            "value": "bb"
+        },
+        {
+            "name": "OBJECT_PATH",
+            "value": "cc"
+        },
+        {
+            "name": "OBJECT_ID",
+            "value": "dd"
+        },
+        {
+            "name": "API_VERSION",
+            "value": "v1"
+        }
+    ],
+    "ref": "I8aLhseG0Hvs6TbUSvD6jFzEQ-JsNnnr5moQli4pRW8fZKot95l6VX5zfFW1VRWu"
+}

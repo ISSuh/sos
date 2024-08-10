@@ -30,29 +30,74 @@ import (
 	"github.com/ISSuh/sos/pkg/http"
 )
 
+const (
+	URLVersion1 = "/v1"
+
+	URLGroup      = "/{" + http.GroupParamName + "}"
+	URLPartition  = "/{" + http.PartitionParamName + "}"
+	URLObjectPath = "/{" + http.ObjectPathParamName + "}"
+	URLObjectID   = "/{" + http.ObjectIDParamName + "}"
+	URLMetadata   = "/metadata"
+
+	URLDefault            = URLVersion1 + URLGroup + URLPartition + URLObjectPath
+	URLObject             = URLDefault + URLObjectID
+	URLObjectMetadata     = URLObject + URLMetadata
+	URLObjectMetadataList = URLDefault + URLMetadata
+)
+
 func Route(s *http.Server, h *factory.Handlers) {
-	s.Use(middleware.ParseParam)
+	s.Use(middleware.Recover)
+	s.Use(middleware.ParseDefaultParam)
+	s.Use(middleware.ErrorHandler)
 
 	routes := http.RouteList{
+		// Upload
 		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
-			Method:  gohttp.MethodGet,
-			Handler: h.Downloader.Download,
-		},
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}/meta",
-			Method:  gohttp.MethodGet,
-			Handler: h.Downloader.Download,
-		},
-		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
+			URL:     URLDefault,
 			Method:  gohttp.MethodPost,
 			Handler: h.Uploader.Upload,
 		},
+		// Download
 		http.RouteItem{
-			URL:     "/v1/{group}/{partition}/{object}",
-			Method:  gohttp.MethodDelete,
+			URL:     URLObject,
+			Method:  gohttp.MethodGet,
 			Handler: h.Downloader.Download,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseObjectIDParam,
+			},
+		},
+		// Update
+		http.RouteItem{
+			URL:     URLObject,
+			Method:  gohttp.MethodPut,
+			Handler: h.Uploader.Update,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseObjectIDParam,
+			},
+		},
+		// Delete
+		http.RouteItem{
+			URL:     URLObject,
+			Method:  gohttp.MethodDelete,
+			Handler: h.Eraser.Delete,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseObjectIDParam,
+			},
+		},
+		// metadata
+		http.RouteItem{
+			URL:     URLObjectMetadata,
+			Method:  gohttp.MethodGet,
+			Handler: h.Finder.Find,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseObjectIDParam,
+			},
+		},
+		// list
+		http.RouteItem{
+			URL:     URLDefault,
+			Method:  gohttp.MethodGet,
+			Handler: h.Finder.List,
 		},
 	}
 

@@ -20,37 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package rest
 
-import (
-	"fmt"
+import "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
-	"github.com/ISSuh/sos/pkg/validation"
-)
-
-type ObjectMetadata interface {
-}
-
-type objectMetadata struct {
-	logger logger.Logger
-
-	metadataRepository repository.ObjectMetadata
-}
-
-func NewObjectMetadata(
-	l logger.Logger, metadataRepository repository.ObjectMetadata,
-) (ObjectMetadata, error) {
-	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataRepository):
-		return nil, fmt.Errorf("MetadataRepository is nil")
-	}
-
-	return &objectMetadata{
-		logger:             l,
-		metadataRepository: metadataRepository,
-	}, nil
+type Finder interface {
+	Find(w http.ResponseWriter, r *http.Request)
+	List(w http.ResponseWriter, r *http.Request)
 }

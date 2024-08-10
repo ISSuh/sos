@@ -23,21 +23,35 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/ISSuh/sos/internal/domain/service"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type DownloadHandler struct {
+type downloader struct {
 	logger logger.Logger
+
+	downloadService service.Downloader
 }
 
-func NewDownloadHandler(l logger.Logger) *DownloadHandler {
-	return &DownloadHandler{
-		logger: l,
+func NewDownloader(l logger.Logger, downloadService service.Downloader) (rest.Downloader, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(downloadService):
+		return nil, fmt.Errorf("download service is nil")
 	}
+
+	return &downloader{
+		logger:          l,
+		downloadService: downloadService,
+	}, nil
 }
 
-func (h *DownloadHandler) Download(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debugf("[DownloadHandler.Download]")
+func (h *downloader) Download(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debugf("[downloader.Download]")
 }

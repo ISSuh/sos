@@ -23,10 +23,13 @@
 package factory
 
 import (
+	"fmt"
+
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
 	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
 	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Repositories struct {
@@ -35,6 +38,11 @@ type Repositories struct {
 }
 
 func NewRepositories(l logger.Logger) (*Repositories, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	}
+
 	objectMetadata, err := database.NewLocalObjectMetadata(l)
 	if err != nil {
 		return nil, err

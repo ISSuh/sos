@@ -31,17 +31,19 @@ import (
 type ParamContextKey string
 
 const (
-	GroupParamName     = "group"
-	PartitionParamName = "partition"
-	ObjectParamName    = "object"
+	GroupParamName      = "group"
+	PartitionParamName  = "partition"
+	ObjectPathParamName = "objectPath"
+	ObjectIDParamName   = "objectID"
 
-	GroupParamContextKey ParamContextKey = "group"
-	PartitionContextKey  ParamContextKey = "partition"
-	ObjectContextKey     ParamContextKey = "object"
+	GroupParamContextKey ParamContextKey = GroupParamName
+	PartitionContextKey  ParamContextKey = PartitionParamName
+	PathContextKey       ParamContextKey = ObjectPathParamName
+	ObjectIDContextKey   ParamContextKey = ObjectIDParamName
 
 	MultiPartUploadKey = "upload"
 )
 
-func ParseParme(r *http.Request) map[string]string {
+func ParseParm(r *http.Request) map[string]string {
 	return mux.Vars(r)
 }

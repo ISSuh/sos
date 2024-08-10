@@ -25,32 +25,31 @@ package service
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/logger"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type ObjectMetadata interface {
+type Finder interface {
 }
 
-type objectMetadata struct {
+type finder struct {
 	logger logger.Logger
 
-	metadataRepository repository.ObjectMetadata
+	metadataService ObjectMetadata
 }
 
-func NewObjectMetadata(
-	l logger.Logger, metadataRepository repository.ObjectMetadata,
-) (ObjectMetadata, error) {
+func NewFinder(
+	l logger.Logger, metadataService ObjectMetadata,
+) (Finder, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataRepository):
-		return nil, fmt.Errorf("MetadataRepository is nil")
+	case validation.IsNil(metadataService):
+		return nil, fmt.Errorf("ObjectMetadata is nil")
 	}
 
-	return &objectMetadata{
-		logger:             l,
-		metadataRepository: metadataRepository,
+	return &finder{
+		logger:          l,
+		metadataService: metadataService,
 	}, nil
 }

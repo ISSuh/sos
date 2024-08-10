@@ -28,14 +28,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type RouteItem struct {
-	URL     string
-	Method  string
-	Handler http.HandlerFunc
-}
-
-type RouteList []RouteItem
-
 type Server struct {
 	middlewares []MiddlewareFunc
 	router      *mux.Router
@@ -63,6 +55,11 @@ func (s *Server) Mux(pattern string, method string, handler http.HandlerFunc) {
 func (s *Server) MuxAll(routeList RouteList) {
 	for _, item := range routeList {
 		h := http.HandlerFunc(item.Handler)
+
+		for i := len(item.Middlewares) - 1; i >= 0; i-- {
+			h = item.Middlewares[i](h)
+		}
+
 		for i := len(s.middlewares) - 1; i >= 0; i-- {
 			h = s.middlewares[i](h)
 		}

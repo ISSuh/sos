@@ -20,41 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package rest
 
-import (
-	"fmt"
+import "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
-	"github.com/ISSuh/sos/pkg/validation"
-)
-
-type Deleter interface {
-}
-
-type deleter struct {
-	logger logger.Logger
-
-	metadataRepository repository.ObjectMetadata
-	storageRepository  repository.ObjectStorage
-}
-
-func NewDeleter(
-	l logger.Logger, metadataRepository repository.ObjectMetadata, storageRepository repository.ObjectStorage,
-) (Deleter, error) {
-	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataRepository):
-		return nil, fmt.Errorf("MetadataRepository is nil")
-	case validation.IsNil(storageRepository):
-		return nil, fmt.Errorf("StorageRepository is nil")
-	}
-
-	return &deleter{
-		logger:             l,
-		metadataRepository: metadataRepository,
-		storageRepository:  storageRepository,
-	}, nil
+type Uploader interface {
+	Upload(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
 }

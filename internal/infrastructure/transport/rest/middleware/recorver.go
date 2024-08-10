@@ -20,7 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package http
+package middleware
 
-type DTO struct {
+import (
+	"fmt"
+	gohttp "net/http"
+)
+
+func Recover(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		fmt.Printf("[Recover] start\n")
+
+		next.ServeHTTP(w, r)
+
+		fmt.Printf("[Recover] end\n")
+
+	})
 }

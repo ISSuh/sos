@@ -24,24 +24,58 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	gohttp "net/http"
 
 	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
-func ParseParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+func ParseDefaultParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		params := http.ParseParme(r)
+		fmt.Printf("[ParseDefaultParam] start\n")
+
+		params := http.ParseParm(r)
 
 		group := params[http.GroupParamName]
-		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
+		if validation.IsEmpty(group) {
+			return
+		}
 
 		partition := params[http.PartitionParamName]
-		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
+		if validation.IsEmpty(partition) {
+			return
+		}
 
-		objectName := params[http.ObjectParamName]
-		ctx = context.WithValue(ctx, http.ObjectContextKey, objectName)
+		path := params[http.ObjectPathParamName]
+		if validation.IsEmpty(path) {
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
+		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
+		ctx = context.WithValue(ctx, http.ObjectIDParamName, path)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+
+		fmt.Printf("[ParseDefaultParam] end\n")
+	})
+}
+
+func ParseObjectIDParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		fmt.Printf("[ParseObjectIDParam] start\n")
+
+		params := http.ParseParm(r)
+
+		objectID := params[http.ObjectIDParamName]
+		if validation.IsEmpty(objectID) {
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, objectID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+
+		fmt.Printf("[ParseObjectIDParam] end\n")
 	})
 }
