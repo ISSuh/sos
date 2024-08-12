@@ -24,6 +24,7 @@ package handler
 
 import (
 	"fmt"
+	"io"
 	gohttp "net/http"
 
 	"github.com/ISSuh/sos/internal/domain/service"
@@ -61,14 +62,19 @@ func NewUploader(l logger.Logger, uploadService service.Uploader) (rest.Uploader
 
 func (h *uploader) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	h.logger.Debugf("[uploader.Upload]")
-	c := r.Context()
 
+	c := r.Context()
 	group := c.Value(http.GroupParamContextKey)
 	partition := c.Value(http.PartitionContextKey)
 	objectName := c.Value(http.ObjectIDContextKey)
 
 	h.logger.Debugf("[UploadHandler.Upload] group : %s, partition : %s, objectName : %s", group, partition, objectName)
 
+	// h.multipartUpload(w, r)
+	h.chunkedUpload(w, r)
+}
+
+func (h *uploader) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	// 최대 메모리 사용량 설정 (32MB)
 	r.ParseMultipartForm(32 << 20)
 
@@ -110,6 +116,31 @@ func (h *uploader) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	// }
 
 	h.logger.Debugf("Successfully Uploaded File\n")
+}
+
+func (h *uploader) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
+	h.logger.Debugf("[uploader.chunkedUpload]")
+	h.logger.Debugf("content type: %s\n", r.Header.Get("Content-Type"))
+
+	// Read the chunked data
+	for {
+		buf := make([]byte, 4096)
+		n, err := r.Body.Read(buf)
+		if err != nil && err != io.EOF {
+			gohttp.Error(w, "Failed to read chunked data", gohttp.StatusInternalServerError)
+			return
+		}
+
+		if n == 0 {
+			break
+		}
+
+		// need data handling
+		h.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+	}
+
+	w.WriteHeader(gohttp.StatusOK)
+	w.Write([]byte("Chunk uploaded successfully"))
 }
 
 func (h *uploader) Update(w gohttp.ResponseWriter, r *gohttp.Request) {

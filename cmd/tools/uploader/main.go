@@ -23,186 +23,95 @@
 package main
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
-	"sync"
-	"time"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity/model"
 	"github.com/alexflint/go-arg"
 )
 
 const (
-	CrcSize       = 4
-	BodySize      = 4092
-	BufferSize    = BodySize + CrcSize
+	CrcSize    = 4
+	BodySize   = 4092
+	BufferSize = BodySize + CrcSize
+
+	// chunkSize     = 1 * 1024 * 1024 // 1MB
+	chunkSize     = 30 * 1024 // 30KB
 	ChunkEncoding = "chunked"
 )
 
 var args struct {
-	Server    string `arg:"-s,--server,required"`
-	Group     string `arg:"-g,--group,required"`
-	Partition string `arg:"-p,--partision,required"`
-	File      string `arg:"-f,--file,required"`
+	Server     string `arg:"-s,--server,required"`
+	Group      string `arg:"-g,--group,required"`
+	Partition  string `arg:"-p,--partition,required"`
+	ObjectPath string `arg:"-o,--path,required"`
+	File       string `arg:"-f,--file,required"`
 }
 
-func fileReadAndWriteToChan(f *os.File, writer *io.PipeWriter) (bool, int, error) {
-	buf := make([]byte, BodySize)
-	n, err := f.Read(buf)
-	if err == io.EOF {
-		fmt.Printf("end of file")
-		return true, n, nil
-	}
-
+func uploadChunked(url string, filePath string) error {
+	file, err := os.Open(filePath)
 	if err != nil {
-		return false, 0, err
+		return fmt.Errorf("failed to open file: %v", err)
 	}
+	defer file.Close()
 
-	crc := crc32.ChecksumIEEE(buf)
-	buf = binary.LittleEndian.AppendUint32(buf, crc)
-
-	fmt.Printf("b : %d / %+v\n", len(buf), buf[BodySize:])
-
-	n, err = writer.Write(buf)
-	return false, n, err
-}
-
-func fileTask(file string, writer *io.PipeWriter, q <-chan struct{}, wg *sync.WaitGroup) {
-	f, err := os.Open(file)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create request: %v", err)
 	}
+	req.TransferEncoding = []string{"chunked"}
+	req.Header.Set("Content-Type", "application/octet-stream")
 
-	defer f.Close()
-	defer wg.Done()
-	defer writer.Close()
+	pr, pw := io.Pipe()
+	req.Body = pr
 
-	totalSize := 0
-	isEOF := false
-	for !isEOF {
-		select {
-		case <-q:
-			break
-		default:
-			n := 0
-			isEOF, n, err = fileReadAndWriteToChan(f, writer)
-			if err != nil {
-				panic(err)
+	go func() {
+		defer pw.Close()
+		buf := make([]byte, chunkSize)
+		for {
+			n, err := file.Read(buf)
+			if err != nil && err != io.EOF {
+				pw.CloseWithError(fmt.Errorf("failed to read chunk: %v", err))
+				return
+			}
+			if n == 0 {
+				break
 			}
 
-			totalSize += n
+			_, err = pw.Write(buf[:n])
+			if err != nil {
+				pw.CloseWithError(fmt.Errorf("failed to write chunk: %v", err))
+				return
+			}
 		}
+	}()
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned non-200 status: %v", resp.Status)
 	}
 
-	fmt.Printf("total size : %d", totalSize)
-	time.Sleep(1 * time.Second)
+	return nil
 }
 
 func main() {
 	arg.MustParse(&args)
 
 	// set url
-	fileName := filepath.Base(args.File)
-	urlStr := fmt.Sprintf("http://%s/v1/%s/%s/%s", args.Server, args.Group, args.Partition, fileName)
-	u, err := url.Parse(urlStr)
+	url := fmt.Sprintf("http://%s/v1/%s/%s/%s", args.Server, args.Group, args.Partition, args.ObjectPath)
+
+	err := uploadChunked(url, args.File)
 	if err != nil {
-		fmt.Printf("err : %s\n", err.Error())
-		return
-	}
-
-	// open pipe
-	reader, writer := io.Pipe()
-
-	req := &http.Request{
-		Method:           http.MethodPut,
-		URL:              u,
-		TransferEncoding: []string{ChunkEncoding},
-		Body:             reader,
-		Header:           make(map[string][]string),
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	q := make(chan struct{})
-	// go fileTask(args.File, writer, q, &wg)
-	go func() {
-		f, err := os.Open(args.File)
-		if err != nil {
-			panic(err)
-		}
-
-		defer f.Close()
-		defer wg.Done()
-		defer writer.Close()
-
-		time.Sleep(1 * time.Second)
-
-		stat, err := os.Stat(args.File)
-		if err != nil {
-			panic(err)
-		}
-
-		header := model.Metadata{
-			Name:      fileName,
-			Group:     args.Group,
-			Partition: args.Partition,
-			Size:      uint32(stat.Size()),
-		}
-
-		j, err := json.Marshal(header)
-		if err != nil {
-			panic(err)
-		}
-
-		n, err := writer.Write(j)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("write header len : %d, header : %+v\n", n, header)
-
-		totalSize := 0
-		isEOF := false
-		for !isEOF {
-			select {
-			case <-q:
-				break
-			default:
-				n := 0
-				isEOF, n, err = fileReadAndWriteToChan(f, writer)
-				if err != nil {
-					panic(err)
-				}
-
-				totalSize += n
-			}
-		}
-
-		fmt.Printf("total size : %d", totalSize)
-		time.Sleep(1 * time.Second)
-	}()
-
-	client := http.DefaultClient
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-
-	wg.Wait()
-
-	body, err := io.ReadAll(resp.Body)
-	if nil != err {
-		fmt.Println("error =>", err.Error())
+		fmt.Printf("Error uploading file: %v\n", err)
 	} else {
-		fmt.Println(string(body))
+		fmt.Println("File uploaded successfully")
 	}
+	fmt.Println("File uploaded successfully")
 }

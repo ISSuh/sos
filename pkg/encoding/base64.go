@@ -20,7 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dto
+package encoding
 
-type Property struct {
+import "encoding/base64"
+
+func EncodeBase64(data []byte) string {
+	return base64.StdEncoding.EncodeToString(data)
+}
+
+func DecodeBase64(data string) ([]byte, error) {
+	dec, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return nil, err
+	}
+	return dec, nil
 }

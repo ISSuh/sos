@@ -20,40 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package database
+package entity
 
-import (
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
-)
+type Object struct {
+	ID       uint64
+	Segments Blocks
+	Metadata ObjectMetadata
 
-type localObjectMetadata struct {
-	logger logger.Logger
-
-	db map[uint64]entity.ObjectMetadata
-}
-
-func NewLocalObjectMetadata(l logger.Logger) (repository.ObjectMetadata, error) {
-	return &localObjectMetadata{
-			logger: l,
-			db:     make(map[uint64]entity.ObjectMetadata),
-		},
-		nil
-}
-
-func (d *localObjectMetadata) Create() {
-
-}
-
-func (d *localObjectMetadata) Update() {
-
-}
-
-func (d *localObjectMetadata) Delete() {
-
-}
-
-func (d *localObjectMetadata) Find() {
-
+	ModifiedTime
 }

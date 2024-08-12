@@ -20,16 +20,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package model
-
-import "time"
-
-type Object struct {
-	ID         string
-	Name       string
-	Size       int64
-	Segments   []Block
-	Metadata   Metadata
-	CreatedAt  time.Time
-	ModifiedAt time.Time
-}
+package http

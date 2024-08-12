@@ -20,13 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package model
+package http
 
-type Metadata struct {
-	ID        uint64
-	Group     string
-	Partition string
-	Name      string
-	Path      string
-	Size      uint32
+type Response struct {
 }

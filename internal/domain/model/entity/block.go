@@ -20,6 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package model
+package entity
 
-type Chunk []byte
+import "time"
+
+type BlockHeader struct {
+	ID        string
+	ObjectID  string
+	Index     int
+	Size      uint32
+	Node      Node
+	Timestamp time.Time
+	Checksum  string
+}
+
+type Block struct {
+	ID     uint64
+	Header BlockHeader
+	Data   []byte
+
+	ModifiedTime
+}
+
+type Blocks []Block

@@ -20,40 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package database
+package dto
 
 import (
+	"time"
+
 	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
 )
 
-type localObjectMetadata struct {
-	logger logger.Logger
-
-	db map[uint64]entity.ObjectMetadata
+type Metadata struct {
+	ID         uint64
+	Group      string
+	Partition  string
+	Name       string
+	Path       string
+	Size       uint64
+	CreatedAt  time.Time
+	ModifiedAt time.Time
 }
 
-func NewLocalObjectMetadata(l logger.Logger) (repository.ObjectMetadata, error) {
-	return &localObjectMetadata{
-			logger: l,
-			db:     make(map[uint64]entity.ObjectMetadata),
-		},
-		nil
-}
-
-func (d *localObjectMetadata) Create() {
-
-}
-
-func (d *localObjectMetadata) Update() {
-
-}
-
-func (d *localObjectMetadata) Delete() {
-
-}
-
-func (d *localObjectMetadata) Find() {
-
+func NewMedataFromModel(m *entity.ObjectMetadata) *Metadata {
+	return &Metadata{
+		ID:         m.ID,
+		Group:      m.Group,
+		Partition:  m.Partition,
+		Name:       m.Name,
+		Path:       m.Path,
+		Size:       m.Size,
+		CreatedAt:  m.CreatedAt,
+		ModifiedAt: m.ModifiedAt,
+	}
 }
