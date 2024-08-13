@@ -27,11 +27,11 @@ import (
 	"github.com/ISSuh/sos/internal/factory"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/router"
 	"github.com/ISSuh/sos/pkg/http"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 )
 
 type Api struct {
-	logger logger.Logger
+	logger log.Logger
 
 	config *config.SosConfig
 	server *http.Server
@@ -41,7 +41,7 @@ type Api struct {
 	handlers     *factory.Handlers
 }
 
-func NewApi(c *config.SosConfig, l logger.Logger) (*Api, error) {
+func NewApi(c *config.SosConfig, l log.Logger) (*Api, error) {
 	a := &Api{
 		config: c,
 		logger: l,
@@ -71,7 +71,7 @@ func (a *Api) init() error {
 		return err
 	}
 
-	router.Route(a.server, a.handlers)
+	router.Route(a.logger, a.server, a.handlers)
 	return nil
 }
 

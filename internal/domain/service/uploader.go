@@ -23,37 +23,89 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"io"
 
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Uploader interface {
+	Upload(ctx context.Context, req dto.Request, bodyStream io.ReadCloser) error
 }
 
 type uploader struct {
-	logger logger.Logger
+	logger log.Logger
 
-	findService    Finder
-	storageService ObjectStorage
+	findService     Finder
+	metadataService ObjectMetadata
+	storageService  ObjectStorage
 }
 
 func NewUploader(
-	l logger.Logger, findService Finder, storageService ObjectStorage,
+	l log.Logger, findService Finder, metadataService ObjectMetadata, storageService ObjectStorage,
 ) (Uploader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(findService):
 		return nil, fmt.Errorf("find service is nil")
+	case validation.IsNil(metadataService):
+		return nil, fmt.Errorf("object metadata service is nil")
 	case validation.IsNil(storageService):
-		return nil, fmt.Errorf("object storage is nil")
+		return nil, fmt.Errorf("object storage service is nil")
 	}
 
 	return &uploader{
-		logger:         l,
-		findService:    findService,
-		storageService: storageService,
+		logger:          l,
+		findService:     findService,
+		metadataService: metadataService,
+		storageService:  storageService,
 	}, nil
+}
+
+func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) error {
+	defer bodyStream.Close()
+
+	exist, id, err := s.findService.CanUploadNewObject(c, req)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		return fmt.Errorf("object already exist")
+	}
+
+	totalReadSize := uint64(0)
+	for {
+		buf := make([]byte, 4096)
+		n, err := bodyStream.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		if n == 0 {
+			break
+		}
+
+		// need data handling
+		totalReadSize += uint64(n)
+		s.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+	}
+
+	if err := s.uploadNewObjectMetadata(c, req, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *uploader) uploadNewObjectMetadata(c context.Context, req dto.Request, id uint64) error {
+	req.ID = id
+	if err := s.metadataService.Create(c, req); err != nil {
+		return err
+	}
+	return nil
 }

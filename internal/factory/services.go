@@ -26,7 +26,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -46,7 +46,7 @@ type StorageService struct {
 }
 
 func NewAPIServices(
-	l logger.Logger, objectMetadata service.ObjectMetadata, objectStorage service.ObjectStorage,
+	l log.Logger, objectMetadata service.ObjectMetadata, objectStorage service.ObjectStorage,
 ) (*APIServices, error) {
 	switch {
 	case validation.IsNil(l):
@@ -62,7 +62,7 @@ func NewAPIServices(
 		return nil, err
 	}
 
-	uploader, err := service.NewUploader(l, finder, objectStorage)
+	uploader, err := service.NewUploader(l, finder, objectMetadata, objectStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func NewAPIServices(
 	}, nil
 }
 
-func NewMetadataService(l logger.Logger, repositoryFactory *Repositories) (*MetadataService, error) {
+func NewMetadataService(l log.Logger, repositoryFactory *Repositories) (*MetadataService, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
@@ -103,7 +103,7 @@ func NewMetadataService(l logger.Logger, repositoryFactory *Repositories) (*Meta
 	}, nil
 }
 
-func NewStorageService(l logger.Logger, repositoryFactory *Repositories) (*StorageService, error) {
+func NewStorageService(l log.Logger, repositoryFactory *Repositories) (*StorageService, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")

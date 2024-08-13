@@ -26,7 +26,9 @@ import (
 	"context"
 	"fmt"
 	gohttp "net/http"
+	"strconv"
 
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -52,10 +54,13 @@ func ParseDefaultParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, group)
-		ctx = context.WithValue(ctx, http.PartitionContextKey, partition)
-		ctx = context.WithValue(ctx, http.ObjectIDParamName, path)
+		req := dto.Request{
+			Group:     group,
+			Partition: partition,
+			Path:      path,
+		}
 
+		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 		fmt.Printf("[ParseDefaultParam] end\n")
@@ -73,9 +78,44 @@ func ParseObjectIDParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), http.GroupParamContextKey, objectID)
+		req := dto.RequestFromContext(r.Context(), http.RequestContextKey)
+		req.ObjectID = objectID
+
+		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 		fmt.Printf("[ParseObjectIDParam] end\n")
+	})
+}
+
+func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		fmt.Printf("[ParseQueryParam] start\n")
+
+		name := r.URL.Query().Get(http.ObjectName)
+		if validation.IsEmpty(name) {
+			return
+		}
+
+		sizeStr := r.URL.Query().Get(http.ObjectSizeName)
+		size, err := strconv.ParseUint(sizeStr, 10, 64)
+		if err != nil {
+			return
+		}
+
+		chunkSizeStr := r.URL.Query().Get(http.ChunkSizeName)
+		chunkSize, err := strconv.ParseUint(chunkSizeStr, 10, 64)
+		if err != nil {
+			return
+		}
+
+		req := dto.RequestFromContext(r.Context(), http.RequestContextKey)
+		req.Size = size
+		req.ChunkSize = chunkSize
+
+		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
+		next.ServeHTTP(w, r.WithContext(ctx))
+
+		fmt.Printf("[ParseQueryParam] end\n")
 	})
 }

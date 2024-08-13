@@ -23,37 +23,64 @@
 package database
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 )
 
 type localObjectMetadata struct {
-	logger logger.Logger
+	logger log.Logger
 
-	db map[uint64]entity.ObjectMetadata
+	db map[string]map[string]map[string]map[string]entity.ObjectMetadata
 }
 
-func NewLocalObjectMetadata(l logger.Logger) (repository.ObjectMetadata, error) {
+func NewLocalObjectMetadata(l log.Logger) (repository.ObjectMetadata, error) {
 	return &localObjectMetadata{
 			logger: l,
-			db:     make(map[uint64]entity.ObjectMetadata),
+			db:     make(map[string]map[string]map[string]map[string]entity.ObjectMetadata),
 		},
 		nil
 }
 
-func (d *localObjectMetadata) Create() {
-
+func (d *localObjectMetadata) Create(c context.Context, metadata entity.ObjectMetadata) error {
+	d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name] = metadata
+	return nil
 }
 
-func (d *localObjectMetadata) Update() {
-
+func (d *localObjectMetadata) Update(c context.Context, metadata entity.ObjectMetadata) error {
+	d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name] = metadata
+	return nil
 }
 
-func (d *localObjectMetadata) Delete() {
-
+func (d *localObjectMetadata) Delete(c context.Context, metadata entity.ObjectMetadata) error {
+	_, exist := d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name]
+	if !exist {
+		return fmt.Errorf("metadata not exist")
+	}
+	delete(d.db[metadata.Group][metadata.Partition][metadata.Name], metadata.Path)
+	return nil
 }
 
-func (d *localObjectMetadata) Find() {
+func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, partition, path, name string) (entity.ObjectMetadata, error) {
+	metadata, exist := d.db[group][partition][path][name]
+	if !exist {
+		return entity.NewEmptyObjectMetadata(), fmt.Errorf("metadata not exist")
+	}
+	return metadata, nil
+}
 
+func (d *localObjectMetadata) FindMetadata(c context.Context, group, partition, path string) ([]entity.ObjectMetadata, error) {
+	list, exist := d.db[group][partition][path]
+	if !exist {
+		return nil, fmt.Errorf("metadata not exist")
+	}
+
+	var metadataList []entity.ObjectMetadata
+	for _, v := range list {
+		metadataList = append(metadataList, v)
+	}
+	return metadataList, nil
 }

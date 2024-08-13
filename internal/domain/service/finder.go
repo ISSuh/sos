@@ -23,23 +23,29 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Finder interface {
+	FindObjectMetadata(c context.Context, req dto.Request) (entity.ObjectMetadata, error)
+	IsObjectExist(c context.Context, req dto.Request) (bool, error)
+	CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error)
 }
 
 type finder struct {
-	logger logger.Logger
+	logger log.Logger
 
 	metadataService ObjectMetadata
 }
 
 func NewFinder(
-	l logger.Logger, metadataService ObjectMetadata,
+	l log.Logger, metadataService ObjectMetadata,
 ) (Finder, error) {
 	switch {
 	case validation.IsNil(l):
@@ -52,4 +58,38 @@ func NewFinder(
 		logger:          l,
 		metadataService: metadataService,
 	}, nil
+}
+
+func (s *finder) FindObjectMetadata(c context.Context, req dto.Request) (entity.ObjectMetadata, error) {
+	metadata, err := s.metadataService.MetadataByObjectName(c, req)
+	if err != nil {
+		return entity.NewEmptyObjectMetadata(), err
+	}
+	return metadata, nil
+}
+
+func (s *finder) IsObjectExist(c context.Context, req dto.Request) (bool, error) {
+	metadata, err := s.FindObjectMetadata(c, req)
+	if err != nil {
+		return false, err
+	}
+	return metadata.IsEmpty(), nil
+}
+
+func (s *finder) CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error) {
+	exist, err := s.IsObjectExist(c, req)
+	if err != nil {
+		return false, 0, err
+	}
+
+	if exist {
+		return false, 0, nil
+	}
+
+	id, err := s.metadataService.GenerateNewObjectID(c)
+	if err != nil {
+		return false, 0, err
+	}
+
+	return true, id, nil
 }

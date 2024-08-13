@@ -24,13 +24,13 @@ package handler
 
 import (
 	"fmt"
-	"io"
 	gohttp "net/http"
 
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/pkg/http"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -41,12 +41,12 @@ const (
 )
 
 type uploader struct {
-	logger logger.Logger
+	logger log.Logger
 
 	uploadService service.Uploader
 }
 
-func NewUploader(l logger.Logger, uploadService service.Uploader) (rest.Uploader, error) {
+func NewUploader(l log.Logger, uploadService service.Uploader) (rest.Uploader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
@@ -62,15 +62,6 @@ func NewUploader(l logger.Logger, uploadService service.Uploader) (rest.Uploader
 
 func (h *uploader) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	h.logger.Debugf("[uploader.Upload]")
-
-	c := r.Context()
-	group := c.Value(http.GroupParamContextKey)
-	partition := c.Value(http.PartitionContextKey)
-	objectName := c.Value(http.ObjectIDContextKey)
-
-	h.logger.Debugf("[UploadHandler.Upload] group : %s, partition : %s, objectName : %s", group, partition, objectName)
-
-	// h.multipartUpload(w, r)
 	h.chunkedUpload(w, r)
 }
 
@@ -122,21 +113,31 @@ func (h *uploader) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	h.logger.Debugf("[uploader.chunkedUpload]")
 	h.logger.Debugf("content type: %s\n", r.Header.Get("Content-Type"))
 
+	c := r.Context()
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	h.logger.Debugf("Request: %+v\n", dto)
+
 	// Read the chunked data
-	for {
-		buf := make([]byte, 4096)
-		n, err := r.Body.Read(buf)
-		if err != nil && err != io.EOF {
-			gohttp.Error(w, "Failed to read chunked data", gohttp.StatusInternalServerError)
-			return
-		}
+	// for {
+	// 	buf := make([]byte, 4096)
+	// 	n, err := r.Body.Read(buf)
+	// 	if err != nil && err != io.EOF {
+	// 		gohttp.Error(w, "Failed to read chunked data", gohttp.StatusInternalServerError)
+	// 		return
+	// 	}
 
-		if n == 0 {
-			break
-		}
+	// 	if n == 0 {
+	// 		break
+	// 	}
 
-		// need data handling
-		h.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+	// 	// need data handling
+	// 	h.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+	// }
+
+	err := h.uploadService.Upload(c, dto, r.Body)
+	if err != nil {
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(gohttp.StatusOK)

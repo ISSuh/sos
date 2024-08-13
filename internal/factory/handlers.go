@@ -27,7 +27,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -38,7 +38,7 @@ type Handlers struct {
 	Eraser     rest.Eraser
 }
 
-func NewHandlers(l logger.Logger, serviceFactory *APIServices) (*Handlers, error) {
+func NewHandlers(l log.Logger, serviceFactory *APIServices) (*Handlers, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")

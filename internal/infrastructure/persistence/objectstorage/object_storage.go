@@ -24,16 +24,16 @@ package objectstorage
 
 import (
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 )
 
 type localObjectStorage struct {
-	logger logger.Logger
+	logger log.Logger
 
 	storage map[string][]byte
 }
 
-func NewLocalObjectStorage(l logger.Logger) (repository.ObjectStorage, error) {
+func NewLocalObjectStorage(l log.Logger) (repository.ObjectStorage, error) {
 	return &localObjectStorage{
 			logger:  l,
 			storage: make(map[string][]byte),

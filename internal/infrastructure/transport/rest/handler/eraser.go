@@ -28,17 +28,17 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type eraser struct {
-	logger logger.Logger
+	logger log.Logger
 
 	eraserService service.Eraser
 }
 
-func NewEraser(l logger.Logger, eraserService service.Eraser) (rest.Eraser, error) {
+func NewEraser(l log.Logger, eraserService service.Eraser) (rest.Eraser, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")

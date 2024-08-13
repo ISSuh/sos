@@ -28,17 +28,17 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type downloader struct {
-	logger logger.Logger
+	logger log.Logger
 
 	downloadService service.Downloader
 }
 
-func NewDownloader(l logger.Logger, downloadService service.Downloader) (rest.Downloader, error) {
+func NewDownloader(l log.Logger, downloadService service.Downloader) (rest.Downloader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")

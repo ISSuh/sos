@@ -27,6 +27,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
+	"strconv"
 
 	"github.com/alexflint/go-arg"
 )
@@ -39,6 +41,10 @@ const (
 	// chunkSize     = 1 * 1024 * 1024 // 1MB
 	chunkSize     = 30 * 1024 // 30KB
 	ChunkEncoding = "chunked"
+
+	ObjectNameQueryName = "name"
+	ObjectSizeQueryName = "size"
+	ChunkSizeQueryName  = "chunk_size"
 )
 
 var args struct {
@@ -56,12 +62,23 @@ func uploadChunked(url string, filePath string) error {
 	}
 	defer file.Close()
 
+	fileStat, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file stat: %v", err)
+	}
+
 	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %v", err)
 	}
 	req.TransferEncoding = []string{"chunked"}
 	req.Header.Set("Content-Type", "application/octet-stream")
+
+	q := req.URL.Query()
+	q.Add(ObjectNameQueryName, path.Base(filePath))
+	q.Add(ObjectSizeQueryName, strconv.FormatInt(fileStat.Size(), 10))
+	q.Add(ChunkSizeQueryName, strconv.Itoa(chunkSize))
+	req.URL.RawQuery = q.Encode()
 
 	pr, pw := io.Pipe()
 	req.Body = pr

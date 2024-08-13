@@ -32,3 +32,65 @@ type ObjectMetadata struct {
 
 	ModifiedTime
 }
+
+func NewEmptyObjectMetadata() ObjectMetadata {
+	return ObjectMetadata{}
+}
+
+func (e ObjectMetadata) IsEmpty() bool {
+	return e == ObjectMetadata{}
+}
+
+type ObjectMetadataBuilder struct {
+	id        uint64
+	group     string
+	partition string
+	name      string
+	path      string
+	size      uint64
+}
+
+func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
+	return &ObjectMetadataBuilder{}
+}
+
+func (b *ObjectMetadataBuilder) ID(id uint64) *ObjectMetadataBuilder {
+	b.id = id
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Group(group string) *ObjectMetadataBuilder {
+	b.group = group
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Partition(partition string) *ObjectMetadataBuilder {
+	b.partition = partition
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Name(name string) *ObjectMetadataBuilder {
+	b.name = name
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Path(path string) *ObjectMetadataBuilder {
+	b.path = path
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Size(size uint64) *ObjectMetadataBuilder {
+	b.size = size
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
+	return ObjectMetadata{
+		ID:        b.id,
+		Group:     b.group,
+		Partition: b.partition,
+		Name:      b.name,
+		Path:      b.path,
+		Size:      b.size,
+	}
+}

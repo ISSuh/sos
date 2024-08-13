@@ -23,24 +23,32 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"sync/atomic"
 
+	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type ObjectMetadata interface {
+	Create(c context.Context, req dto.Request) error
+	GenerateNewObjectID(c context.Context) (uint64, error)
+	MetadataByObjectName(c context.Context, req dto.Request) (entity.ObjectMetadata, error)
 }
 
 type objectMetadata struct {
-	logger logger.Logger
+	logger log.Logger
 
 	metadataRepository repository.ObjectMetadata
+	tempID             uint64
 }
 
 func NewObjectMetadata(
-	l logger.Logger, metadataRepository repository.ObjectMetadata,
+	l log.Logger, metadataRepository repository.ObjectMetadata,
 ) (ObjectMetadata, error) {
 	switch {
 	case validation.IsNil(l):
@@ -52,5 +60,36 @@ func NewObjectMetadata(
 	return &objectMetadata{
 		logger:             l,
 		metadataRepository: metadataRepository,
+		tempID:             0,
 	}, nil
+}
+
+func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
+	builder := entity.NewObjectMetadataBuilder()
+	metadata :=
+		builder.ID(req.ID).
+			Group(req.Group).
+			Partition(req.Partition).
+			Path(req.Path).
+			Name(req.Name).
+			Size(req.Size).
+			Build()
+
+	if err := s.metadataRepository.Create(c, metadata); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *objectMetadata) GenerateNewObjectID(c context.Context) (uint64, error) {
+	atomic.AddUint64(&s.tempID, 1)
+	return s.tempID, nil
+}
+
+func (s *objectMetadata) MetadataByObjectName(c context.Context, req dto.Request) (entity.ObjectMetadata, error) {
+	metadata, err := s.metadataRepository.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
+	if err != nil {
+		return entity.NewEmptyObjectMetadata(), err
+	}
+	return metadata, nil
 }

@@ -20,14 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package logger
+package middleware
 
-type Fields map[string]interface{}
+import (
+	"context"
+	gohttp "net/http"
 
-type Logger interface {
-	Debugf(format string, args ...interface{})
-	Infof(format string, args ...interface{})
-	Warnf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalln(args ...interface{})
+	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/pkg/log"
+)
+
+func WithLog(logger log.Logger) http.MiddlewareFunc {
+	return func(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+		return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+			logger.Infof("[WithLog] start")
+			ctx := context.WithValue(r.Context(), log.LoggerKey, logger)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			logger.Infof("[WithLog] end")
+		}
+	}
 }

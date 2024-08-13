@@ -25,7 +25,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -33,14 +33,14 @@ type Eraser interface {
 }
 
 type eraser struct {
-	logger logger.Logger
+	logger log.Logger
 
 	findService    Finder
 	storageService ObjectStorage
 }
 
 func NewEraser(
-	l logger.Logger, findService Finder, storageService ObjectStorage,
+	l log.Logger, findService Finder, storageService ObjectStorage,
 ) (Eraser, error) {
 	switch {
 	case validation.IsNil(l):

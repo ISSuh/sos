@@ -28,17 +28,17 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type finder struct {
-	logger logger.Logger
+	logger log.Logger
 
 	findService service.Finder
 }
 
-func NewFinder(l logger.Logger, findService service.Finder) (rest.Finder, error) {
+func NewFinder(l log.Logger, findService service.Finder) (rest.Finder, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")

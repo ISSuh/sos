@@ -25,7 +25,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -33,14 +33,14 @@ type Downloader interface {
 }
 
 type downloader struct {
-	logger logger.Logger
+	logger log.Logger
 
 	findService    Finder
 	storageService ObjectStorage
 }
 
 func NewDownloader(
-	l logger.Logger, findService Finder, storageService ObjectStorage,
+	l log.Logger, findService Finder, storageService ObjectStorage,
 ) (Downloader, error) {
 	switch {
 	case validation.IsNil(l):

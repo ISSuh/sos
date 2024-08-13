@@ -26,7 +26,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/logger"
+	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -34,13 +34,13 @@ type ObjectStorage interface {
 }
 
 type objectStorage struct {
-	logger logger.Logger
+	logger log.Logger
 
 	storageRepository repository.ObjectStorage
 }
 
 func NewObjectStorage(
-	l logger.Logger, storageRepository repository.ObjectStorage,
+	l log.Logger, storageRepository repository.ObjectStorage,
 ) (ObjectStorage, error) {
 	switch {
 	case validation.IsNil(l):

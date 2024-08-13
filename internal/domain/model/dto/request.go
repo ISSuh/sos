@@ -20,36 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package http
+package dto
 
-import (
-	"net/http"
+import "context"
 
-	"github.com/gorilla/mux"
-)
+type Request struct {
+	ID        uint64
+	Group     string
+	Partition string
+	Path      string
+	ObjectID  string
+	Name      string
+	Size      uint64
+	ChunkSize uint64
+}
 
-type ParamContextKey string
-
-const (
-	GroupParamName      = "group"
-	PartitionParamName  = "partition"
-	ObjectPathParamName = "objectPath"
-	ObjectIDParamName   = "objectID"
-	ObjectName          = "name"
-	ObjectSizeName      = "size"
-	ChunkSizeName       = "chunk_size"
-
-	GroupParamContextKey ParamContextKey = GroupParamName
-	PartitionContextKey  ParamContextKey = PartitionParamName
-	PathContextKey       ParamContextKey = ObjectPathParamName
-	ObjectIDContextKey   ParamContextKey = ObjectIDParamName
-	ObjectSizeContextKey ParamContextKey = ObjectPathParamName
-	ChunkSizeContextKey  ParamContextKey = ObjectIDParamName
-	RequestContextKey    ParamContextKey = "_request"
-
-	MultiPartUploadKey = "upload"
-)
-
-func ParseParm(r *http.Request) map[string]string {
-	return mux.Vars(r)
+func RequestFromContext(c context.Context, key any) Request {
+	if val := c.Value(key); val != nil {
+		return val.(Request)
+	}
+	return Request{}
 }

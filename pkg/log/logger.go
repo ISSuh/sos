@@ -20,36 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package http
+package log
 
-import (
-	"net/http"
+import "context"
 
-	"github.com/gorilla/mux"
-)
-
-type ParamContextKey string
+type LoggerContextKey string
 
 const (
-	GroupParamName      = "group"
-	PartitionParamName  = "partition"
-	ObjectPathParamName = "objectPath"
-	ObjectIDParamName   = "objectID"
-	ObjectName          = "name"
-	ObjectSizeName      = "size"
-	ChunkSizeName       = "chunk_size"
-
-	GroupParamContextKey ParamContextKey = GroupParamName
-	PartitionContextKey  ParamContextKey = PartitionParamName
-	PathContextKey       ParamContextKey = ObjectPathParamName
-	ObjectIDContextKey   ParamContextKey = ObjectIDParamName
-	ObjectSizeContextKey ParamContextKey = ObjectPathParamName
-	ChunkSizeContextKey  ParamContextKey = ObjectIDParamName
-	RequestContextKey    ParamContextKey = "_request"
-
-	MultiPartUploadKey = "upload"
+	LoggerKey LoggerContextKey = "_logger"
 )
 
-func ParseParm(r *http.Request) map[string]string {
-	return mux.Vars(r)
+type Fields map[string]interface{}
+
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalln(args ...interface{})
+}
+
+func LoggerFromContext(c context.Context, key any) Logger {
+	if val := c.Value(key); val != nil {
+		return val.(Logger)
+	}
+	return nil
 }

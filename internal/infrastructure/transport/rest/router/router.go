@@ -28,6 +28,7 @@ import (
 	"github.com/ISSuh/sos/internal/factory"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/middleware"
 	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/pkg/log"
 )
 
 const (
@@ -45,7 +46,8 @@ const (
 	URLObjectMetadataList = URLDefault + URLMetadata
 )
 
-func Route(s *http.Server, h *factory.Handlers) {
+func Route(logger log.Logger, s *http.Server, h *factory.Handlers) {
+	s.Use(middleware.WithLog(logger))
 	s.Use(middleware.Recover)
 	s.Use(middleware.ParseDefaultParam)
 	s.Use(middleware.ErrorHandler)
@@ -56,6 +58,9 @@ func Route(s *http.Server, h *factory.Handlers) {
 			URL:     URLDefault,
 			Method:  gohttp.MethodPost,
 			Handler: h.Uploader.Upload,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseQueryParam,
+			},
 		},
 		// Download
 		http.RouteItem{
