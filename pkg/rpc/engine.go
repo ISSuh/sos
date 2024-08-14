@@ -20,45 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package rpc
 
 import (
-	"errors"
-	"os"
-
-	"gopkg.in/yaml.v2"
+	"google.golang.org/grpc"
 )
 
-type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+type Engine struct {
+	*grpc.Server
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
-}
-
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
-}
-
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
-	}
-	return buffer, nil
-}
+type RegisterFunc func(*Engine)

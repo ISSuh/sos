@@ -20,45 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package handler
 
 import (
-	"errors"
-	"os"
+	"context"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/message"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
+
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
-type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+type metadataRegistry struct {
+	rpc.UnimplementedMetadataRegistryServer
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
+func NewMetadataRegistry() rpc.MetadataRegistryServer {
+	return &metadataRegistry{}
 }
 
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
+func (h *metadataRegistry) Create(context.Context, *message.Metadata) (*message.Metadata, error) {
+	return nil, nil
 }
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+func (h *metadataRegistry) GetByObjectName(context.Context, *message.MetadataFindRequest) (*message.Metadata, error) {
+	return nil, nil
+}
+
+func (h *metadataRegistry) GenerateNewObjectID(context.Context, *empty.Empty) (*message.Metadata_ObjectID, error) {
+	return nil, nil
+}
+
+func RegistMetadataRegistry(handler rpc.MetadataRegistryServer) sosrpc.RegisterFunc {
+	return func(engine *sosrpc.Engine) {
+		rpc.RegisterMetadataRegistryServer(engine.Server, handler)
 	}
-	return buffer, nil
 }

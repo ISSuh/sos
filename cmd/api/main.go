@@ -45,8 +45,8 @@ func main() {
 
 	l := log.NewZapLogger(config.SOS.Api.Log)
 
-	l.Infof("configure : %+v", *config)
-	api, err := app.NewApi(&config.SOS, l)
+	l.Infof("configure : %+v", config)
+	api, err := app.NewApi(config.SOS, l)
 	if err != nil {
 		return
 	}

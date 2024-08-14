@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package rpc;
+option go_package = "github.com/ISSuh/sos/internal/infrastructure/transport/rpc/message";
+
+message Metadata {
+    message ObjectID {
+        uint64 id = 1;
+    }
+
+    ObjectID id  = 1;
+    string group = 2;
+    string partition = 3;
+    string path = 4;
+    string name = 5;
+    uint64 size = 6;
+}
+
+message MetadataFindRequest {
+    string group = 1;
+    string partition = 2;
+    string path = 3;
+    string name = 4;
+  }
+  

@@ -20,45 +20,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package rpc
 
 import (
-	"errors"
-	"os"
+	"fmt"
+	"net"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/grpc"
 )
 
-type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+type Server struct {
+	engine    Engine
+	registers []RegisterFunc
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
+func NewServer() Server {
+	return Server{
+		engine: Engine{
+			Server: grpc.NewServer(),
+		},
+		registers: make([]RegisterFunc, 0),
+	}
 }
 
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
+func (s *Server) Regist(functions []RegisterFunc) {
+	s.registers = append(s.registers, functions...)
+}
+
+func (s *Server) Run(address string) error {
+	switch {
+	case validation.IsEmpty(address):
+		return fmt.Errorf("address is empty")
+	case len(s.registers) == 0:
+		return fmt.Errorf("register functions is empty")
 	}
 
-	buffer, err := loadFile(path)
+	l, err := net.Listen("tcp", address)
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
+	for _, f := range s.registers {
+		f(&s.engine)
 	}
-	return config, nil
-}
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+	if err := s.engine.Serve(l); err != nil {
+		return err
 	}
-	return buffer, nil
+	return nil
 }

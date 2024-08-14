@@ -20,45 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package app
 
 import (
-	"errors"
-	"os"
-
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/factory"
+	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/pkg/rpc"
 )
 
-type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+type MetadataRegistry struct {
+	logger log.Logger
+
+	config config.SosConfig
+	server rpc.Server
+
+	repositories *factory.Repositories
+	services     *factory.APIServices
+	handlers     *factory.RPCHandlers
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
+func NewMetadata(c config.SosConfig, l log.Logger) (MetadataRegistry, error) {
+	a := MetadataRegistry{
+		config: c,
+		logger: l,
+		server: rpc.NewServer(),
+	}
+	return a, nil
 }
 
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
+func (a *MetadataRegistry) Run() error {
+	a.logger.Infof("[Api.Run]")
+	if err := a.init(); err != nil {
+		return err
 	}
-
-	buffer, err := loadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
+	return nil
 }
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+func (a *MetadataRegistry) init() error {
+	if err := a.initHandler(); err != nil {
+		return err
 	}
-	return buffer, nil
+
+	registers := a.handlers.Registers()
+	a.server.Regist(registers)
+	return nil
+}
+
+func (a *MetadataRegistry) initHandler() error {
+	var err error
+	if a.handlers, err = factory.NewRPCHandlers(a.logger, a.services); err != nil {
+		return err
+	}
+	return nil
 }

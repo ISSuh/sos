@@ -26,8 +26,11 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
+	resthandler "github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	rpchandler "github.com/ISSuh/sos/internal/infrastructure/transport/rpc/handler"
 	"github.com/ISSuh/sos/pkg/log"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -46,22 +49,22 @@ func NewHandlers(l log.Logger, serviceFactory *APIServices) (*Handlers, error) {
 		return nil, fmt.Errorf("service factory is nil")
 	}
 
-	finder, err := handler.NewFinder(l, serviceFactory.Finder)
+	finder, err := resthandler.NewFinder(l, serviceFactory.Finder)
 	if err != nil {
 		return nil, err
 	}
 
-	uploader, err := handler.NewUploader(l, serviceFactory.Uploader)
+	uploader, err := resthandler.NewUploader(l, serviceFactory.Uploader)
 	if err != nil {
 		return nil, err
 	}
 
-	downloader, err := handler.NewDownloader(l, serviceFactory.Downloader)
+	downloader, err := resthandler.NewDownloader(l, serviceFactory.Downloader)
 	if err != nil {
 		return nil, err
 	}
 
-	eraser, err := handler.NewEraser(l, serviceFactory.Eraser)
+	eraser, err := resthandler.NewEraser(l, serviceFactory.Eraser)
 	if err != nil {
 		return nil, err
 	}
@@ -72,5 +75,28 @@ func NewHandlers(l log.Logger, serviceFactory *APIServices) (*Handlers, error) {
 		Downloader: downloader,
 		Eraser:     eraser,
 	}
+
 	return h, nil
+}
+
+type RPCHandlers struct {
+	MetadataRegistry rpc.MetadataRegistryServer
+}
+
+func NewRPCHandlers(l log.Logger, serviceFactory *APIServices) (*RPCHandlers, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	}
+
+	h := &RPCHandlers{
+		MetadataRegistry: rpchandler.NewMetadataRegistry(),
+	}
+	return h, nil
+}
+
+func (f *RPCHandlers) Registers() []sosrpc.RegisterFunc {
+	return []sosrpc.RegisterFunc{
+		rpchandler.RegistMetadataRegistry(f.MetadataRegistry),
+	}
 }

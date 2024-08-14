@@ -20,45 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package main
 
 import (
-	"errors"
-	"os"
+	"github.com/ISSuh/sos/internal/app"
+	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/pkg/log"
 
-	"gopkg.in/yaml.v2"
+	"github.com/alexflint/go-arg"
 )
 
-type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+type args struct {
+	Config string `arg:"-c,--config,required"`
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
-}
+func main() {
+	args := args{}
+	arg.MustParse(&args)
 
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
+	config, err := config.NewConfig(args.Config)
 	if err != nil {
-		return Config{}, err
+		return
 	}
 
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
-}
+	l := log.NewZapLogger(config.SOS.Api.Log)
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+	l.Infof("configure : %+v", config)
+	metadata, err := app.NewMetadata(config.SOS, l)
+	if err != nil {
+		return
 	}
-	return buffer, nil
+
+	if err := metadata.Run(); err != nil {
+		return
+	}
 }

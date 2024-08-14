@@ -33,8 +33,8 @@ type Server struct {
 	router      *mux.Router
 }
 
-func NewServer() *Server {
-	return &Server{
+func NewServer() Server {
+	return Server{
 		router: mux.NewRouter(),
 	}
 }

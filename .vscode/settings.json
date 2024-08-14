@@ -5,6 +5,10 @@
     "Debugf",
     "Infof",
     "Warnf",
-    "enccoderConfig"
+    "enccoderConfig",
+    "sosrpc",
+    "resthandler",
+    "rpchandler",
+    "regist"
   ],
 }

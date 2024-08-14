@@ -33,16 +33,16 @@ import (
 type Api struct {
 	logger log.Logger
 
-	config *config.SosConfig
-	server *http.Server
+	config config.SosConfig
+	server http.Server
 
 	repositories *factory.Repositories
 	services     *factory.APIServices
 	handlers     *factory.Handlers
 }
 
-func NewApi(c *config.SosConfig, l log.Logger) (*Api, error) {
-	a := &Api{
+func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
+	a := Api{
 		config: c,
 		logger: l,
 		server: http.NewServer(),
@@ -71,7 +71,7 @@ func (a *Api) init() error {
 		return err
 	}
 
-	router.Route(a.logger, a.server, a.handlers)
+	router.Route(a.logger, &a.server, a.handlers)
 	return nil
 }
 
@@ -84,17 +84,19 @@ func (a *Api) initRepository() error {
 }
 
 func (a *Api) initService() error {
-	objectStorageService, err := factory.NewMetadataService(a.logger, a.repositories)
+	objectMetadataService, err := factory.NewMetadataService(a.logger, a.repositories)
 	if err != nil {
 		return err
 	}
 
-	objectMetadataService, err := factory.NewStorageService(a.logger, a.repositories)
+	objectStorageService, err := factory.NewStorageService(a.logger, a.repositories)
 	if err != nil {
 		return err
 	}
 
-	if a.services, err = factory.NewAPIServices(a.logger, objectMetadataService, objectStorageService); err != nil {
+	if a.services, err = factory.NewAPIServices(
+		a.logger, objectMetadataService.ObjectMetadata, objectStorageService,
+	); err != nil {
 		return err
 	}
 	return nil
