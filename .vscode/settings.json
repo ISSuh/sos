@@ -11,4 +11,10 @@
     "rpchandler",
     "regist"
   ],
+
+  "protoc": {
+    "options": [
+        "--proto_path=internal",
+    ]
+}
 }

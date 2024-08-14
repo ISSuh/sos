@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package message;
 
-import "google/protobuf/timestamp.proto";
+option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
 
-option go_package = "github.com/ISSuh/sos/internal/message";
+import "google/protobuf/timestamp.proto";
 
 message Block {
     string id = 1;
