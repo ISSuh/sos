@@ -25,8 +25,9 @@ package handler
 import (
 	"context"
 
+	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/message"
+	"github.com/ISSuh/sos/pkg/log"
 	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -34,21 +35,26 @@ import (
 
 type metadataRegistry struct {
 	rpc.UnimplementedMetadataRegistryServer
+
+	logger log.Logger
 }
 
-func NewMetadataRegistry() rpc.MetadataRegistryServer {
+func NewMetadataRegistry(l log.Logger) rpc.MetadataRegistryServer {
 	return &metadataRegistry{}
 }
 
 func (h *metadataRegistry) Create(context.Context, *message.Metadata) (*message.Metadata, error) {
+	h.logger.Debugf("[MetadataRegistry.Create]")
 	return nil, nil
 }
 
 func (h *metadataRegistry) GetByObjectName(context.Context, *message.MetadataFindRequest) (*message.Metadata, error) {
+	h.logger.Debugf("[MetadataRegistry.GetByObjectName]")
 	return nil, nil
 }
 
 func (h *metadataRegistry) GenerateNewObjectID(context.Context, *empty.Empty) (*message.Metadata_ObjectID, error) {
+	h.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
 	return nil, nil
 }
 

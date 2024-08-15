@@ -90,7 +90,7 @@ func NewRPCHandlers(l log.Logger, serviceFactory *APIServices) (*RPCHandlers, er
 	}
 
 	h := &RPCHandlers{
-		MetadataRegistry: rpchandler.NewMetadataRegistry(),
+		MetadataRegistry: rpchandler.NewMetadataRegistry(l),
 	}
 	return h, nil
 }

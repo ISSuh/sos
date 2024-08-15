@@ -30,9 +30,9 @@ import (
 )
 
 type SosConfig struct {
-	Api     ApiConfig     `yaml:"api"`
-	Meta    MetaConfig    `yaml:"meta"`
-	Storage StorageConfig `yaml:"storage"`
+	Api              ApiConfig              `yaml:"api"`
+	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
+	Storage          StorageConfig          `yaml:"storage"`
 }
 
 type Config struct {

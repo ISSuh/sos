@@ -1,0 +1,14 @@
+sos:
+  api:
+    logger:
+      level: debug
+      format: text
+    address:
+      ip: 0.0.0.0
+      port: 33221
+  metadata_registry:
+    address:
+      host: 127.0.0.1:33222
+  storage:
+    address:
+      host: 127.0.0.1:33223

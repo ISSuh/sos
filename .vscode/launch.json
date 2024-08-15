@@ -14,6 +14,17 @@
             "args": [
                 "--config=${workspaceFolder}/config/sos_api.yaml"
             ]
+        },
+        {
+            "name": "MetadataRegistry",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/cmd/metadata_registry/main.go",
+            "args": [
+                "--config=${workspaceFolder}/config/sos_metadata_registry.yaml"
+            ]
         }
     ]
 }

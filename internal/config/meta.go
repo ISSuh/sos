@@ -24,7 +24,7 @@ SOFTWARE.
 
 package config
 
-type MetaConfig struct {
+type MetadataRegistryConfig struct {
 	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }
