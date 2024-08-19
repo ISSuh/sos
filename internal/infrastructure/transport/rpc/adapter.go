@@ -20,57 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package app
+package rpc
 
-import (
-	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/rpc"
-)
+import "github.com/ISSuh/sos/pkg/rpc"
 
-type MetadataRegistry struct {
-	logger log.Logger
-
-	config config.SosConfig
-	server rpc.Server
-
-	repositories *factory.Repositories
-	services     *factory.APIServices
-	handlers     *factory.RPCHandlers
-}
-
-func NewMetadata(c config.SosConfig, l log.Logger) (MetadataRegistry, error) {
-	a := MetadataRegistry{
-		config: c,
-		logger: l,
-		server: rpc.NewServer(),
-	}
-	return a, nil
-}
-
-func (a *MetadataRegistry) Run() error {
-	a.logger.Infof("[MetadataRegistry.Run]")
-	if err := a.init(); err != nil {
-		return err
-	}
-	return a.server.Run(a.config.MetadataRegistry.Address.String())
-}
-
-func (a *MetadataRegistry) init() error {
-	if err := a.initHandler(); err != nil {
-		return err
-	}
-
-	registers := a.handlers.Registers()
-	a.server.Regist(registers)
-	return nil
-}
-
-func (a *MetadataRegistry) initHandler() error {
-	var err error
-	if a.handlers, err = factory.NewRPCHandlers(a.logger, a.services); err != nil {
-		return err
-	}
-	return nil
+type Adapter interface {
+	Regist() rpc.RegisterFunc
 }

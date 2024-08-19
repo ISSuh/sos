@@ -20,55 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dto
+package rpc
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/grpc"
 )
 
-type Metadata struct {
-	ID         uint64    `json:"id"`
-	Group      string    `json:"group"`
-	Partition  string    `json:"partition"`
-	Name       string    `json:"name"`
-	Path       string    `json:"path"`
-	Size       uint64    `json:"size"`
-	CreatedAt  time.Time `json:"created_at"`
-	ModifiedAt time.Time `json:"modified_at"`
-}
+func NewClientConnection(address string) (grpc.ClientConnInterface, error) {
+	if validation.IsEmpty(address) {
+		return nil, fmt.Errorf("address is empty")
+	}
 
-func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
-	return &Metadata{
-		ID:         m.ID,
-		Group:      m.Group,
-		Partition:  m.Partition,
-		Name:       m.Name,
-		Path:       m.Path,
-		Size:       m.Size,
-		CreatedAt:  m.CreatedAt,
-		ModifiedAt: m.ModifiedAt,
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return nil, fmt.Errorf("did not connect: %v", err)
 	}
-}
 
-func NewMetadataFromMessage(m *message.Metadata) Metadata {
-	switch {
-	case validation.IsNil(m):
-		return Metadata{}
-	case validation.IsNil(m.GetId()):
-		return Metadata{}
-	}
-	return Metadata{
-		ID:        m.GetId().Id,
-		Group:     m.Group,
-		Partition: m.Partition,
-		Name:      m.Name,
-		Path:      m.Path,
-		Size:      m.Size,
-		// CreatedAt:  m.CreatedAt,
-		// ModifiedAt: m.ModifiedAt,
-	}
+	return conn, nil
 }

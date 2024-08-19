@@ -46,7 +46,7 @@ const (
 	URLObjectMetadataList = URLDefault + URLMetadata
 )
 
-func Route(logger log.Logger, s *http.Server, h *factory.Handlers) {
+func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 	s.Use(middleware.WithLog(logger))
 	s.Use(middleware.Recover)
 	s.Use(middleware.ParseDefaultParam)

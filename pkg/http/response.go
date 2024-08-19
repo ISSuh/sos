@@ -22,5 +22,21 @@
 
 package http
 
-type Response struct {
+import (
+	"encoding/json"
+	"net/http"
+)
+
+func Json(w http.ResponseWriter, data any) error {
+	if err := json.NewEncoder(w).Encode(&data); err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
+func NoContent(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNoContent)
 }

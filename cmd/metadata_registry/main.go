@@ -43,7 +43,7 @@ func main() {
 		return
 	}
 
-	l := log.NewZapLogger(config.SOS.Api.Log)
+	l := log.NewZapLogger(config.SOS.MetadataRegistry.Log)
 
 	l.Infof("configure : %+v", config)
 	metadata, err := app.NewMetadata(config.SOS, l)
@@ -52,6 +52,7 @@ func main() {
 	}
 
 	if err := metadata.Run(); err != nil {
+		l.Errorf(err.Error())
 		return
 	}
 }

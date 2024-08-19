@@ -20,62 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package factory
 
 import (
 	"fmt"
-	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/requestor"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type finder struct {
+type RPCRequestor struct {
 	logger log.Logger
-
-	findService service.Finder
 }
 
-func NewFinder(l log.Logger, findService service.Finder) (rest.Finder, error) {
+func NewRPCRequestor(l log.Logger) (*RPCRequestor, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
-		return nil, fmt.Errorf("find service is nil")
 	}
 
-	return &finder{
-		logger:      l,
-		findService: findService,
-	}, nil
+	h := &RPCRequestor{
+		logger: l,
+	}
+	return h, nil
 }
 
-func (h *finder) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.Find]")
-
-	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	h.logger.Debugf("Request: %+v\n", dto)
-
-	metadata, err := h.findService.FindObjectMetadata(c, dto)
-	if err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
+func (f *RPCRequestor) NewMetadataRegistry(address string) (rpc.MetadataRegistryRequestor, error) {
+	if validation.IsEmpty(address) {
+		return nil, fmt.Errorf("address is empty")
 	}
-
-	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-	return
-}
-
-func (h *finder) List(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.List]")
+	return requestor.NewClient(f.logger, address)
 }

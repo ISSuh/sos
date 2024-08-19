@@ -38,7 +38,8 @@ type Api struct {
 
 	repositories *factory.Repositories
 	services     *factory.APIServices
-	handlers     *factory.Handlers
+	handlers     *factory.RestHandlers
+	rpcRequestor *factory.RPCRequestor
 }
 
 func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
@@ -59,6 +60,10 @@ func (a *Api) Run() error {
 }
 
 func (a *Api) init() error {
+	if err := a.initRPCRequestor(); err != nil {
+		return err
+	}
+
 	if err := a.initRepository(); err != nil {
 		return err
 	}
@@ -94,8 +99,13 @@ func (a *Api) initService() error {
 		return err
 	}
 
+	metadataRequestor, err := a.rpcRequestor.NewMetadataRegistry(a.config.MetadataRegistry.Address.Host)
+	if err != nil {
+		return err
+	}
+
 	if a.services, err = factory.NewAPIServices(
-		a.logger, objectMetadataService.ObjectMetadata, objectStorageService,
+		a.logger, objectMetadataService.ObjectMetadata, objectStorageService, metadataRequestor,
 	); err != nil {
 		return err
 	}
@@ -105,6 +115,14 @@ func (a *Api) initService() error {
 func (a *Api) initHandler() error {
 	var err error
 	if a.handlers, err = factory.NewHandlers(a.logger, a.services); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Api) initRPCRequestor() error {
+	var err error
+	if a.rpcRequestor, err = factory.NewRPCRequestor(a.logger); err != nil {
 		return err
 	}
 	return nil

@@ -20,48 +20,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package requestor
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/validation"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type metadataRegistry struct {
 	logger log.Logger
+	engine rpc.MetadataRegistryClient
 }
 
-func NewMetadataRegistry(l log.Logger) (rpc.MetadataRegistryHandler, error) {
-	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
+func NewClient(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
+	conn, err := sosrpc.NewClientConnection(address)
+	if err != nil {
+		return nil, err
 	}
 
 	return &metadataRegistry{
 		logger: l,
+		engine: rpc.NewMetadataRegistryClient(conn),
 	}, nil
 }
 
-func (h *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
-	h.logger.Debugf("[MetadataRegistry.Create]")
-	return &message.Metadata{}, nil
+func (r *metadataRegistry) Create(c context.Context, in *message.Metadata) (*message.Metadata, error) {
+	r.logger.Debugf("[MetadataRegistry.Create]")
+	return r.engine.Create(c, in)
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.Metadata, error) {
-	h.logger.Debugf("[MetadataRegistry.GetByObjectName]")
-	return &message.Metadata{
-		Id: &message.Metadata_ObjectID{
-			Id: 1,
-		},
-	}, nil
+func (r *metadataRegistry) GetByObjectName(c context.Context, in *message.MetadataFindRequest) (*message.Metadata, error) {
+	r.logger.Debugf("[MetadataRegistry.GetByObjectName]")
+	return r.engine.GetByObjectName(c, in)
 }
 
-func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error) {
-	h.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	return &message.Metadata_ObjectID{}, nil
+func (r *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error) {
+	r.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
+	e := emptypb.Empty{}
+	return r.engine.GenerateNewObjectID(c, &e)
 }

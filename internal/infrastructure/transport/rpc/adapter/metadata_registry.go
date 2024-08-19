@@ -20,55 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dto
+package adapter
 
 import (
-	"time"
+	"context"
+	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
-type Metadata struct {
-	ID         uint64    `json:"id"`
-	Group      string    `json:"group"`
-	Partition  string    `json:"partition"`
-	Name       string    `json:"name"`
-	Path       string    `json:"path"`
-	Size       uint64    `json:"size"`
-	CreatedAt  time.Time `json:"created_at"`
-	ModifiedAt time.Time `json:"modified_at"`
+type MetadataRegistry struct {
+	rpc.UnimplementedMetadataRegistryServer
+	handler rpc.MetadataRegistryHandler
 }
 
-func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
-	return &Metadata{
-		ID:         m.ID,
-		Group:      m.Group,
-		Partition:  m.Partition,
-		Name:       m.Name,
-		Path:       m.Path,
-		Size:       m.Size,
-		CreatedAt:  m.CreatedAt,
-		ModifiedAt: m.ModifiedAt,
-	}
-}
-
-func NewMetadataFromMessage(m *message.Metadata) Metadata {
+func NewMetadataRegistry(handler rpc.MetadataRegistryHandler) (rpc.Adapter, error) {
 	switch {
-	case validation.IsNil(m):
-		return Metadata{}
-	case validation.IsNil(m.GetId()):
-		return Metadata{}
+	case validation.IsNil(handler):
+		return nil, fmt.Errorf("handler is nil")
 	}
-	return Metadata{
-		ID:        m.GetId().Id,
-		Group:     m.Group,
-		Partition: m.Partition,
-		Name:      m.Name,
-		Path:      m.Path,
-		Size:      m.Size,
-		// CreatedAt:  m.CreatedAt,
-		// ModifiedAt: m.ModifiedAt,
+
+	return &MetadataRegistry{
+		handler: handler,
+	}, nil
+}
+
+func (a *MetadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+	return a.handler.Create(c, metadata)
+}
+
+func (a *MetadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error) {
+	return a.handler.GetByObjectName(c, req)
+}
+
+func (a *MetadataRegistry) GenerateNewObjectID(c context.Context, _ *empty.Empty) (*message.Metadata_ObjectID, error) {
+	return a.handler.GenerateNewObjectID(c)
+}
+
+func (a *MetadataRegistry) Regist() sosrpc.RegisterFunc {
+	return func(engine *sosrpc.Engine) {
+		rpc.RegisterMetadataRegistryServer(engine.Server, a)
 	}
 }

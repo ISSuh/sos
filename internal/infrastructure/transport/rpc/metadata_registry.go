@@ -22,5 +22,20 @@
 
 package rpc
 
-type Requestor struct {
+import (
+	"context"
+
+	message "github.com/ISSuh/sos/internal/domain/model/message"
+)
+
+type MetadataRegistryHandler interface {
+	Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error)
+	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error)
+	GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error)
+}
+
+type MetadataRegistryRequestor interface {
+	Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error)
+	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error)
+	GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error)
 }

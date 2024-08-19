@@ -52,6 +52,7 @@ func main() {
 	}
 
 	if err := api.Run(); err != nil {
+		l.Errorf(err.Error())
 		return
 	}
 }

@@ -27,13 +27,14 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/model/entity"
+	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Finder interface {
-	FindObjectMetadata(c context.Context, req dto.Request) (entity.ObjectMetadata, error)
+	FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error)
 	IsObjectExist(c context.Context, req dto.Request) (bool, error)
 	CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error)
 }
@@ -41,55 +42,65 @@ type Finder interface {
 type finder struct {
 	logger log.Logger
 
-	metadataService ObjectMetadata
+	metadataRequestor rpc.MetadataRegistryRequestor
 }
 
 func NewFinder(
-	l log.Logger, metadataService ObjectMetadata,
+	l log.Logger, metadataRequestor rpc.MetadataRegistryRequestor,
 ) (Finder, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(metadataService):
-		return nil, fmt.Errorf("ObjectMetadata is nil")
+	case validation.IsNil(metadataRequestor):
+		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
 	}
 
 	return &finder{
-		logger:          l,
-		metadataService: metadataService,
+		logger:            l,
+		metadataRequestor: metadataRequestor,
 	}, nil
 }
 
-func (s *finder) FindObjectMetadata(c context.Context, req dto.Request) (entity.ObjectMetadata, error) {
-	metadata, err := s.metadataService.MetadataByObjectName(c, req)
-	if err != nil {
-		return entity.NewEmptyObjectMetadata(), err
+func (s *finder) FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error) {
+	message := &message.MetadataFindRequest{
+		Group:     req.Group,
+		Partition: req.Partition,
+		Path:      req.Path,
+		Name:      req.Name,
 	}
-	return metadata, nil
+
+	metadata, err := s.metadataRequestor.GetByObjectName(c, message)
+	if err != nil {
+		return dto.Metadata{}, err
+	}
+	return dto.NewMetadataFromMessage(metadata), nil
 }
 
 func (s *finder) IsObjectExist(c context.Context, req dto.Request) (bool, error) {
-	metadata, err := s.FindObjectMetadata(c, req)
-	if err != nil {
-		return false, err
-	}
-	return metadata.IsEmpty(), nil
+	// metadata, err := s.FindObjectMetadata(c, req)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// return metadata.IsEmpty(), nil
+	return false, nil
 }
 
 func (s *finder) CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error) {
-	exist, err := s.IsObjectExist(c, req)
-	if err != nil {
-		return false, 0, err
-	}
+	// exist, err := s.IsObjectExist(c, req)
+	// if err != nil {
+	// 	return false, 0, err
+	// }
 
-	if exist {
-		return false, 0, nil
-	}
+	// if exist {
+	// 	return false, 0, nil
+	// }
 
-	id, err := s.metadataService.GenerateNewObjectID(c)
-	if err != nil {
-		return false, 0, err
-	}
+	// id, err := s.metadataService.GenerateNewObjectID(c)
+	// if err != nil {
+	// 	return false, 0, err
+	// }
 
-	return true, id, nil
+	// return true, id, nil
+
+	return false, 0, nil
 }

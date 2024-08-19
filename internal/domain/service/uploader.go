@@ -28,41 +28,43 @@ import (
 	"io"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type Uploader interface {
-	Upload(ctx context.Context, req dto.Request, bodyStream io.ReadCloser) error
+	Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) error
 }
 
 type uploader struct {
 	logger log.Logger
 
-	findService     Finder
-	metadataService ObjectMetadata
-	storageService  ObjectStorage
+	findService    Finder
+	storageService ObjectStorage
+
+	metadataRequestor rpc.MetadataRegistryRequestor
 }
 
 func NewUploader(
-	l log.Logger, findService Finder, metadataService ObjectMetadata, storageService ObjectStorage,
+	l log.Logger, findService Finder, metadataRequestor rpc.MetadataRegistryRequestor, storageService ObjectStorage,
 ) (Uploader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(findService):
 		return nil, fmt.Errorf("find service is nil")
-	case validation.IsNil(metadataService):
-		return nil, fmt.Errorf("object metadata service is nil")
+	case validation.IsNil(metadataRequestor):
+		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
 	case validation.IsNil(storageService):
 		return nil, fmt.Errorf("object storage service is nil")
 	}
 
 	return &uploader{
-		logger:          l,
-		findService:     findService,
-		metadataService: metadataService,
-		storageService:  storageService,
+		logger:            l,
+		findService:       findService,
+		metadataRequestor: metadataRequestor,
+		storageService:    storageService,
 	}, nil
 }
 
@@ -103,9 +105,9 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 }
 
 func (s *uploader) uploadNewObjectMetadata(c context.Context, req dto.Request, id uint64) error {
-	req.ID = id
-	if err := s.metadataService.Create(c, req); err != nil {
-		return err
-	}
+	// req.ID = id
+	// if err := s.metadataService.Create(c, req); err != nil {
+	// 	return err
+	// }
 	return nil
 }

@@ -20,62 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package factory
 
 import (
 	"fmt"
-	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/http"
+	resthandler "github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type finder struct {
-	logger log.Logger
-
-	findService service.Finder
+type RestHandlers struct {
+	Uploader   rest.Uploader
+	Downloader rest.Downloader
+	Finder     rest.Finder
+	Eraser     rest.Eraser
 }
 
-func NewFinder(l log.Logger, findService service.Finder) (rest.Finder, error) {
+func NewHandlers(l log.Logger, serviceFactory *APIServices) (*RestHandlers, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
-		return nil, fmt.Errorf("find service is nil")
+	case validation.IsNil(serviceFactory):
+		return nil, fmt.Errorf("service factory is nil")
 	}
 
-	return &finder{
-		logger:      l,
-		findService: findService,
-	}, nil
-}
-
-func (h *finder) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.Find]")
-
-	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	h.logger.Debugf("Request: %+v\n", dto)
-
-	metadata, err := h.findService.FindObjectMetadata(c, dto)
+	finder, err := resthandler.NewFinder(l, serviceFactory.Finder)
 	if err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
+	uploader, err := resthandler.NewUploader(l, serviceFactory.Uploader)
+	if err != nil {
+		return nil, err
 	}
-	return
-}
 
-func (h *finder) List(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.List]")
+	downloader, err := resthandler.NewDownloader(l, serviceFactory.Downloader)
+	if err != nil {
+		return nil, err
+	}
+
+	eraser, err := resthandler.NewEraser(l, serviceFactory.Eraser)
+	if err != nil {
+		return nil, err
+	}
+
+	h := &RestHandlers{
+		Finder:     finder,
+		Uploader:   uploader,
+		Downloader: downloader,
+		Eraser:     eraser,
+	}
+
+	return h, nil
 }

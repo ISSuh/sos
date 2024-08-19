@@ -26,6 +26,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/service"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -46,7 +47,7 @@ type StorageService struct {
 }
 
 func NewAPIServices(
-	l log.Logger, objectMetadata service.ObjectMetadata, objectStorage service.ObjectStorage,
+	l log.Logger, objectMetadata service.ObjectMetadata, objectStorage service.ObjectStorage, metadataRequestor rpc.MetadataRegistryRequestor,
 ) (*APIServices, error) {
 	switch {
 	case validation.IsNil(l):
@@ -55,14 +56,16 @@ func NewAPIServices(
 		return nil, fmt.Errorf("object metadata service is nil")
 	case validation.IsNil(objectStorage):
 		return nil, fmt.Errorf("object storage service is nil")
+	case validation.IsNil(metadataRequestor):
+		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
 	}
 
-	finder, err := service.NewFinder(l, objectMetadata)
+	finder, err := service.NewFinder(l, metadataRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	uploader, err := service.NewUploader(l, finder, objectMetadata, objectStorage)
+	uploader, err := service.NewUploader(l, finder, metadataRequestor, objectStorage)
 	if err != nil {
 		return nil, err
 	}
