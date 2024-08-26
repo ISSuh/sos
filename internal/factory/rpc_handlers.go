@@ -25,7 +25,7 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/adapter"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/handler"
 	"github.com/ISSuh/sos/pkg/log"
@@ -33,19 +33,15 @@ import (
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type RPCHandlers struct {
-	MetadataRegistry rpc.Adapter
-}
-
-func NewRPCHandlers(l log.Logger, serviceFactory *APIServices) (*RPCHandlers, error) {
+func MetadataRegistryHandler(l log.Logger, metadataService service.ObjectMetadata) ([]sosrpc.RegisterFunc, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(serviceFactory):
-		return nil, fmt.Errorf("service factory is nil")
+	case validation.IsNil(metadataService):
+		return nil, fmt.Errorf("ObjectMetadata service is nil")
 	}
 
-	metadataHandler, err := handler.NewMetadataRegistry(l)
+	metadataHandler, err := handler.NewMetadataRegistry(l, metadataService)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +51,30 @@ func NewRPCHandlers(l log.Logger, serviceFactory *APIServices) (*RPCHandlers, er
 		return nil, err
 	}
 
-	h := &RPCHandlers{
-		MetadataRegistry: metadataAdapter,
-	}
-	return h, nil
+	return []sosrpc.RegisterFunc{
+		metadataAdapter.Regist(),
+	}, nil
 }
 
-func (f *RPCHandlers) Registers() []sosrpc.RegisterFunc {
-	return []sosrpc.RegisterFunc{
-		f.MetadataRegistry.Regist(),
+func BlockStorageHandler(l log.Logger, storageService service.ObjectStorage) ([]sosrpc.RegisterFunc, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(storageService):
+		return nil, fmt.Errorf("ObjectStorage service is nil")
 	}
+
+	storageHandler, err := handler.NewBlockStorage(l, storageService)
+	if err != nil {
+		return nil, err
+	}
+
+	metadataAdapter, err := adapter.NewBlockStorage(storageHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	return []sosrpc.RegisterFunc{
+		metadataAdapter.Regist(),
+	}, nil
 }

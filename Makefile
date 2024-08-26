@@ -7,7 +7,7 @@ gprc_proto_dir := internal/infrastructure/transport/rpc/proto
 gprc_service_dir := internal/infrastructure/transport/rpc
 gprc_proto_files := $(wildcard $(gprc_proto_dir)/*.proto)
 
-proto_gen_files := $(shell find . -name '*.pb.go' -printf "%P\n")
+proto_gen_files := $(shell find . -name '*.pb.go')
 
 RELEASE ?= 0
 ifeq ($(RELEASE), 1)
@@ -17,8 +17,8 @@ else
 endif
 
 generate: 
-	protoc -I=$(message_proto_dir) \
-    --go_out=${message_proto_dir} \
+	protoc -I=internal \
+    --go_out=internal \
     --go_opt=paths=source_relative \
     $(message_proto_files)
 

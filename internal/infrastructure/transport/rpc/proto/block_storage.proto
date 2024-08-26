@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package rpc;
+option go_package = "github.com/ISSuh/sos/internal/infrastructure/transport/rpc";
+
+import "domain/model/message/block.proto";
+
+message StorageResponse {
+  bool result = 1;
+  string message = 2;
+}
+
+service BlockStorage {
+  rpc Put(message.Block) returns (StorageResponse) {}
+  rpc Get(message.BlockHeader) returns (message.Block) {}
+  rpc Delete(message.BlockHeader) returns (StorageResponse) {}
+}

@@ -37,7 +37,7 @@ type metadataRegistry struct {
 	engine rpc.MetadataRegistryClient
 }
 
-func NewClient(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
+func NewMetadataRegistry(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
 	conn, err := sosrpc.NewClientConnection(address)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (r *metadataRegistry) GetByObjectName(c context.Context, in *message.Metada
 	return r.engine.GetByObjectName(c, in)
 }
 
-func (r *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error) {
+func (r *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
 	r.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
 	e := emptypb.Empty{}
 	return r.engine.GenerateNewObjectID(c, &e)

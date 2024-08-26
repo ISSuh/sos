@@ -4,11 +4,9 @@ package message;
 
 option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
 
-message Metadata {
-    message ObjectID {
-        uint64 id = 1;
-    }
+import "domain/model/message/object.proto";
 
+message Metadata {
     ObjectID id  = 1;
     string group = 2;
     string partition = 3;

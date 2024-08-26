@@ -57,7 +57,7 @@ func (a *MetadataRegistry) GetByObjectName(c context.Context, req *message.Metad
 	return a.handler.GetByObjectName(c, req)
 }
 
-func (a *MetadataRegistry) GenerateNewObjectID(c context.Context, _ *empty.Empty) (*message.Metadata_ObjectID, error) {
+func (a *MetadataRegistry) GenerateNewObjectID(c context.Context, _ *empty.Empty) (*message.ObjectID, error) {
 	return a.handler.GenerateNewObjectID(c)
 }
 

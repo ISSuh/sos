@@ -32,12 +32,7 @@ import (
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type Repositories struct {
-	ObjectMetadata repository.ObjectMetadata
-	ObjectStorage  repository.ObjectStorage
-}
-
-func NewRepositories(l log.Logger) (*Repositories, error) {
+func NewObjectMetadataRepository(l log.Logger) (repository.ObjectMetadata, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
@@ -47,14 +42,18 @@ func NewRepositories(l log.Logger) (*Repositories, error) {
 	if err != nil {
 		return nil, err
 	}
+	return objectMetadata, nil
+}
+
+func NewObjectStorageRepository(l log.Logger) (repository.ObjectStorage, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	}
 
 	objectStorage, err := objectstorage.NewLocalObjectStorage(l)
 	if err != nil {
 		return nil, err
 	}
-
-	return &Repositories{
-		ObjectMetadata: objectMetadata,
-		ObjectStorage:  objectStorage,
-	}, nil
+	return objectStorage, nil
 }

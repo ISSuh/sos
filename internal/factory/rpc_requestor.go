@@ -31,25 +31,24 @@ import (
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type RPCRequestor struct {
-	logger log.Logger
-}
-
-func NewRPCRequestor(l log.Logger) (*RPCRequestor, error) {
+func NewMetadataRegistryRequestor(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	}
-
-	h := &RPCRequestor{
-		logger: l,
-	}
-	return h, nil
-}
-
-func (f *RPCRequestor) NewMetadataRegistry(address string) (rpc.MetadataRegistryRequestor, error) {
-	if validation.IsEmpty(address) {
+	case validation.IsEmpty(address):
 		return nil, fmt.Errorf("address is empty")
 	}
-	return requestor.NewClient(f.logger, address)
+
+	return requestor.NewMetadataRegistry(l, address)
+}
+
+func NewBlockStorageRequestor(l log.Logger, address string) (rpc.BlockStorageRequestor, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
+	case validation.IsEmpty(address):
+		return nil, fmt.Errorf("address is empty")
+	}
+
+	return requestor.NewBlockStorage(l, address)
 }

@@ -20,45 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package requestor
 
 import (
-	"errors"
-	"os"
+	"context"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/pkg/log"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 )
 
-type SosConfig struct {
-	Api              ApiConfig              `yaml:"api"`
-	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
-	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+type blockStorage struct {
+	logger log.Logger
+	engine rpc.BlockStorageClient
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
-}
-
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
+func NewBlockStorage(l log.Logger, address string) (rpc.BlockStorageRequestor, error) {
+	conn, err := sosrpc.NewClientConnection(address)
 	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
-}
-
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
 		return nil, err
 	}
-	return buffer, nil
+
+	return &blockStorage{
+		logger: l,
+		engine: rpc.NewBlockStorageClient(conn),
+	}, nil
+}
+
+func (r *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+	r.logger.Debugf("[BlockStorage.Put]")
+	return r.engine.Put(ctx, block)
+}
+
+func (r *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
+	r.logger.Debugf("[BlockStorage.Get]")
+	return r.engine.Get(ctx, header)
+}
+
+func (r *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
+	r.logger.Debugf("[BlockStorage.Delete]")
+	return r.engine.Delete(ctx, header)
 }

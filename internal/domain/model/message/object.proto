@@ -5,15 +5,14 @@ package message;
 option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
 
 import "google/protobuf/timestamp.proto";
+import "domain/model/message/block.proto";
 
-message Block {
-    string id = 1;
-    uint64 index = 2;
-    uint64 size = 3;
+message ObjectID {
+    uint64 id = 1;
 }
 
 message Object {
-    string id = 1;
+    ObjectID id = 1;
     string name = 2;
     uint64 size = 3;
     google.protobuf.Timestamp time = 4;

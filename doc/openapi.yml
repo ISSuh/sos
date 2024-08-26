@@ -1,0 +1,118 @@
+openapi: '3.0.3'
+info:
+  title: Simple Object Storage API
+  version: '1.0'
+  description: |
+    API Description of SOS(Simple Object Storage)
+
+servers:
+  - url: https://api.server.test/v1
+
+paths:
+  /v1/{group}/{partition}/{path}:
+    get:
+      summary: Get a list of objects
+      tags:
+        - Find
+      parameters:
+        - $ref: '#/components/parameters/group'
+        - $ref: '#/components/parameters/partition'
+        - $ref: '#/components/parameters/path'
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: upload a new object
+      tags:
+        - Upload
+      parameters:
+        - $ref: '#/components/parameters/group'
+        - $ref: '#/components/parameters/partition'
+        - $ref: '#/components/parameters/path'
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: OK
+  /v1/{group}/{partition}/{path}/{object-id}:
+    get:
+      summary: Get an object
+      tags:
+        - Download
+      parameters:
+        - $ref: '#/components/parameters/group'
+        - $ref: '#/components/parameters/partition'
+        - $ref: '#/components/parameters/path'
+        - $ref: '#/components/parameters/object-id'
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update an object
+      tags:
+        - Upload
+      parameters:
+        - $ref: '#/components/parameters/group'
+        - $ref: '#/components/parameters/partition'
+        - $ref: '#/components/parameters/path'
+        - $ref: '#/components/parameters/object-id'
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete an object
+      tags:
+        - Delete
+      parameters:
+        - $ref: '#/components/parameters/group'
+        - $ref: '#/components/parameters/partition'
+        - $ref: '#/components/parameters/path'
+        - $ref: '#/components/parameters/object-id'
+      responses:
+        '200':
+          description: OK
+
+components:
+  parameters:
+    group:
+      name: group
+      in: path
+      required: true
+      schema:
+        type: string
+      description: |
+        group
+      example: AAA
+    partition:
+      name: partition
+      in: path
+      required: true
+      schema:
+        type: string
+      description: |
+        partition
+      example: BBB
+    path:
+      name: path
+      in: path
+      required: true
+      schema:
+        type: string
+      description: |
+        The path through which the object is stored
+        - should be a base64 encoded string
+      example: CCC
+    object-id:
+      name: object-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: |
+        The object id
+      example: DDD

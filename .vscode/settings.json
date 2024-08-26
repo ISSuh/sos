@@ -9,12 +9,14 @@
     "sosrpc",
     "resthandler",
     "rpchandler",
-    "regist"
+    "regist",
+    "alexflint"
   ],
 
   "protoc": {
     "options": [
-        "--proto_path=internal",
+        "--proto_path=${workspaceFolder}/internal",
+        "--proto_path=${workspaceFolder}/internal/domain/model/message",
     ]
-}
+  }
 }

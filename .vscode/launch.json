@@ -25,6 +25,17 @@
             "args": [
                 "--config=${workspaceFolder}/config/sos_metadata_registry.yaml"
             ]
+        },
+        {
+            "name": "BlockStorage",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/cmd/block_storage/main.go",
+            "args": [
+                "--config=${workspaceFolder}/config/sos_block_storage.yaml"
+            ]
         }
     ]
 }

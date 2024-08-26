@@ -24,7 +24,7 @@ SOFTWARE.
 
 package config
 
-type StorageConfig struct {
+type BlockStorageConfig struct {
 	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }

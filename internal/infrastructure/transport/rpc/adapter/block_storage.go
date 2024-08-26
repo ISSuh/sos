@@ -20,45 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package adapter
 
 import (
-	"errors"
-	"os"
+	"context"
+	"fmt"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	sosrpc "github.com/ISSuh/sos/pkg/rpc"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type SosConfig struct {
-	Api              ApiConfig              `yaml:"api"`
-	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
-	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+type BlockStorage struct {
+	rpc.UnimplementedBlockStorageServer
+	handler rpc.BlockStorageHandler
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
+func NewBlockStorage(handler rpc.BlockStorageHandler) (rpc.Adapter, error) {
+	switch {
+	case validation.IsNil(handler):
+		return nil, fmt.Errorf("handler is nil")
+	}
+
+	return &BlockStorage{
+		handler: handler,
+	}, nil
 }
 
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
+func (a *BlockStorage) Put(c context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+	return a.handler.Put(c, block)
 }
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+func (a *BlockStorage) Get(c context.Context, header *message.BlockHeader) (*message.Block, error) {
+	return a.handler.Get(c, header)
+}
+
+func (a *BlockStorage) Delete(c context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
+	return a.handler.Delete(c, header)
+}
+
+func (a *BlockStorage) Regist() sosrpc.RegisterFunc {
+	return func(engine *sosrpc.Engine) {
+		rpc.RegisterBlockStorageServer(engine.Server, a)
 	}
-	return buffer, nil
 }

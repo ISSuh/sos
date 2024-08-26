@@ -20,45 +20,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package app
 
 import (
-	"errors"
-	"os"
-
-	"gopkg.in/yaml.v2"
+	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/factory"
+	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/pkg/rpc"
 )
 
-type SosConfig struct {
-	Api              ApiConfig              `yaml:"api"`
-	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
-	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+type BlockStorage struct {
+	logger log.Logger
+
+	config config.SosConfig
+	server rpc.Server
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
-}
-
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
+func NewBlockStorage(c config.SosConfig, l log.Logger) (BlockStorage, error) {
+	a := BlockStorage{
+		config: c,
+		logger: l,
+		server: rpc.NewServer(),
 	}
+	return a, nil
+}
 
-	buffer, err := loadFile(path)
+func (a *BlockStorage) Run() error {
+	a.logger.Infof("[BlockStorage.Run]")
+	if err := a.init(); err != nil {
+		return err
+	}
+	return a.server.Run(a.config.BlockStorage.Address.String())
+}
+
+func (a *BlockStorage) init() error {
+	repository, err := factory.NewObjectStorageRepository(a.logger)
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
+	service, err := factory.NewObjectStorageService(a.logger, repository)
+	if err != nil {
+		return err
 	}
-	return config, nil
-}
 
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
+	registers, err := factory.BlockStorageHandler(a.logger, service)
+	if err != nil {
+		return err
 	}
-	return buffer, nil
+
+	a.server.Regist(registers)
+	return nil
 }

@@ -25,6 +25,7 @@ package service
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -35,25 +36,26 @@ type Downloader interface {
 type downloader struct {
 	logger log.Logger
 
-	findService    Finder
-	storageService ObjectStorage
+	findService Finder
+
+	storageRequestor rpc.BlockStorageRequestor
 }
 
 func NewDownloader(
-	l log.Logger, findService Finder, storageService ObjectStorage,
+	l log.Logger, findService Finder, storageRequestor rpc.BlockStorageRequestor,
 ) (Downloader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(findService):
 		return nil, fmt.Errorf("find service is nil")
-	case validation.IsNil(storageService):
-		return nil, fmt.Errorf("object storage is nil")
+	case validation.IsNil(storageRequestor):
+		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
 	return &downloader{
-		logger:         l,
-		findService:    findService,
-		storageService: storageService,
+		logger:           l,
+		findService:      findService,
+		storageRequestor: storageRequestor,
 	}, nil
 }

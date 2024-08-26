@@ -36,10 +36,8 @@ type Api struct {
 	config config.SosConfig
 	server http.Server
 
-	repositories *factory.Repositories
-	services     *factory.APIServices
-	handlers     *factory.RestHandlers
-	rpcRequestor *factory.RPCRequestor
+	services *factory.APIServices
+	handlers *factory.RestHandlers
 }
 
 func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
@@ -60,14 +58,6 @@ func (a *Api) Run() error {
 }
 
 func (a *Api) init() error {
-	if err := a.initRPCRequestor(); err != nil {
-		return err
-	}
-
-	if err := a.initRepository(); err != nil {
-		return err
-	}
-
 	if err := a.initService(); err != nil {
 		return err
 	}
@@ -80,33 +70,18 @@ func (a *Api) init() error {
 	return nil
 }
 
-func (a *Api) initRepository() error {
-	var err error
-	if a.repositories, err = factory.NewRepositories(a.logger); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (a *Api) initService() error {
-	objectMetadataService, err := factory.NewMetadataService(a.logger, a.repositories)
+	metadataRequestor, err := factory.NewMetadataRegistryRequestor(a.logger, a.config.MetadataRegistry.Address.Host)
 	if err != nil {
 		return err
 	}
 
-	objectStorageService, err := factory.NewStorageService(a.logger, a.repositories)
+	storageRequestor, err := factory.NewBlockStorageRequestor(a.logger, a.config.BlockStorage.Address.Host)
 	if err != nil {
 		return err
 	}
 
-	metadataRequestor, err := a.rpcRequestor.NewMetadataRegistry(a.config.MetadataRegistry.Address.Host)
-	if err != nil {
-		return err
-	}
-
-	if a.services, err = factory.NewAPIServices(
-		a.logger, objectMetadataService.ObjectMetadata, objectStorageService, metadataRequestor,
-	); err != nil {
+	if a.services, err = factory.NewAPIServices(a.logger, metadataRequestor, storageRequestor); err != nil {
 		return err
 	}
 	return nil
@@ -115,14 +90,6 @@ func (a *Api) initService() error {
 func (a *Api) initHandler() error {
 	var err error
 	if a.handlers, err = factory.NewHandlers(a.logger, a.services); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *Api) initRPCRequestor() error {
-	var err error
-	if a.rpcRequestor, err = factory.NewRPCRequestor(a.logger); err != nil {
 		return err
 	}
 	return nil

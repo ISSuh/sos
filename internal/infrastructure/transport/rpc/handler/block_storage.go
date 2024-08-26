@@ -20,55 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package app
+package handler
 
 import (
-	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/factory"
+	"context"
+	"fmt"
+
+	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/domain/service"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/rpc"
+	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type MetadataRegistry struct {
+type blockStorage struct {
 	logger log.Logger
 
-	config config.SosConfig
-	server rpc.Server
+	objectStorage service.ObjectStorage
 }
 
-func NewMetadata(c config.SosConfig, l log.Logger) (MetadataRegistry, error) {
-	a := MetadataRegistry{
-		config: c,
-		logger: l,
-		server: rpc.NewServer(),
+func NewBlockStorage(l log.Logger, objectStorage service.ObjectStorage) (rpc.BlockStorageHandler, error) {
+	switch {
+	case validation.IsNil(l):
+		return nil, fmt.Errorf("logger is nil")
 	}
-	return a, nil
+
+	return &blockStorage{
+		logger:        l,
+		objectStorage: objectStorage,
+	}, nil
 }
 
-func (a *MetadataRegistry) Run() error {
-	a.logger.Infof("[MetadataRegistry.Run]")
-	if err := a.init(); err != nil {
-		return err
-	}
-	return a.server.Run(a.config.MetadataRegistry.Address.String())
+func (h *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+	h.logger.Debugf("[BlockStorage.Put]")
+	return &rpc.StorageResponse{}, nil
 }
 
-func (a *MetadataRegistry) init() error {
-	repository, err := factory.NewObjectMetadataRepository(a.logger)
-	if err != nil {
-		return err
-	}
+func (h *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
+	h.logger.Debugf("[BlockStorage.Get]")
+	return &message.Block{}, nil
+}
 
-	service, err := factory.NewObjectMetadataService(a.logger, repository)
-	if err != nil {
-		return err
-	}
-
-	registers, err := factory.MetadataRegistryHandler(a.logger, service)
-	if err != nil {
-		return err
-	}
-
-	a.server.Regist(registers)
-	return nil
+func (h *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
+	h.logger.Debugf("[BlockStorage.Delete]")
+	return &rpc.StorageResponse{}, nil
 }

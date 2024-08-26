@@ -25,6 +25,7 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
@@ -38,26 +39,16 @@ type APIServices struct {
 	Eraser     service.Eraser
 }
 
-type MetadataService struct {
-	ObjectMetadata service.ObjectMetadata
-}
-
-type StorageService struct {
-	ObjectStorage service.ObjectStorage
-}
-
 func NewAPIServices(
-	l log.Logger, objectMetadata service.ObjectMetadata, objectStorage service.ObjectStorage, metadataRequestor rpc.MetadataRegistryRequestor,
+	l log.Logger, metadataRequestor rpc.MetadataRegistryRequestor, storageRequestor rpc.BlockStorageRequestor,
 ) (*APIServices, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(objectMetadata):
-		return nil, fmt.Errorf("object metadata service is nil")
-	case validation.IsNil(objectStorage):
-		return nil, fmt.Errorf("object storage service is nil")
 	case validation.IsNil(metadataRequestor):
 		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
+	case validation.IsNil(storageRequestor):
+		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
 	finder, err := service.NewFinder(l, metadataRequestor)
@@ -65,17 +56,17 @@ func NewAPIServices(
 		return nil, err
 	}
 
-	uploader, err := service.NewUploader(l, finder, metadataRequestor, objectStorage)
+	uploader, err := service.NewUploader(l, finder, metadataRequestor, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	downloader, err := service.NewDownloader(l, finder, objectStorage)
+	downloader, err := service.NewDownloader(l, finder, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	eraser, err := service.NewEraser(l, finder, objectStorage)
+	eraser, err := service.NewEraser(l, finder, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
@@ -88,38 +79,34 @@ func NewAPIServices(
 	}, nil
 }
 
-func NewMetadataService(l log.Logger, repositoryFactory *Repositories) (*MetadataService, error) {
+func NewObjectMetadataService(l log.Logger, repo repository.ObjectMetadata) (service.ObjectMetadata, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(repositoryFactory):
-		return nil, fmt.Errorf("repository factory is nil")
+	case validation.IsNil(repo):
+		return nil, fmt.Errorf("ObjectMetadata repository is nil")
 	}
 
-	objectMetadata, err := service.NewObjectMetadata(l, repositoryFactory.ObjectMetadata)
+	objectMetadata, err := service.NewObjectMetadata(l, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MetadataService{
-		ObjectMetadata: objectMetadata,
-	}, nil
+	return objectMetadata, nil
 }
 
-func NewStorageService(l log.Logger, repositoryFactory *Repositories) (*StorageService, error) {
+func NewObjectStorageService(l log.Logger, repo repository.ObjectStorage) (service.ObjectStorage, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(repositoryFactory):
-		return nil, fmt.Errorf("repository factory is nil")
+	case validation.IsNil(repo):
+		return nil, fmt.Errorf("ObjectStorage repository is nil")
 	}
 
-	objectStorage, err := service.NewObjectStorage(l, repositoryFactory.ObjectStorage)
+	objectStorage, err := service.NewObjectStorage(l, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &StorageService{
-		ObjectStorage: objectStorage,
-	}, nil
+	return objectStorage, nil
 }

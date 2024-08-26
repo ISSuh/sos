@@ -27,6 +27,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
@@ -34,16 +35,19 @@ import (
 
 type metadataRegistry struct {
 	logger log.Logger
+
+	objectMetadata service.ObjectMetadata
 }
 
-func NewMetadataRegistry(l log.Logger) (rpc.MetadataRegistryHandler, error) {
+func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryHandler, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
 	}
 
 	return &metadataRegistry{
-		logger: l,
+		logger:         l,
+		objectMetadata: objectMetadata,
 	}, nil
 }
 
@@ -55,13 +59,13 @@ func (h *metadataRegistry) Create(c context.Context, metadata *message.Metadata)
 func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.Metadata, error) {
 	h.logger.Debugf("[MetadataRegistry.GetByObjectName]")
 	return &message.Metadata{
-		Id: &message.Metadata_ObjectID{
+		Id: &message.ObjectID{
 			Id: 1,
 		},
 	}, nil
 }
 
-func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.Metadata_ObjectID, error) {
+func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
 	h.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	return &message.Metadata_ObjectID{}, nil
+	return &message.ObjectID{}, nil
 }

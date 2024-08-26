@@ -20,45 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package config
+package rpc
 
 import (
-	"errors"
-	"os"
+	"context"
 
-	"gopkg.in/yaml.v2"
+	message "github.com/ISSuh/sos/internal/domain/model/message"
 )
 
-type SosConfig struct {
-	Api              ApiConfig              `yaml:"api"`
-	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
-	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+type BlockStorageHandler interface {
+	Put(ctx context.Context, block *message.Block) (*StorageResponse, error)
+	Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	Delete(ctx context.Context, header *message.BlockHeader) (*StorageResponse, error)
 }
 
-type Config struct {
-	SOS SosConfig `yaml:"sos"`
-}
-
-func NewConfig(path string) (Config, error) {
-	if len(path) == 0 {
-		return Config{}, errors.New("can not found config file")
-	}
-
-	buffer, err := loadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	config := Config{}
-	if err = yaml.Unmarshal(buffer, &config); err != nil {
-		return Config{}, nil
-	}
-	return config, nil
-}
-
-func loadFile(path string) (buffer []byte, err error) {
-	if buffer, err = os.ReadFile(path); err != nil {
-		return nil, err
-	}
-	return buffer, nil
+type BlockStorageRequestor interface {
+	Put(ctx context.Context, block *message.Block) (*StorageResponse, error)
+	Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	Delete(ctx context.Context, header *message.BlockHeader) (*StorageResponse, error)
 }
