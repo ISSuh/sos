@@ -43,12 +43,12 @@ type Metadata struct {
 
 func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
 	return &Metadata{
-		ID:         m.ID,
-		Group:      m.Group,
-		Partition:  m.Partition,
-		Name:       m.Name,
-		Path:       m.Path,
-		Size:       m.Size,
+		ID:         m.ID(),
+		Group:      m.Group(),
+		Partition:  m.Partition(),
+		Name:       m.Name(),
+		Path:       m.Path(),
+		Size:       m.Size(),
 		CreatedAt:  m.CreatedAt,
 		ModifiedAt: m.ModifiedAt,
 	}
@@ -71,4 +71,12 @@ func NewMetadataFromMessage(m *message.Metadata) Metadata {
 		// CreatedAt:  m.CreatedAt,
 		// ModifiedAt: m.ModifiedAt,
 	}
+}
+
+func NewEmptyMetadata() Metadata {
+	return Metadata{}
+}
+
+func (d Metadata) IsEmpty() bool {
+	return d == Metadata{}
 }

@@ -51,17 +51,17 @@ func NewBlockStorage(l log.Logger, objectStorage service.ObjectStorage) (rpc.Blo
 	}, nil
 }
 
-func (h *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
-	h.logger.Debugf("[BlockStorage.Put]")
+func (h *blockStorage) Put(c context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+	log.FromContext(c).Debugf("[BlockStorage.Put]")
 	return &rpc.StorageResponse{}, nil
 }
 
-func (h *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
-	h.logger.Debugf("[BlockStorage.Get]")
+func (h *blockStorage) Get(c context.Context, header *message.BlockHeader) (*message.Block, error) {
+	log.FromContext(c).Debugf("[BlockStorage.Get]")
 	return &message.Block{}, nil
 }
 
-func (h *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
-	h.logger.Debugf("[BlockStorage.Delete]")
+func (h *blockStorage) Delete(c context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
+	log.FromContext(c).Debugf("[BlockStorage.Delete]")
 	return &rpc.StorageResponse{}, nil
 }

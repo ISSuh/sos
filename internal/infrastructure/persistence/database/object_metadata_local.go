@@ -34,53 +34,75 @@ import (
 type localObjectMetadata struct {
 	logger log.Logger
 
-	db map[string]map[string]map[string]map[string]entity.ObjectMetadata
+	db map[string]map[string]entity.ObjectMetadata
 }
 
 func NewLocalObjectMetadata(l log.Logger) (repository.ObjectMetadata, error) {
 	return &localObjectMetadata{
 			logger: l,
-			db:     make(map[string]map[string]map[string]map[string]entity.ObjectMetadata),
+			db:     make(map[string]map[string]entity.ObjectMetadata),
 		},
 		nil
 }
 
 func (d *localObjectMetadata) Create(c context.Context, metadata entity.ObjectMetadata) error {
-	d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name] = metadata
+	log.FromContext(c).Debugf("[localObjectMetadata.Create] metadata: %+v", metadata)
+	key := d.makeKey(metadata.Group(), metadata.Partition(), metadata.Path())
+	_, exist := d.db[key]
+	if !exist {
+		d.db[key] = make(map[string]entity.ObjectMetadata)
+	}
+
+	d.db[key][metadata.Name()] = metadata
 	return nil
 }
 
 func (d *localObjectMetadata) Update(c context.Context, metadata entity.ObjectMetadata) error {
-	d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name] = metadata
+	log.FromContext(c).Debugf("[localObjectMetadata.Update] metadata: %+v", metadata)
+	key := d.makeKey(metadata.Group(), metadata.Partition(), metadata.Path())
+	_, exist := d.db[key]
+	if !exist {
+		return fmt.Errorf("metadata not exist")
+	}
+
+	d.db[key][metadata.Name()] = metadata
 	return nil
 }
 
 func (d *localObjectMetadata) Delete(c context.Context, metadata entity.ObjectMetadata) error {
-	_, exist := d.db[metadata.Group][metadata.Partition][metadata.Path][metadata.Name]
+	log.FromContext(c).Debugf("[localObjectMetadata.Delete] metadata: %+v", metadata)
+	key := d.makeKey(metadata.Group(), metadata.Partition(), metadata.Path())
+	_, exist := d.db[key]
 	if !exist {
 		return fmt.Errorf("metadata not exist")
 	}
-	delete(d.db[metadata.Group][metadata.Partition][metadata.Name], metadata.Path)
+
+	delete(d.db[key], metadata.Name())
 	return nil
 }
 
 func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, partition, path, name string) (entity.ObjectMetadata, error) {
-	metadata, exist := d.db[group][partition][path][name]
+	log.FromContext(c).Debugf("[localObjectMetadata.MetadataByObjectName] group: %s, partition: %s, path: %s, name: %s", group, partition, path, name)
+	key := d.makeKey(group, partition, path)
+	_, exist := d.db[key]
 	if !exist {
-		return entity.NewEmptyObjectMetadata(), fmt.Errorf("metadata not exist")
+		return entity.NewEmptyObjectMetadata(), nil
 	}
-	return metadata, nil
+	return d.db[key][name], nil
 }
 
 func (d *localObjectMetadata) FindMetadata(c context.Context, group, partition, path string) ([]entity.ObjectMetadata, error) {
-	list, exist := d.db[group][partition][path]
-	if !exist {
-		return nil, fmt.Errorf("metadata not exist")
-	}
+	log.FromContext(c).Debugf("[localObjectMetadata.FindMetadata] group: %s, partition: %s, path: %s", group, partition, path)
+	key := d.makeKey(group, partition, path)
+	list := d.db[key]
 
 	var metadataList []entity.ObjectMetadata
 	for _, v := range list {
 		metadataList = append(metadataList, v)
 	}
 	return metadataList, nil
+}
+
+func (d *localObjectMetadata) makeKey(group, partition, path string) string {
+	return fmt.Sprintf("%s:%s:%s", group, partition, path)
 }

@@ -23,9 +23,29 @@
 package entity
 
 type Object struct {
-	ID       uint64
-	Segments Blocks
-	Metadata ObjectMetadata
+	id       uint64
+	blocks   Blocks
+	metadata ObjectMetadata
 
 	ModifiedTime
+}
+
+func NewObject(id uint64, blocks Blocks, metadata ObjectMetadata) Object {
+	return Object{
+		id:       id,
+		blocks:   blocks,
+		metadata: metadata,
+	}
+}
+
+func (e Object) ID() uint64 {
+	return e.id
+}
+
+func (e Object) Blocks() Blocks {
+	return e.blocks
+}
+
+func (e Object) Metadata() ObjectMetadata {
+	return e.metadata
 }

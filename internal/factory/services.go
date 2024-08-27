@@ -33,7 +33,7 @@ import (
 )
 
 type APIServices struct {
-	Finder     service.Finder
+	Explorer   service.Explorer
 	Uploader   service.Uploader
 	Downloader service.Downloader
 	Eraser     service.Eraser
@@ -51,28 +51,28 @@ func NewAPIServices(
 		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
-	finder, err := service.NewFinder(l, metadataRequestor)
+	explorer, err := service.NewExplorer(l, metadataRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	uploader, err := service.NewUploader(l, finder, metadataRequestor, storageRequestor)
+	uploader, err := service.NewUploader(l, explorer, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	downloader, err := service.NewDownloader(l, finder, storageRequestor)
+	downloader, err := service.NewDownloader(l, explorer, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
 
-	eraser, err := service.NewEraser(l, finder, storageRequestor)
+	eraser, err := service.NewEraser(l, explorer, storageRequestor)
 	if err != nil {
 		return nil, err
 	}
 
 	return &APIServices{
-		Finder:     finder,
+		Explorer:   explorer,
 		Uploader:   uploader,
 		Downloader: downloader,
 		Eraser:     eraser,

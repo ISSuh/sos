@@ -40,8 +40,8 @@ type Logger interface {
 	Fatalln(args ...interface{})
 }
 
-func LoggerFromContext(c context.Context, key any) Logger {
-	if val := c.Value(key); val != nil {
+func FromContext(c context.Context) Logger {
+	if val := c.Value(LoggerKey); val != nil {
 		return val.(Logger)
 	}
 	return nil

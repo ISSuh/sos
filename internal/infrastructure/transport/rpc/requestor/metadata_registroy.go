@@ -49,18 +49,18 @@ func NewMetadataRegistry(l log.Logger, address string) (rpc.MetadataRegistryRequ
 	}, nil
 }
 
-func (r *metadataRegistry) Create(c context.Context, in *message.Metadata) (*message.Metadata, error) {
-	r.logger.Debugf("[MetadataRegistry.Create]")
-	return r.engine.Create(c, in)
+func (r *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
+	return r.engine.Create(c, metadata)
 }
 
-func (r *metadataRegistry) GetByObjectName(c context.Context, in *message.MetadataFindRequest) (*message.Metadata, error) {
-	r.logger.Debugf("[MetadataRegistry.GetByObjectName]")
-	return r.engine.GetByObjectName(c, in)
+func (r *metadataRegistry) GetByObjectName(c context.Context, metadata *message.MetadataFindRequest) (*message.Metadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
+	return r.engine.GetByObjectName(c, metadata)
 }
 
 func (r *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	r.logger.Debugf("[MetadataRegistry.GenerateNewObjectID]")
+	log.FromContext(c).Debugf("[MetadataRegistry.GenerateNewObjectID]")
 	e := emptypb.Empty{}
 	return r.engine.GenerateNewObjectID(c, &e)
 }

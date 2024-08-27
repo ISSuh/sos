@@ -53,5 +53,4 @@ func NewDownloader(l log.Logger, downloadService service.Downloader) (rest.Downl
 }
 
 func (h *downloader) Download(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debugf("[downloader.Download]")
 }

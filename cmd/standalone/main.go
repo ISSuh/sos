@@ -20,47 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package main
 
-type Block struct {
-	id     uint64
-	header BlockHeader
-	data   []byte
+import (
+	"github.com/ISSuh/sos/internal/app"
+	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/pkg/log"
 
-	ModifiedTime
+	"github.com/alexflint/go-arg"
+)
+
+type args struct {
+	Config string `arg:"-c,--config,required"`
 }
 
-type Blocks []Block
+func main() {
+	args := args{}
+	arg.MustParse(&args)
 
-type BlockBuilder struct {
-	id     uint64
-	header BlockHeader
-	data   []byte
-}
+	config, err := config.NewConfig(args.Config)
+	if err != nil {
+		return
+	}
 
-func NewBlockBuilder() *BlockBuilder {
-	return &BlockBuilder{}
-}
+	l := log.NewZapLogger(config.SOS.Api.Log)
 
-func (b *BlockBuilder) ID(id uint64) *BlockBuilder {
-	b.id = id
-	return b
-}
+	l.Infof("configure : %+v", config)
+	standalone, err := app.NewStandalone(config.SOS, l)
+	if err != nil {
+		return
+	}
 
-func (b *BlockBuilder) Header(header BlockHeader) *BlockBuilder {
-	b.header = header
-	return b
-}
-
-func (b *BlockBuilder) Data(data []byte) *BlockBuilder {
-	b.data = data
-	return b
-}
-
-func (b *BlockBuilder) Build() Block {
-	return Block{
-		id:     b.id,
-		header: b.header,
-		data:   b.data,
+	if err := standalone.Run(); err != nil {
+		l.Errorf(err.Error())
+		return
 	}
 }

@@ -20,12 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package standalone
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
@@ -39,7 +40,7 @@ type metadataRegistry struct {
 	objectMetadata service.ObjectMetadata
 }
 
-func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryHandler, error) {
+func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryRequestor, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
@@ -51,21 +52,51 @@ func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (r
 	}, nil
 }
 
-func (h *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
-	return &message.Metadata{}, nil
+func (s *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+	d := dto.Request{
+		ID:        metadata.GetId().Id,
+		Name:      metadata.GetName(),
+		Group:     metadata.GetGroup(),
+		Partition: metadata.GetPartition(),
+		Path:      metadata.GetPath(),
+		Size:      metadata.GetSize(),
+	}
+
+	err := s.objectMetadata.Create(c, d)
+	if err != nil {
+		return nil, err
+	}
+
+	return metadata, nil
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.Metadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
+func (s *metadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error) {
+	d := dto.Request{
+		Group:     req.GetGroup(),
+		Partition: req.GetPartition(),
+		Path:      req.GetPath(),
+		Name:      req.GetName(),
+	}
+
+	metadata, err := s.objectMetadata.MetadataByObjectName(c, d)
+	if err != nil {
+		return nil, err
+	}
+
 	return &message.Metadata{
-		Id: &message.ObjectID{
-			Id: 1,
-		},
+		Id:        &message.ObjectID{Id: metadata.ID()},
+		Name:      metadata.Name(),
+		Group:     metadata.Group(),
+		Partition: metadata.Partition(),
+		Path:      metadata.Path(),
+		Size:      metadata.Size(),
 	}, nil
 }
 
-func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	return &message.ObjectID{}, nil
+func (s *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
+	id, err := s.objectMetadata.GenerateNewObjectID(c)
+	if err != nil {
+		return nil, err
+	}
+	return &message.ObjectID{Id: id}, nil
 }

@@ -34,7 +34,7 @@ import (
 type RestHandlers struct {
 	Uploader   rest.Uploader
 	Downloader rest.Downloader
-	Finder     rest.Finder
+	Explorer   rest.Explorer
 	Eraser     rest.Eraser
 }
 
@@ -46,7 +46,7 @@ func NewHandlers(l log.Logger, serviceFactory *APIServices) (*RestHandlers, erro
 		return nil, fmt.Errorf("service factory is nil")
 	}
 
-	finder, err := resthandler.NewFinder(l, serviceFactory.Finder)
+	explorer, err := resthandler.NewExplorer(l, serviceFactory.Explorer)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func NewHandlers(l log.Logger, serviceFactory *APIServices) (*RestHandlers, erro
 	}
 
 	h := &RestHandlers{
-		Finder:     finder,
+		Explorer:   explorer,
 		Uploader:   uploader,
 		Downloader: downloader,
 		Eraser:     eraser,

@@ -20,47 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package middleware
 
-type Block struct {
-	id     uint64
-	header BlockHeader
-	data   []byte
+import (
+	"fmt"
+	gohttp "net/http"
+)
 
-	ModifiedTime
-}
+func GenerateRequestID(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		fmt.Printf("[GenerateRequestID] start\n")
 
-type Blocks []Block
+		next.ServeHTTP(w, r)
 
-type BlockBuilder struct {
-	id     uint64
-	header BlockHeader
-	data   []byte
-}
-
-func NewBlockBuilder() *BlockBuilder {
-	return &BlockBuilder{}
-}
-
-func (b *BlockBuilder) ID(id uint64) *BlockBuilder {
-	b.id = id
-	return b
-}
-
-func (b *BlockBuilder) Header(header BlockHeader) *BlockBuilder {
-	b.header = header
-	return b
-}
-
-func (b *BlockBuilder) Data(data []byte) *BlockBuilder {
-	b.data = data
-	return b
-}
-
-func (b *BlockBuilder) Build() Block {
-	return Block{
-		id:     b.id,
-		header: b.header,
-		data:   b.data,
-	}
+		fmt.Printf("[GenerateRequestID] end\n")
+	})
 }

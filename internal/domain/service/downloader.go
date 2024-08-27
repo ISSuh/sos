@@ -36,26 +36,26 @@ type Downloader interface {
 type downloader struct {
 	logger log.Logger
 
-	findService Finder
+	explorerService Explorer
 
 	storageRequestor rpc.BlockStorageRequestor
 }
 
 func NewDownloader(
-	l log.Logger, findService Finder, storageRequestor rpc.BlockStorageRequestor,
+	l log.Logger, explorerService Explorer, storageRequestor rpc.BlockStorageRequestor,
 ) (Downloader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
-		return nil, fmt.Errorf("find service is nil")
+	case validation.IsNil(explorerService):
+		return nil, fmt.Errorf("explorer service is nil")
 	case validation.IsNil(storageRequestor):
 		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
 	return &downloader{
 		logger:           l,
-		findService:      findService,
+		explorerService:  explorerService,
 		storageRequestor: storageRequestor,
 	}, nil
 }

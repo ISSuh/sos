@@ -53,5 +53,4 @@ func NewEraser(l log.Logger, eraserService service.Eraser) (rest.Eraser, error) 
 }
 
 func (h *eraser) Delete(w http.ResponseWriter, r *http.Request) {
-	h.logger.Debugf("[eraser.Delete]")
 }

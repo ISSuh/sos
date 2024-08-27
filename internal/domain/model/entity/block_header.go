@@ -20,11 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rest
+package entity
 
-import "net/http"
+import "time"
 
-type Finder interface {
-	Find(w http.ResponseWriter, r *http.Request)
-	List(w http.ResponseWriter, r *http.Request)
+type BlockHeader struct {
+	id        uint64
+	objectID  string
+	index     int
+	size      uint32
+	node      Node
+	timestamp time.Time
+	checksum  string
 }

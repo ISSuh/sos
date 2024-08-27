@@ -47,8 +47,9 @@ const (
 )
 
 func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
-	s.Use(middleware.WithLog(logger))
 	s.Use(middleware.Recover)
+	s.Use(middleware.WithLog(logger))
+	s.Use(middleware.GenerateRequestID)
 	s.Use(middleware.ParseDefaultParam)
 	s.Use(middleware.ErrorHandler)
 
@@ -93,7 +94,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLObjectMetadata,
 			Method:  gohttp.MethodGet,
-			Handler: h.Finder.Find,
+			Handler: h.Explorer.Find,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -102,7 +103,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLDefault,
 			Method:  gohttp.MethodGet,
-			Handler: h.Finder.List,
+			Handler: h.Explorer.List,
 		},
 	}
 

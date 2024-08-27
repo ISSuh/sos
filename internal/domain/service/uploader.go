@@ -28,6 +28,7 @@ import (
 	"io"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
@@ -40,38 +41,32 @@ type Uploader interface {
 type uploader struct {
 	logger log.Logger
 
-	findService Finder
+	explorerService Explorer
 
-	metadataRequestor rpc.MetadataRegistryRequestor
-	storageRequestor  rpc.BlockStorageRequestor
+	storageRequestor rpc.BlockStorageRequestor
 }
 
 func NewUploader(
-	l log.Logger, findService Finder, metadataRequestor rpc.MetadataRegistryRequestor, storageRequestor rpc.BlockStorageRequestor,
+	l log.Logger, explorerService Explorer, storageRequestor rpc.BlockStorageRequestor,
 ) (Uploader, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
+	case validation.IsNil(explorerService):
 		return nil, fmt.Errorf("find service is nil")
-	case validation.IsNil(metadataRequestor):
-		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
 	case validation.IsNil(storageRequestor):
 		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
 	return &uploader{
-		logger:            l,
-		findService:       findService,
-		metadataRequestor: metadataRequestor,
-		storageRequestor:  storageRequestor,
+		logger:           l,
+		explorerService:  explorerService,
+		storageRequestor: storageRequestor,
 	}, nil
 }
 
 func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) error {
-	defer bodyStream.Close()
-
-	exist, id, err := s.findService.CanUploadNewObject(c, req)
+	exist, err := s.explorerService.IsObjectExist(c, req)
 	if err != nil {
 		return err
 	}
@@ -79,6 +74,19 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 	if exist {
 		return fmt.Errorf("object already exist")
 	}
+
+	id, err := s.explorerService.GenerateNewObjectID(c)
+	if err != nil {
+		return err
+	}
+
+	metadataBuilder := entity.NewObjectMetadataBuilder()
+	metadataBuilder.
+		Group(req.Group).
+		Partition(req.Partition).
+		Name(req.Name).
+		Path(req.Path).
+		Size(req.Size)
 
 	totalReadSize := uint64(0)
 	for {
@@ -94,20 +102,13 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 
 		// need data handling
 		totalReadSize += uint64(n)
-		s.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+		log.FromContext(c).Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
 	}
 
-	if err := s.uploadNewObjectMetadata(c, req, id); err != nil {
+	object := entity.NewObject(id, nil, metadataBuilder.Build())
+	if err := s.explorerService.UpsertObjectMetadata(c, object); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (s *uploader) uploadNewObjectMetadata(c context.Context, req dto.Request, id uint64) error {
-	// req.ID = id
-	// if err := s.metadataService.Create(c, req); err != nil {
-	// 	return err
-	// }
 	return nil
 }

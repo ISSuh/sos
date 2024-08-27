@@ -65,6 +65,8 @@ func NewObjectMetadata(
 }
 
 func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
+	log.FromContext(c).Debugf("[objectMetadata.Create] request: %+v", req)
+
 	builder := entity.NewObjectMetadataBuilder()
 	metadata :=
 		builder.ID(req.ID).

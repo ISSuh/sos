@@ -23,49 +23,56 @@
 package handler
 
 import (
-	"context"
 	"fmt"
+	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
+	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type metadataRegistry struct {
+type explorer struct {
 	logger log.Logger
 
-	objectMetadata service.ObjectMetadata
+	explorerService service.Explorer
 }
 
-func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryHandler, error) {
+func NewExplorer(l log.Logger, explorerService service.Explorer) (rest.Explorer, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(explorerService):
+		return nil, fmt.Errorf("explorer service is nil")
 	}
 
-	return &metadataRegistry{
-		logger:         l,
-		objectMetadata: objectMetadata,
+	return &explorer{
+		logger:          l,
+		explorerService: explorerService,
 	}, nil
 }
 
-func (h *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
-	return &message.Metadata{}, nil
+func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	log.FromContext(c).Debugf("[explorer.Find]")
+	log.FromContext(c).Debugf("Request: %+v\n", dto)
+
+	metadata, err := h.explorerService.FindObjectMetadata(c, dto)
+	if err != nil {
+		h.logger.Errorf(err.Error())
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
+	}
+
+	if err := http.Json(w, metadata); err != nil {
+		h.logger.Errorf(err.Error())
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
+	}
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.Metadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
-	return &message.Metadata{
-		Id: &message.ObjectID{
-			Id: 1,
-		},
-	}, nil
-}
-
-func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	return &message.ObjectID{}, nil
+func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 }

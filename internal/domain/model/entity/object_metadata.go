@@ -23,18 +23,42 @@
 package entity
 
 type ObjectMetadata struct {
-	ID        uint64
-	Group     string
-	Partition string
-	Name      string
-	Path      string
-	Size      uint64
+	id        uint64
+	group     string
+	partition string
+	name      string
+	path      string
+	size      uint64
 
 	ModifiedTime
 }
 
 func NewEmptyObjectMetadata() ObjectMetadata {
 	return ObjectMetadata{}
+}
+
+func (e ObjectMetadata) ID() uint64 {
+	return e.id
+}
+
+func (e ObjectMetadata) Group() string {
+	return e.group
+}
+
+func (e ObjectMetadata) Partition() string {
+	return e.partition
+}
+
+func (e ObjectMetadata) Name() string {
+	return e.name
+}
+
+func (e ObjectMetadata) Path() string {
+	return e.path
+}
+
+func (e ObjectMetadata) Size() uint64 {
+	return e.size
 }
 
 func (e ObjectMetadata) IsEmpty() bool {
@@ -86,11 +110,11 @@ func (b *ObjectMetadataBuilder) Size(size uint64) *ObjectMetadataBuilder {
 
 func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 	return ObjectMetadata{
-		ID:        b.id,
-		Group:     b.group,
-		Partition: b.partition,
-		Name:      b.name,
-		Path:      b.path,
-		Size:      b.size,
+		id:        b.id,
+		group:     b.group,
+		partition: b.partition,
+		name:      b.name,
+		path:      b.path,
+		size:      b.size,
 	}
 }

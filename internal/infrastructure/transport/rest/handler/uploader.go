@@ -61,11 +61,12 @@ func NewUploader(l log.Logger, uploadService service.Uploader) (rest.Uploader, e
 }
 
 func (h *uploader) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[uploader.Upload]")
 	h.chunkedUpload(w, r)
 }
 
 func (h *uploader) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+
 	// 최대 메모리 사용량 설정 (32MB)
 	r.ParseMultipartForm(32 << 20)
 
@@ -79,18 +80,18 @@ func (h *uploader) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 	tempFile := r.MultipartForm.File
 	for k, v := range tempFile {
-		h.logger.Debugf("tempFile => Key: %s, Value: %+v\n", k, v)
+		log.FromContext(c).Debugf("tempFile => Key: %s, Value: %+v\n", k, v)
 	}
 
 	tempValue := r.MultipartForm.Value
 	for k, v := range tempValue {
-		h.logger.Debugf("tempValue => Key: %s, Value: %+v\n", k, v)
+		log.FromContext(c).Debugf("tempValue => Key: %s, Value: %+v\n", k, v)
 	}
 
 	// 업로드된 파일 정보를 출력합니다.
-	h.logger.Debugf("Uploaded File: %+v\n", handler.Filename)
-	h.logger.Debugf("File Size: %+v\n", handler.Size)
-	h.logger.Debugf("MIME Header: %+v\n", handler.Header)
+	log.FromContext(c).Debugf("Uploaded File: %+v\n", handler.Filename)
+	log.FromContext(c).Debugf("File Size: %+v\n", handler.Size)
+	log.FromContext(c).Debugf("MIME Header: %+v\n", handler.Header)
 
 	// // 파일을 서버에 저장합니다.
 	// dst, err := os.Create("./uploads/" + handler.Filename)
@@ -106,44 +107,26 @@ func (h *uploader) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	// 	return
 	// }
 
-	h.logger.Debugf("Successfully Uploaded File\n")
+	log.FromContext(c).Debugf("Successfully Uploaded File\n")
 }
 
 func (h *uploader) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[uploader.chunkedUpload]")
-	h.logger.Debugf("content type: %s\n", r.Header.Get("Content-Type"))
-
 	c := r.Context()
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	h.logger.Debugf("Request: %+v\n", dto)
-
-	// Read the chunked data
-	// for {
-	// 	buf := make([]byte, 4096)
-	// 	n, err := r.Body.Read(buf)
-	// 	if err != nil && err != io.EOF {
-	// 		gohttp.Error(w, "Failed to read chunked data", gohttp.StatusInternalServerError)
-	// 		return
-	// 	}
-
-	// 	if n == 0 {
-	// 		break
-	// 	}
-
-	// 	// need data handling
-	// 	h.logger.Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
-	// }
+	log.FromContext(c).Debugf("[uploader.chunkedUpload]")
+	log.FromContext(c).Debugf("Request: %+v\n", dto)
+	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
 
 	err := h.uploadService.Upload(c, dto, r.Body)
 	if err != nil {
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
+	defer r.Body.Close()
 
 	w.WriteHeader(gohttp.StatusOK)
 	w.Write([]byte("Chunk uploaded successfully"))
 }
 
 func (h *uploader) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[uploader.Update]")
 }

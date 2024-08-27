@@ -36,6 +36,17 @@
             "args": [
                 "--config=${workspaceFolder}/config/sos_block_storage.yaml"
             ]
+        },
+        {
+            "name": "Standalone",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/cmd/standalone/main.go",
+            "args": [
+                "--config=${workspaceFolder}/config/sos_standalone.yaml"
+            ]
         }
     ]
 }

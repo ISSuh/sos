@@ -10,7 +10,8 @@
     "resthandler",
     "rpchandler",
     "regist",
-    "alexflint"
+    "alexflint",
+    "Upsert"
   ],
 
   "protoc": {

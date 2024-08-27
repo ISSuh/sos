@@ -27,27 +27,29 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type Finder interface {
+type Explorer interface {
 	FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error)
 	IsObjectExist(c context.Context, req dto.Request) (bool, error)
-	CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error)
+	GenerateNewObjectID(c context.Context) (uint64, error)
+	UpsertObjectMetadata(c context.Context, object entity.Object) error
 }
 
-type finder struct {
+type explorer struct {
 	logger log.Logger
 
 	metadataRequestor rpc.MetadataRegistryRequestor
 }
 
-func NewFinder(
+func NewExplorer(
 	l log.Logger, metadataRequestor rpc.MetadataRegistryRequestor,
-) (Finder, error) {
+) (Explorer, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
@@ -55,13 +57,13 @@ func NewFinder(
 		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
 	}
 
-	return &finder{
+	return &explorer{
 		logger:            l,
 		metadataRequestor: metadataRequestor,
 	}, nil
 }
 
-func (s *finder) FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error) {
+func (s *explorer) FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error) {
 	message := &message.MetadataFindRequest{
 		Group:     req.Group,
 		Partition: req.Partition,
@@ -71,36 +73,41 @@ func (s *finder) FindObjectMetadata(c context.Context, req dto.Request) (dto.Met
 
 	metadata, err := s.metadataRequestor.GetByObjectName(c, message)
 	if err != nil {
-		return dto.Metadata{}, err
+		return dto.NewEmptyMetadata(), err
 	}
+
 	return dto.NewMetadataFromMessage(metadata), nil
 }
 
-func (s *finder) IsObjectExist(c context.Context, req dto.Request) (bool, error) {
-	// metadata, err := s.FindObjectMetadata(c, req)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// return metadata.IsEmpty(), nil
-	return false, nil
+func (s *explorer) IsObjectExist(c context.Context, req dto.Request) (bool, error) {
+	metadata, err := s.FindObjectMetadata(c, req)
+	if err != nil {
+		return false, err
+	}
+	return !metadata.IsEmpty(), nil
 }
 
-func (s *finder) CanUploadNewObject(c context.Context, req dto.Request) (bool, uint64, error) {
-	// exist, err := s.IsObjectExist(c, req)
-	// if err != nil {
-	// 	return false, 0, err
-	// }
+func (s *explorer) GenerateNewObjectID(c context.Context) (uint64, error) {
+	id, err := s.metadataRequestor.GenerateNewObjectID(c)
+	if err != nil {
+		return 0, err
+	}
+	return id.GetId(), nil
+}
 
-	// if exist {
-	// 	return false, 0, nil
-	// }
+func (s *explorer) UpsertObjectMetadata(c context.Context, object entity.Object) error {
+	metadata := object.Metadata()
+	message := &message.Metadata{
+		Id:        &message.ObjectID{Id: metadata.ID()},
+		Group:     metadata.Group(),
+		Partition: metadata.Partition(),
+		Path:      metadata.Path(),
+		Name:      metadata.Name(),
+		Size:      metadata.Size(),
+	}
 
-	// id, err := s.metadataService.GenerateNewObjectID(c)
-	// if err != nil {
-	// 	return false, 0, err
-	// }
-
-	// return true, id, nil
-
-	return false, 0, nil
+	if _, err := s.metadataRequestor.Create(c, message); err != nil {
+		return err
+	}
+	return nil
 }

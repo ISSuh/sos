@@ -20,62 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package handler
+package standalone
 
 import (
+	"context"
 	"fmt"
-	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/pkg/http"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type finder struct {
+type blockStorage struct {
 	logger log.Logger
 
-	findService service.Finder
+	objectStorage service.ObjectStorage
 }
 
-func NewFinder(l log.Logger, findService service.Finder) (rest.Finder, error) {
+func NewBlockStorage(l log.Logger, objectStorage service.ObjectStorage) (rpc.BlockStorageRequestor, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
-		return nil, fmt.Errorf("find service is nil")
 	}
 
-	return &finder{
-		logger:      l,
-		findService: findService,
+	return &blockStorage{
+		logger:        l,
+		objectStorage: objectStorage,
 	}, nil
 }
 
-func (h *finder) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.Find]")
-
-	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	h.logger.Debugf("Request: %+v\n", dto)
-
-	metadata, err := h.findService.FindObjectMetadata(c, dto)
-	if err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-
-	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-	return
+func (r *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+	return nil, nil
 }
 
-func (h *finder) List(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.logger.Debugf("[finder.List]")
+func (r *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
+	return nil, nil
+}
+
+func (r *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
+	return nil, nil
 }

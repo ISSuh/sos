@@ -36,26 +36,26 @@ type Eraser interface {
 type eraser struct {
 	logger log.Logger
 
-	findService Finder
+	explorerService Explorer
 
 	storageRequestor rpc.BlockStorageRequestor
 }
 
 func NewEraser(
-	l log.Logger, findService Finder, storageRequestor rpc.BlockStorageRequestor,
+	l log.Logger, explorerService Explorer, storageRequestor rpc.BlockStorageRequestor,
 ) (Eraser, error) {
 	switch {
 	case validation.IsNil(l):
 		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(findService):
-		return nil, fmt.Errorf("find service is nil")
+	case validation.IsNil(explorerService):
+		return nil, fmt.Errorf("explorer service is nil")
 	case validation.IsNil(storageRequestor):
 		return nil, fmt.Errorf("BlockStorage requestor is nil")
 	}
 
 	return &eraser{
 		logger:           l,
-		findService:      findService,
+		explorerService:  explorerService,
 		storageRequestor: storageRequestor,
 	}, nil
 }
