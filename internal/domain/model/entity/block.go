@@ -32,6 +32,18 @@ type Block struct {
 
 type Blocks []Block
 
+func (b *Block) ID() uint64 {
+	return b.id
+}
+
+func (b *Block) Header() BlockHeader {
+	return b.header
+}
+
+func (b *Block) Data() []byte {
+	return b.data
+}
+
 type BlockBuilder struct {
 	id     uint64
 	header BlockHeader

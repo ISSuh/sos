@@ -22,8 +22,15 @@
 
 package repository
 
+import (
+	"context"
+
+	"github.com/ISSuh/sos/internal/domain/model/entity"
+)
+
 type ObjectStorage interface {
-	Store()
-	Delete()
-	Find()
+	Put(c context.Context, block entity.Block) error
+	GetBlock(c context.Context, objectId string, blockID, index uint64) (entity.Block, error)
+	GetBlockHeader(c context.Context, objectId string, blockID, index uint64) (entity.BlockHeader, error)
+	Delete(c context.Context, objectId string, blockID, index uint64) error
 }

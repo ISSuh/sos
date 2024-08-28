@@ -23,6 +23,11 @@
 package objectstorage
 
 import (
+	"context"
+	"fmt"
+	"strconv"
+
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/log"
 )
@@ -30,25 +35,52 @@ import (
 type localObjectStorage struct {
 	logger log.Logger
 
-	storage map[string][]byte
+	storage map[string]entity.Block
 }
 
 func NewLocalObjectStorage(l log.Logger) (repository.ObjectStorage, error) {
 	return &localObjectStorage{
 			logger:  l,
-			storage: make(map[string][]byte),
+			storage: make(map[string]entity.Block),
 		},
 		nil
 }
 
-func (s *localObjectStorage) Store() {
-
+func (s *localObjectStorage) Put(c context.Context, block entity.Block) error {
+	log.FromContext(c).Debugf("[localObjectStorage.Put] block: %+v", block)
+	header := block.Header()
+	key := s.makeKey(header.ObjectID(), header.ID(), header.Index())
+	s.storage[key] = block
+	return nil
 }
 
-func (s *localObjectStorage) Delete() {
-
+func (s *localObjectStorage) GetBlock(c context.Context, objectId string, blockID, index uint64) (entity.Block, error) {
+	log.FromContext(c).Debugf("[localObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
+	key := s.makeKey(objectId, blockID, index)
+	block, exist := s.storage[key]
+	if !exist {
+		return entity.Empty[entity.Block](), fmt.Errorf("block not found")
+	}
+	return block, nil
 }
 
-func (s *localObjectStorage) Find() {
+func (s *localObjectStorage) GetBlockHeader(c context.Context, objectId string, blockID, index uint64) (entity.BlockHeader, error) {
+	log.FromContext(c).Debugf("[localObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
+	key := s.makeKey(objectId, blockID, index)
+	block, exist := s.storage[key]
+	if !exist {
+		return entity.Empty[entity.BlockHeader](), fmt.Errorf("block not found")
+	}
+	return block.Header(), nil
+}
 
+func (s *localObjectStorage) Delete(c context.Context, objectId string, blockID, index uint64) error {
+	log.FromContext(c).Debugf("[localObjectStorage.Delete] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
+	key := s.makeKey(objectId, blockID, index)
+	delete(s.storage, key)
+	return nil
+}
+
+func (s *localObjectStorage) makeKey(objectId string, blockID, index uint64) string {
+	return objectId + ":" + strconv.FormatUint(blockID, 10) + ":" + strconv.FormatUint(index, 10)
 }

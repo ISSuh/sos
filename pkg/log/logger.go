@@ -22,7 +22,11 @@
 
 package log
 
-import "context"
+import (
+	"context"
+
+	"github.com/ISSuh/sos/internal/config"
+)
 
 type LoggerContextKey string
 
@@ -44,5 +48,5 @@ func FromContext(c context.Context) Logger {
 	if val := c.Value(LoggerKey); val != nil {
 		return val.(Logger)
 	}
-	return nil
+	return NewZapLogger(config.Logger{})
 }

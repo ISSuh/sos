@@ -22,50 +22,7 @@
 
 package entity
 
-import "time"
-
-type BlockHeader struct {
-	id        uint64
-	objectID  string
-	index     uint64
-	size      uint32
-	node      Node
-	timestamp time.Time
-	checksum  string
-}
-
-func NewEmptyBlockHeader() BlockHeader {
-	return BlockHeader{}
-}
-
-func (b *BlockHeader) ID() uint64 {
-	return b.id
-}
-
-func (b *BlockHeader) ObjectID() string {
-	return b.objectID
-}
-
-func (b *BlockHeader) Index() uint64 {
-	return b.index
-}
-
-func (b *BlockHeader) Size() uint32 {
-	return b.size
-}
-
-func (b *BlockHeader) Node() Node {
-	return b.node
-}
-
-func (b *BlockHeader) Timestamp() time.Time {
-	return b.timestamp
-}
-
-func (b *BlockHeader) Checksum() string {
-	return b.checksum
-}
-
-func (b *BlockHeader) IsEmpty() bool {
-	return b.id == 0
+func Empty[T any]() T {
+	var t T
+	return t
 }

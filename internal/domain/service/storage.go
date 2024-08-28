@@ -23,14 +23,20 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type ObjectStorage interface {
+	Put(c context.Context, block entity.Block) error
+	GetBlock(c context.Context, objectId string, blockID, index uint64) (entity.Block, error)
+	GetBlockHeader(c context.Context, objectId string, blockID, index uint64) (entity.BlockHeader, error)
+	Delete(c context.Context, objectId string, blockID, index uint64) error
 }
 
 type objectStorage struct {
