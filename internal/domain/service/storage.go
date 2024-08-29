@@ -34,9 +34,16 @@ import (
 
 type ObjectStorage interface {
 	Put(c context.Context, block entity.Block) error
-	GetBlock(c context.Context, objectId string, blockID, index uint64) (entity.Block, error)
-	GetBlockHeader(c context.Context, objectId string, blockID, index uint64) (entity.BlockHeader, error)
-	Delete(c context.Context, objectId string, blockID, index uint64) error
+
+	GetBlock(
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+	) (entity.Block, error)
+
+	GetBlockHeader(
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+	) (entity.BlockHeader, error)
+
+	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error
 }
 
 type objectStorage struct {
@@ -59,4 +66,34 @@ func NewObjectStorage(
 		logger:            l,
 		storageRepository: storageRepository,
 	}, nil
+}
+
+func (s *objectStorage) Put(c context.Context, block entity.Block) error {
+	if err := s.storageRepository.Put(c, block); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.Block, error) {
+	block, err := s.storageRepository.GetBlock(c, objectID, blockID, index)
+	if err != nil {
+		return entity.Block{}, err
+	}
+	return block, nil
+}
+
+func (s *objectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.BlockHeader, error) {
+	header, err := s.storageRepository.GetBlockHeader(c, objectID, blockID, index)
+	if err != nil {
+		return entity.BlockHeader{}, err
+	}
+	return header, nil
+}
+
+func (s *objectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error {
+	if err := s.storageRepository.Delete(c, objectID, blockID, index); err != nil {
+		return err
+	}
+	return nil
 }

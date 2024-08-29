@@ -25,8 +25,8 @@ package entity
 import "time"
 
 type BlockHeader struct {
-	id        uint64
-	objectID  string
+	id        BlockID
+	objectID  ObjectID
 	index     uint64
 	size      uint32
 	node      Node
@@ -38,11 +38,11 @@ func NewEmptyBlockHeader() BlockHeader {
 	return BlockHeader{}
 }
 
-func (b *BlockHeader) ID() uint64 {
+func (b *BlockHeader) ID() BlockID {
 	return b.id
 }
 
-func (b *BlockHeader) ObjectID() string {
+func (b *BlockHeader) ObjectID() ObjectID {
 	return b.objectID
 }
 

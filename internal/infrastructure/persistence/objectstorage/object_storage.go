@@ -54,9 +54,9 @@ func (s *localObjectStorage) Put(c context.Context, block entity.Block) error {
 	return nil
 }
 
-func (s *localObjectStorage) GetBlock(c context.Context, objectId string, blockID, index uint64) (entity.Block, error) {
-	log.FromContext(c).Debugf("[localObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
-	key := s.makeKey(objectId, blockID, index)
+func (s *localObjectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.Block, error) {
+	log.FromContext(c).Debugf("[localObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
 		return entity.Empty[entity.Block](), fmt.Errorf("block not found")
@@ -64,9 +64,9 @@ func (s *localObjectStorage) GetBlock(c context.Context, objectId string, blockI
 	return block, nil
 }
 
-func (s *localObjectStorage) GetBlockHeader(c context.Context, objectId string, blockID, index uint64) (entity.BlockHeader, error) {
-	log.FromContext(c).Debugf("[localObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
-	key := s.makeKey(objectId, blockID, index)
+func (s *localObjectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.BlockHeader, error) {
+	log.FromContext(c).Debugf("[localObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
 		return entity.Empty[entity.BlockHeader](), fmt.Errorf("block not found")
@@ -74,13 +74,13 @@ func (s *localObjectStorage) GetBlockHeader(c context.Context, objectId string, 
 	return block.Header(), nil
 }
 
-func (s *localObjectStorage) Delete(c context.Context, objectId string, blockID, index uint64) error {
-	log.FromContext(c).Debugf("[localObjectStorage.Delete] objectID: %s, blockID : %d, index: %d", objectId, blockID, index)
-	key := s.makeKey(objectId, blockID, index)
+func (s *localObjectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error {
+	log.FromContext(c).Debugf("[localObjectStorage.Delete] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	key := s.makeKey(objectID, blockID, index)
 	delete(s.storage, key)
 	return nil
 }
 
-func (s *localObjectStorage) makeKey(objectId string, blockID, index uint64) string {
-	return objectId + ":" + strconv.FormatUint(blockID, 10) + ":" + strconv.FormatUint(index, 10)
+func (s *localObjectStorage) makeKey(objectID entity.ObjectID, blockID entity.BlockID, index uint64) string {
+	return objectID.String() + ":" + blockID.String() + ":" + strconv.FormatUint(index, 10)
 }

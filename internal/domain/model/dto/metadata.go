@@ -31,14 +31,14 @@ import (
 )
 
 type Metadata struct {
-	ID         uint64    `json:"id"`
-	Group      string    `json:"group"`
-	Partition  string    `json:"partition"`
-	Name       string    `json:"name"`
-	Path       string    `json:"path"`
-	Size       uint64    `json:"size"`
-	CreatedAt  time.Time `json:"created_at"`
-	ModifiedAt time.Time `json:"modified_at"`
+	ID         entity.ObjectID `json:"id"`
+	Group      string          `json:"group"`
+	Partition  string          `json:"partition"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Size       uint64          `json:"size"`
+	CreatedAt  time.Time       `json:"created_at"`
+	ModifiedAt time.Time       `json:"modified_at"`
 }
 
 func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
@@ -62,7 +62,7 @@ func NewMetadataFromMessage(m *message.Metadata) Metadata {
 		return Metadata{}
 	}
 	return Metadata{
-		ID:        m.GetId().Id,
+		ID:        entity.ObjectID(m.GetId().Id),
 		Group:     m.Group,
 		Partition: m.Partition,
 		Name:      m.Name,

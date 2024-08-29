@@ -75,10 +75,10 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return fmt.Errorf("object already exist")
 	}
 
-	id, err := s.explorerService.GenerateNewObjectID(c)
-	if err != nil {
-		return err
-	}
+	// _, err := s.explorerService.GenerateNewObjectID(c)
+	// if err != nil {
+	// 	return err
+	// }
 
 	metadataBuilder := entity.NewObjectMetadataBuilder()
 	metadataBuilder.
@@ -88,7 +88,7 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		Path(req.Path).
 		Size(req.Size)
 
-	totalReadSize := uint64(0)
+	var totalReadSize uint64
 	for {
 		buf := make([]byte, 4096)
 		n, err := bodyStream.Read(buf)
@@ -102,10 +102,13 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 
 		// need data handling
 		totalReadSize += uint64(n)
-		log.FromContext(c).Debugf("[uploader.chunkedUpload] Read %d bytes\n", n)
+		if totalReadSize >= entity.BlockSize {
+
+			totalReadSize = 0
+		}
 	}
 
-	object := entity.NewObject(id, nil, metadataBuilder.Build())
+	object := entity.NewObject(metadataBuilder.Build(), nil)
 	if err := s.explorerService.UpsertObjectMetadata(c, object); err != nil {
 		return err
 	}

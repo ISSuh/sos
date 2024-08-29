@@ -84,7 +84,9 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *message.Metad
 	}
 
 	return &message.Metadata{
-		Id:        &message.ObjectID{Id: metadata.ID()},
+		Id: &message.ObjectID{
+			Id: metadata.ID().ToUint64(),
+		},
 		Name:      metadata.Name(),
 		Group:     metadata.Group(),
 		Partition: metadata.Partition(),

@@ -20,24 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package repository
+package entity
 
-import (
-	"context"
+import "strconv"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-)
+type ObjectID uint64
 
-type ObjectStorage interface {
-	Put(c context.Context, block entity.Block) error
+func (i ObjectID) ToUint64() uint64 {
+	return uint64(i)
+}
 
-	GetBlock(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
-	) (entity.Block, error)
-
-	GetBlockHeader(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
-	) (entity.BlockHeader, error)
-
-	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error
+func (i ObjectID) String() string {
+	return strconv.FormatUint(i.ToUint64(), 10)
 }

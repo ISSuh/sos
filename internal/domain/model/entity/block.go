@@ -22,6 +22,10 @@
 
 package entity
 
+const (
+	BlockSize = 4 * 1024 * 1024
+)
+
 type Block struct {
 	id     uint64
 	header BlockHeader

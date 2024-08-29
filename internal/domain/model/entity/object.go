@@ -23,23 +23,21 @@
 package entity
 
 type Object struct {
-	id       uint64
-	blocks   Blocks
 	metadata ObjectMetadata
+	blocks   Blocks
 
 	ModifiedTime
 }
 
-func NewObject(id uint64, blocks Blocks, metadata ObjectMetadata) Object {
+func NewObject(metadata ObjectMetadata, blocks Blocks) Object {
 	return Object{
-		id:       id,
 		blocks:   blocks,
 		metadata: metadata,
 	}
 }
 
-func (e Object) ID() uint64 {
-	return e.id
+func (e Object) ID() ObjectID {
+	return e.metadata.ID()
 }
 
 func (e Object) Blocks() Blocks {

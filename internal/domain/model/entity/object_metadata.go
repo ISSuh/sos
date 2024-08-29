@@ -23,7 +23,7 @@
 package entity
 
 type ObjectMetadata struct {
-	id        uint64
+	id        ObjectID
 	group     string
 	partition string
 	name      string
@@ -37,7 +37,7 @@ func NewEmptyObjectMetadata() ObjectMetadata {
 	return ObjectMetadata{}
 }
 
-func (e ObjectMetadata) ID() uint64 {
+func (e ObjectMetadata) ID() ObjectID {
 	return e.id
 }
 
@@ -66,7 +66,7 @@ func (e ObjectMetadata) IsEmpty() bool {
 }
 
 type ObjectMetadataBuilder struct {
-	id        uint64
+	id        ObjectID
 	group     string
 	partition string
 	name      string
@@ -79,7 +79,7 @@ func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
 }
 
 func (b *ObjectMetadataBuilder) ID(id uint64) *ObjectMetadataBuilder {
-	b.id = id
+	b.id = ObjectID(id)
 	return b
 }
 

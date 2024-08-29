@@ -98,7 +98,9 @@ func (s *explorer) GenerateNewObjectID(c context.Context) (uint64, error) {
 func (s *explorer) UpsertObjectMetadata(c context.Context, object entity.Object) error {
 	metadata := object.Metadata()
 	message := &message.Metadata{
-		Id:        &message.ObjectID{Id: metadata.ID()},
+		Id: &message.ObjectID{
+			Id: metadata.ID().ToUint64(),
+		},
 		Group:     metadata.Group(),
 		Partition: metadata.Partition(),
 		Path:      metadata.Path(),

@@ -20,24 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package repository
+package size
 
-import (
-	"context"
-
-	"github.com/ISSuh/sos/internal/domain/model/entity"
+const (
+	_          = iota
+	KB float64 = 1 << (10 * iota)
+	MB
+	GB
+	TB
+	PB
+	EB
+	ZB
+	YB
 )
-
-type ObjectStorage interface {
-	Put(c context.Context, block entity.Block) error
-
-	GetBlock(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
-	) (entity.Block, error)
-
-	GetBlockHeader(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
-	) (entity.BlockHeader, error)
-
-	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error
-}
