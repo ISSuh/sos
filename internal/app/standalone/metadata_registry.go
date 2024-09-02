@@ -27,6 +27,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
@@ -52,14 +53,14 @@ func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (r
 	}, nil
 }
 
-func (s *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+func (s *metadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
 	d := dto.Request{
-		ID:        metadata.GetId().Id,
+		ObjectID:  entity.NewObjectIDFrom(metadata.GetId().Id),
 		Name:      metadata.GetName(),
 		Group:     metadata.GetGroup(),
 		Partition: metadata.GetPartition(),
 		Path:      metadata.GetPath(),
-		Size:      metadata.GetSize(),
+		Size:      int(metadata.GetSize()),
 	}
 
 	err := s.objectMetadata.Create(c, d)
@@ -70,7 +71,7 @@ func (s *metadataRegistry) Create(c context.Context, metadata *message.Metadata)
 	return metadata, nil
 }
 
-func (s *metadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error) {
+func (s *metadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
 	d := dto.Request{
 		Group:     req.GetGroup(),
 		Partition: req.GetPartition(),
@@ -83,22 +84,14 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *message.Metad
 		return nil, err
 	}
 
-	return &message.Metadata{
+	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
-			Id: metadata.ID().ToUint64(),
+			Id: metadata.ID().ToInt64(),
 		},
 		Name:      metadata.Name(),
 		Group:     metadata.Group(),
 		Partition: metadata.Partition(),
 		Path:      metadata.Path(),
-		Size:      metadata.Size(),
+		Size:      int32(metadata.Size()),
 	}, nil
-}
-
-func (s *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	id, err := s.objectMetadata.GenerateNewObjectID(c)
-	if err != nil {
-		return nil, err
-	}
-	return &message.ObjectID{Id: id}, nil
 }

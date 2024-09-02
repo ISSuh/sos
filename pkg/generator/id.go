@@ -20,68 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package generator
 
-const (
-	BlockSize = 4 * 1024 * 1024
+import (
+	"sync"
+
+	"github.com/bwmarrin/snowflake"
 )
 
-type Block struct {
-	header BlockHeader
-	buffer []byte
+var instance *identifier
 
-	ModifiedTime
+type identifier struct {
+	node *snowflake.Node
 }
 
-type Blocks []Block
+func InitIdentifier(nodeID int64) {
+	var once sync.Once
+	once.Do(func() {
+		node, err := snowflake.NewNode(nodeID)
+		if err != nil {
+			panic(err)
+		}
 
-func (b *Block) ObjectID() ObjectID {
-	return b.header.ObjectID()
+		instance = &identifier{
+			node: node,
+		}
+	})
 }
 
-func (b *Block) BlockID() BlockID {
-	return b.header.BlockID()
+func ID() *identifier {
+	return instance
 }
 
-func (b *Block) Header() BlockHeader {
-	return b.header
-}
-
-func (b *Block) Buffer() []byte {
-	return b.buffer
-}
-
-type BlockBuilder struct {
-	header BlockHeader
-	buffer []byte
-}
-
-func NewBlockBuilder() *BlockBuilder {
-	return &BlockBuilder{}
-}
-
-func (b *BlockBuilder) Header(header BlockHeader) *BlockBuilder {
-	b.header = header
-	return b
-}
-
-func (b *BlockBuilder) Buffer(buffer []byte) *BlockBuilder {
-	b.buffer = buffer
-	return b
-}
-
-func (b *BlockBuilder) AppendBuffer(buffer []byte) *BlockBuilder {
-	b.buffer = append(b.buffer, buffer...)
-	return b
-}
-
-func (b *BlockBuilder) BufferSize() int {
-	return len(b.buffer)
-}
-
-func (b *BlockBuilder) Build() Block {
-	return Block{
-		header: b.header,
-		buffer: b.buffer,
-	}
+func (i *identifier) Generate() int64 {
+	return i.node.Generate().Int64()
 }

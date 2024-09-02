@@ -29,6 +29,7 @@ import (
 	"strconv"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -79,7 +80,13 @@ func ParseObjectIDParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 		}
 
 		req := dto.RequestFromContext(r.Context(), http.RequestContextKey)
-		req.ObjectID = objectID
+
+		id, err := strconv.ParseInt(objectID, 10, 64)
+		if err != nil {
+			return
+		}
+
+		req.ObjectID = entity.NewObjectIDFrom(id)
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -98,7 +105,7 @@ func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 		}
 
 		sizeStr := r.URL.Query().Get(http.ObjectSizeName)
-		size, err := strconv.ParseUint(sizeStr, 10, 64)
+		size, err := strconv.Atoi(sizeStr)
 		if err != nil {
 			return
 		}

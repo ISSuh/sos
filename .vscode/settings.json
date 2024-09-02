@@ -11,13 +11,14 @@
     "rpchandler",
     "regist",
     "alexflint",
-    "Upsert"
+    "Upsert",
+    "bwmarrin",
+    "blockheaders",
   ],
 
   "protoc": {
     "options": [
         "--proto_path=${workspaceFolder}/internal",
-        "--proto_path=${workspaceFolder}/internal/domain/model/message",
     ]
   }
 }

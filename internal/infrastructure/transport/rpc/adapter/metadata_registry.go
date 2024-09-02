@@ -30,7 +30,6 @@ import (
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
-	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type MetadataRegistry struct {
@@ -49,16 +48,12 @@ func NewMetadataRegistry(handler rpc.MetadataRegistryHandler) (rpc.Adapter, erro
 	}, nil
 }
 
-func (a *MetadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+func (a *MetadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
 	return a.handler.Create(c, metadata)
 }
 
-func (a *MetadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error) {
+func (a *MetadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
 	return a.handler.GetByObjectName(c, req)
-}
-
-func (a *MetadataRegistry) GenerateNewObjectID(c context.Context, _ *empty.Empty) (*message.ObjectID, error) {
-	return a.handler.GenerateNewObjectID(c)
 }
 
 func (a *MetadataRegistry) Regist() sosrpc.RegisterFunc {

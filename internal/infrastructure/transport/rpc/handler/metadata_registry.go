@@ -51,21 +51,16 @@ func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (r
 	}, nil
 }
 
-func (h *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+func (h *metadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
-	return &message.Metadata{}, nil
+	return &message.ObjectMetadata{}, nil
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.Metadata, error) {
+func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
-	return &message.Metadata{
+	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
 			Id: 1,
 		},
 	}, nil
-}
-
-func (h *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	return &message.ObjectID{}, nil
 }

@@ -28,7 +28,8 @@ type ObjectMetadata struct {
 	partition string
 	name      string
 	path      string
-	size      uint64
+	size      int
+	node      Node
 
 	ModifiedTime
 }
@@ -57,8 +58,12 @@ func (e ObjectMetadata) Path() string {
 	return e.path
 }
 
-func (e ObjectMetadata) Size() uint64 {
+func (e ObjectMetadata) Size() int {
 	return e.size
+}
+
+func (e ObjectMetadata) Node() Node {
+	return e.node
 }
 
 func (e ObjectMetadata) IsEmpty() bool {
@@ -71,15 +76,16 @@ type ObjectMetadataBuilder struct {
 	partition string
 	name      string
 	path      string
-	size      uint64
+	size      int
+	node      Node
 }
 
 func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
 	return &ObjectMetadataBuilder{}
 }
 
-func (b *ObjectMetadataBuilder) ID(id uint64) *ObjectMetadataBuilder {
-	b.id = ObjectID(id)
+func (b *ObjectMetadataBuilder) ID(id ObjectID) *ObjectMetadataBuilder {
+	b.id = id
 	return b
 }
 
@@ -103,8 +109,13 @@ func (b *ObjectMetadataBuilder) Path(path string) *ObjectMetadataBuilder {
 	return b
 }
 
-func (b *ObjectMetadataBuilder) Size(size uint64) *ObjectMetadataBuilder {
+func (b *ObjectMetadataBuilder) Size(size int) *ObjectMetadataBuilder {
 	b.size = size
+	return b
+}
+
+func (b *ObjectMetadataBuilder) Node(node Node) *ObjectMetadataBuilder {
+	b.node = node
 	return b
 }
 
@@ -116,5 +127,6 @@ func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 		name:      b.name,
 		path:      b.path,
 		size:      b.size,
+		node:      b.node,
 	}
 }

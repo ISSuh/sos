@@ -36,7 +36,7 @@ type Metadata struct {
 	Partition  string          `json:"partition"`
 	Name       string          `json:"name"`
 	Path       string          `json:"path"`
-	Size       uint64          `json:"size"`
+	Size       int             `json:"size"`
 	CreatedAt  time.Time       `json:"created_at"`
 	ModifiedAt time.Time       `json:"modified_at"`
 }
@@ -54,7 +54,7 @@ func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
 	}
 }
 
-func NewMetadataFromMessage(m *message.Metadata) Metadata {
+func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 	switch {
 	case validation.IsNil(m):
 		return Metadata{}
@@ -67,7 +67,7 @@ func NewMetadataFromMessage(m *message.Metadata) Metadata {
 		Partition: m.Partition,
 		Name:      m.Name,
 		Path:      m.Path,
-		Size:      m.Size,
+		Size:      int(m.GetSize()),
 		// CreatedAt:  m.CreatedAt,
 		// ModifiedAt: m.ModifiedAt,
 	}

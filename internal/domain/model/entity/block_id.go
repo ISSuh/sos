@@ -22,14 +22,22 @@
 
 package entity
 
-import "strconv"
+import (
+	"strconv"
 
-type BlockID uint64
+	"github.com/ISSuh/sos/pkg/generator"
+)
 
-func (i BlockID) ToUint64() uint64 {
-	return uint64(i)
+type BlockID int64
+
+func NewBlockID() BlockID {
+	return BlockID(generator.ID().Generate())
+}
+
+func (i BlockID) ToInt64() int64 {
+	return int64(i)
 }
 
 func (i BlockID) String() string {
-	return strconv.FormatUint(i.ToUint64(), 10)
+	return strconv.FormatInt(i.ToInt64(), 10)
 }

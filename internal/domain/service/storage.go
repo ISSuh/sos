@@ -36,14 +36,14 @@ type ObjectStorage interface {
 	Put(c context.Context, block entity.Block) error
 
 	GetBlock(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
 	) (entity.Block, error)
 
 	GetBlockHeader(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
 	) (entity.BlockHeader, error)
 
-	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error
+	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error
 }
 
 type objectStorage struct {
@@ -75,7 +75,7 @@ func (s *objectStorage) Put(c context.Context, block entity.Block) error {
 	return nil
 }
 
-func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.Block, error) {
+func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.Block, error) {
 	block, err := s.storageRepository.GetBlock(c, objectID, blockID, index)
 	if err != nil {
 		return entity.Block{}, err
@@ -83,7 +83,7 @@ func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, bl
 	return block, nil
 }
 
-func (s *objectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) (entity.BlockHeader, error) {
+func (s *objectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.BlockHeader, error) {
 	header, err := s.storageRepository.GetBlockHeader(c, objectID, blockID, index)
 	if err != nil {
 		return entity.BlockHeader{}, err
@@ -91,7 +91,7 @@ func (s *objectStorage) GetBlockHeader(c context.Context, objectID entity.Object
 	return header, nil
 }
 
-func (s *objectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error {
+func (s *objectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error {
 	if err := s.storageRepository.Delete(c, objectID, blockID, index); err != nil {
 		return err
 	}

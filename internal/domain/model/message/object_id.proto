@@ -4,9 +4,6 @@ package message;
 
 option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
 
-import "domain/model/message/block_header.proto";
-
-message Block {
-    BlockHeader header = 1;
-    bytes data = 2;
+message ObjectID {
+    int64 id = 1;
 }

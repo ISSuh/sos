@@ -37,7 +37,6 @@ import (
 type Explorer interface {
 	FindObjectMetadata(c context.Context, req dto.Request) (dto.Metadata, error)
 	IsObjectExist(c context.Context, req dto.Request) (bool, error)
-	GenerateNewObjectID(c context.Context) (uint64, error)
 	UpsertObjectMetadata(c context.Context, object entity.Object) error
 }
 
@@ -87,25 +86,17 @@ func (s *explorer) IsObjectExist(c context.Context, req dto.Request) (bool, erro
 	return !metadata.IsEmpty(), nil
 }
 
-func (s *explorer) GenerateNewObjectID(c context.Context) (uint64, error) {
-	id, err := s.metadataRequestor.GenerateNewObjectID(c)
-	if err != nil {
-		return 0, err
-	}
-	return id.GetId(), nil
-}
-
 func (s *explorer) UpsertObjectMetadata(c context.Context, object entity.Object) error {
 	metadata := object.Metadata()
-	message := &message.Metadata{
+	message := &message.ObjectMetadata{
 		Id: &message.ObjectID{
-			Id: metadata.ID().ToUint64(),
+			Id: metadata.ID().ToInt64(),
 		},
 		Group:     metadata.Group(),
 		Partition: metadata.Partition(),
 		Path:      metadata.Path(),
 		Name:      metadata.Name(),
-		Size:      metadata.Size(),
+		Size:      int32(metadata.Size()),
 	}
 
 	if _, err := s.metadataRequestor.Create(c, message); err != nil {

@@ -29,13 +29,11 @@ import (
 )
 
 type MetadataRegistryHandler interface {
-	Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error)
-	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error)
-	GenerateNewObjectID(c context.Context) (*message.ObjectID, error)
+	Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error)
+	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.ObjectMetadata, error)
 }
 
 type MetadataRegistryRequestor interface {
-	Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error)
-	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.Metadata, error)
-	GenerateNewObjectID(c context.Context) (*message.ObjectID, error)
+	Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error)
+	GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.ObjectMetadata, error)
 }

@@ -23,16 +23,16 @@
 package entity
 
 type Object struct {
-	metadata ObjectMetadata
-	blocks   Blocks
+	metadata     ObjectMetadata
+	blockHeaders BlockHeaders
 
 	ModifiedTime
 }
 
-func NewObject(metadata ObjectMetadata, blocks Blocks) Object {
+func NewObject(metadata ObjectMetadata, blockHeaders BlockHeaders) Object {
 	return Object{
-		blocks:   blocks,
-		metadata: metadata,
+		blockHeaders: blockHeaders,
+		metadata:     metadata,
 	}
 }
 
@@ -40,8 +40,8 @@ func (e Object) ID() ObjectID {
 	return e.metadata.ID()
 }
 
-func (e Object) Blocks() Blocks {
-	return e.blocks
+func (e Object) BlocksHeaders() BlockHeaders {
+	return e.blockHeaders
 }
 
 func (e Object) Metadata() ObjectMetadata {

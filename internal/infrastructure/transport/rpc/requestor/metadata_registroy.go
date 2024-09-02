@@ -29,7 +29,6 @@ import (
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
 	sosrpc "github.com/ISSuh/sos/pkg/rpc"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type metadataRegistry struct {
@@ -49,18 +48,12 @@ func NewMetadataRegistry(l log.Logger, address string) (rpc.MetadataRegistryRequ
 	}, nil
 }
 
-func (r *metadataRegistry) Create(c context.Context, metadata *message.Metadata) (*message.Metadata, error) {
+func (r *metadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
 	return r.engine.Create(c, metadata)
 }
 
-func (r *metadataRegistry) GetByObjectName(c context.Context, metadata *message.MetadataFindRequest) (*message.Metadata, error) {
+func (r *metadataRegistry) GetByObjectName(c context.Context, metadata *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
 	return r.engine.GetByObjectName(c, metadata)
-}
-
-func (r *metadataRegistry) GenerateNewObjectID(c context.Context) (*message.ObjectID, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.GenerateNewObjectID]")
-	e := emptypb.Empty{}
-	return r.engine.GenerateNewObjectID(c, &e)
 }

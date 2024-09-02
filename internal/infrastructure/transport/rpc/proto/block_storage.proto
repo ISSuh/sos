@@ -4,6 +4,7 @@ package rpc;
 option go_package = "github.com/ISSuh/sos/internal/infrastructure/transport/rpc";
 
 import "domain/model/message/block.proto";
+import "domain/model/message/block_header.proto";
 
 message StorageResponse {
   bool result = 1;

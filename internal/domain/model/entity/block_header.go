@@ -24,11 +24,13 @@ package entity
 
 import "time"
 
+type BlockHeaders []BlockHeader
+
 type BlockHeader struct {
-	id        BlockID
+	blockID   BlockID
 	objectID  ObjectID
-	index     uint64
-	size      uint32
+	index     int
+	size      int
 	node      Node
 	timestamp time.Time
 	checksum  string
@@ -38,19 +40,19 @@ func NewEmptyBlockHeader() BlockHeader {
 	return BlockHeader{}
 }
 
-func (b *BlockHeader) ID() BlockID {
-	return b.id
+func (b *BlockHeader) BlockID() BlockID {
+	return b.blockID
 }
 
 func (b *BlockHeader) ObjectID() ObjectID {
 	return b.objectID
 }
 
-func (b *BlockHeader) Index() uint64 {
+func (b *BlockHeader) Index() int {
 	return b.index
 }
 
-func (b *BlockHeader) Size() uint32 {
+func (b *BlockHeader) Size() int {
 	return b.size
 }
 
@@ -67,5 +69,63 @@ func (b *BlockHeader) Checksum() string {
 }
 
 func (b *BlockHeader) IsEmpty() bool {
-	return b.id == 0
+	return b.blockID == 0
+}
+
+type BlockHeaderBuilder struct {
+	blockID   BlockID
+	objectID  ObjectID
+	index     int
+	size      int
+	node      Node
+	timestamp time.Time
+	checksum  string
+}
+
+func NewBlockHeaderBuilder(objectID ObjectID) *BlockHeaderBuilder {
+	return &BlockHeaderBuilder{
+		objectID: objectID,
+	}
+}
+
+func (b *BlockHeaderBuilder) BlockID(blockID BlockID) *BlockHeaderBuilder {
+	b.blockID = blockID
+	return b
+}
+
+func (b *BlockHeaderBuilder) Index(index int) *BlockHeaderBuilder {
+	b.index = index
+	return b
+}
+
+func (b *BlockHeaderBuilder) Size(size int) *BlockHeaderBuilder {
+	b.size = size
+	return b
+}
+
+func (b *BlockHeaderBuilder) Node(node Node) *BlockHeaderBuilder {
+	b.node = node
+	return b
+}
+
+func (b *BlockHeaderBuilder) Timestamp(timestamp time.Time) *BlockHeaderBuilder {
+	b.timestamp = timestamp
+	return b
+}
+
+func (b *BlockHeaderBuilder) Checksum(checksum string) *BlockHeaderBuilder {
+	b.checksum = checksum
+	return b
+}
+
+func (b *BlockHeaderBuilder) Build() BlockHeader {
+	return BlockHeader{
+		blockID:   b.blockID,
+		objectID:  b.objectID,
+		index:     b.index,
+		size:      b.size,
+		node:      b.node,
+		timestamp: b.timestamp,
+		checksum:  b.checksum,
+	}
 }

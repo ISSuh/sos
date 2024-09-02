@@ -3,12 +3,9 @@ syntax = "proto3";
 package rpc;
 option go_package = "github.com/ISSuh/sos/internal/infrastructure/transport/rpc";
 
-import "google/protobuf/empty.proto";
-import "domain/model/message/metadata.proto";
-import "domain/model/message/object.proto";
+import "domain/model/message/object_metadata.proto";
 
 service MetadataRegistry {
-  rpc Create(message.Metadata) returns (message.Metadata) {}
-  rpc GetByObjectName(message.MetadataFindRequest) returns (message.Metadata) {}
-  rpc GenerateNewObjectID(google.protobuf.Empty) returns (message.ObjectID) {}
+  rpc Create(message.ObjectMetadata) returns (message.ObjectMetadata) {}
+  rpc GetByObjectName(message.MetadataFindRequest) returns (message.ObjectMetadata) {}
 }

@@ -32,12 +32,12 @@ type ObjectStorage interface {
 	Put(c context.Context, block entity.Block) error
 
 	GetBlock(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
 	) (entity.Block, error)
 
 	GetBlockHeader(
-		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64,
+		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
 	) (entity.BlockHeader, error)
 
-	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index uint64) error
+	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error
 }

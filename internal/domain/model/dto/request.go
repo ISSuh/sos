@@ -22,16 +22,19 @@
 
 package dto
 
-import "context"
+import (
+	"context"
+
+	"github.com/ISSuh/sos/internal/domain/model/entity"
+)
 
 type Request struct {
-	ID        uint64
+	ObjectID  entity.ObjectID
 	Group     string
 	Partition string
 	Path      string
-	ObjectID  string
 	Name      string
-	Size      uint64
+	Size      int
 	ChunkSize uint64
 }
 

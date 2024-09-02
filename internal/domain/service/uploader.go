@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/entity"
@@ -75,13 +76,10 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return fmt.Errorf("object already exist")
 	}
 
-	// _, err := s.explorerService.GenerateNewObjectID(c)
-	// if err != nil {
-	// 	return err
-	// }
-
+	objectID := entity.NewObjectID()
 	metadataBuilder := entity.NewObjectMetadataBuilder()
 	metadataBuilder.
+		ID(objectID).
 		Group(req.Group).
 		Partition(req.Partition).
 		Name(req.Name).
@@ -89,6 +87,9 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		Size(req.Size)
 
 	var totalReadSize uint64
+	var blockheaders entity.BlockHeaders
+	blockBuilder := entity.NewBlockBuilder()
+	blockIndex := 0
 	for {
 		buf := make([]byte, 4096)
 		n, err := bodyStream.Read(buf)
@@ -97,21 +98,51 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		}
 
 		if n == 0 {
+			block := s.buildBlock(objectID, blockIndex, blockBuilder)
+			log.FromContext(c).Infof("block: %v", block)
+
+			blockheaders = append(blockheaders, block.Header())
+
 			break
 		}
 
 		// need data handling
 		totalReadSize += uint64(n)
 		if totalReadSize >= entity.BlockSize {
+			block := s.buildBlock(objectID, blockIndex, blockBuilder)
+			log.FromContext(c).Infof("block: %v", block)
 
+			blockheaders = append(blockheaders, block.Header())
+
+			blockBuilder = entity.NewBlockBuilder()
+			blockIndex++
 			totalReadSize = 0
 		}
+
+		blockBuilder.AppendBuffer(buf)
 	}
 
-	object := entity.NewObject(metadataBuilder.Build(), nil)
+	metadata := metadataBuilder.Build()
+	object := entity.NewObject(metadata, blockheaders)
 	if err := s.explorerService.UpsertObjectMetadata(c, object); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder *entity.BlockBuilder) entity.Block {
+	blockerHeaderBuilder := entity.NewBlockHeaderBuilder(objectID)
+	blockerHeaderBuilder.
+		BlockID(entity.NewBlockID()).
+		Index(index).
+		Size(blockBuilder.BufferSize()).
+		Node(entity.Node{}).
+		Timestamp(time.Now()).
+		Checksum("")
+
+	blockHeader := blockerHeaderBuilder.Build()
+
+	blockBuilder.Header(blockHeader)
+	return blockBuilder.Build()
 }
