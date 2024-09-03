@@ -22,6 +22,11 @@
 
 package entity
 
+import (
+	"crypto/md5"
+	"encoding/hex"
+)
+
 const (
 	BlockSize = 4 * 1024 * 1024
 )
@@ -77,6 +82,11 @@ func (b *BlockBuilder) AppendBuffer(buffer []byte) *BlockBuilder {
 
 func (b *BlockBuilder) BufferSize() int {
 	return len(b.buffer)
+}
+
+func (b *BlockBuilder) CalculateChecksum() string {
+	checksum := md5.Sum(b.buffer)
+	return hex.EncodeToString(checksum[:])
 }
 
 func (b *BlockBuilder) Build() Block {

@@ -99,10 +99,7 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 
 		if n == 0 {
 			block := s.buildBlock(objectID, blockIndex, blockBuilder)
-			log.FromContext(c).Infof("block: %v", block)
-
 			blockheaders = append(blockheaders, block.Header())
-
 			break
 		}
 
@@ -110,7 +107,6 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		totalReadSize += uint64(n)
 		if totalReadSize >= entity.BlockSize {
 			block := s.buildBlock(objectID, blockIndex, blockBuilder)
-			log.FromContext(c).Infof("block: %v", block)
 
 			blockheaders = append(blockheaders, block.Header())
 
@@ -132,6 +128,8 @@ func (s *uploader) Upload(c context.Context, req dto.Request, bodyStream io.Read
 }
 
 func (s *uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder *entity.BlockBuilder) entity.Block {
+	c := blockBuilder.CalculateChecksum()
+
 	blockerHeaderBuilder := entity.NewBlockHeaderBuilder(objectID)
 	blockerHeaderBuilder.
 		BlockID(entity.NewBlockID()).
@@ -139,7 +137,7 @@ func (s *uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder 
 		Size(blockBuilder.BufferSize()).
 		Node(entity.Node{}).
 		Timestamp(time.Now()).
-		Checksum("")
+		Checksum(c)
 
 	blockHeader := blockerHeaderBuilder.Build()
 
