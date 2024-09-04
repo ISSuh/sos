@@ -30,6 +30,7 @@ import (
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
+type MetadataList []Metadata
 type Metadata struct {
 	ID         entity.ObjectID `json:"id"`
 	Group      string          `json:"group"`
@@ -41,8 +42,8 @@ type Metadata struct {
 	ModifiedAt time.Time       `json:"modified_at"`
 }
 
-func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
-	return &Metadata{
+func NewMetadataFromModel(m *entity.ObjectMetadata) Metadata {
+	return Metadata{
 		ID:         m.ID(),
 		Group:      m.Group(),
 		Partition:  m.Partition(),

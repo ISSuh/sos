@@ -38,6 +38,10 @@ func NewObjectIDFrom(value int64) ObjectID {
 	return ObjectID(value)
 }
 
+func (i ObjectID) IsValid() bool {
+	return i.ToInt64() > 0
+}
+
 func (i ObjectID) ToInt64() int64 {
 	return int64(i)
 }

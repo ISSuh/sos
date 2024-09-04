@@ -23,35 +23,21 @@
 package factory
 
 import (
-	"fmt"
-
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
 	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
-	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/validation"
 )
 
-func NewObjectMetadataRepository(l log.Logger) (repository.ObjectMetadata, error) {
-	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
-	}
-
-	objectMetadata, err := database.NewLocalObjectMetadata(l)
+func NewObjectMetadataRepository() (repository.ObjectMetadata, error) {
+	objectMetadata, err := database.NewLocalObjectMetadata()
 	if err != nil {
 		return nil, err
 	}
 	return objectMetadata, nil
 }
 
-func NewObjectStorageRepository(l log.Logger) (repository.ObjectStorage, error) {
-	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
-	}
-
-	objectStorage, err := objectstorage.NewLocalObjectStorage(l)
+func NewObjectStorageRepository() (repository.ObjectStorage, error) {
+	objectStorage, err := objectstorage.NewLocalObjectStorage()
 	if err != nil {
 		return nil, err
 	}

@@ -22,14 +22,17 @@
 
 package entity
 
+type ObjectMetadataList []ObjectMetadata
+
 type ObjectMetadata struct {
-	id        ObjectID
-	group     string
-	partition string
-	name      string
-	path      string
-	size      int
-	node      Node
+	id           ObjectID
+	group        string
+	partition    string
+	name         string
+	path         string
+	size         int
+	node         Node
+	blockHeaders BlockHeaders
 
 	ModifiedTime
 }
@@ -66,18 +69,23 @@ func (e ObjectMetadata) Node() Node {
 	return e.node
 }
 
+func (e ObjectMetadata) BlockHeaders() BlockHeaders {
+	return e.blockHeaders
+}
+
 func (e ObjectMetadata) IsEmpty() bool {
-	return e == ObjectMetadata{}
+	return e.id.IsValid()
 }
 
 type ObjectMetadataBuilder struct {
-	id        ObjectID
-	group     string
-	partition string
-	name      string
-	path      string
-	size      int
-	node      Node
+	id           ObjectID
+	group        string
+	partition    string
+	name         string
+	path         string
+	size         int
+	node         Node
+	blockHeaders BlockHeaders
 }
 
 func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
@@ -119,14 +127,20 @@ func (b *ObjectMetadataBuilder) Node(node Node) *ObjectMetadataBuilder {
 	return b
 }
 
+func (b *ObjectMetadataBuilder) BlockHeaders(blockHeaders BlockHeaders) *ObjectMetadataBuilder {
+	b.blockHeaders = blockHeaders
+	return b
+}
+
 func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 	return ObjectMetadata{
-		id:        b.id,
-		group:     b.group,
-		partition: b.partition,
-		name:      b.name,
-		path:      b.path,
-		size:      b.size,
-		node:      b.node,
+		id:           b.id,
+		group:        b.group,
+		partition:    b.partition,
+		name:         b.name,
+		path:         b.path,
+		size:         b.size,
+		node:         b.node,
+		blockHeaders: b.blockHeaders,
 	}
 }

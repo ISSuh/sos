@@ -27,28 +27,23 @@ import (
 
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/requestor"
-	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-func NewMetadataRegistryRequestor(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
+func NewMetadataRegistryRequestor(address string) (rpc.MetadataRegistryRequestor, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
 	case validation.IsEmpty(address):
 		return nil, fmt.Errorf("address is empty")
 	}
 
-	return requestor.NewMetadataRegistry(l, address)
+	return requestor.NewMetadataRegistry(address)
 }
 
-func NewBlockStorageRequestor(l log.Logger, address string) (rpc.BlockStorageRequestor, error) {
+func NewBlockStorageRequestor(address string) (rpc.BlockStorageRequestor, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
 	case validation.IsEmpty(address):
 		return nil, fmt.Errorf("address is empty")
 	}
 
-	return requestor.NewBlockStorage(l, address)
+	return requestor.NewBlockStorage(address)
 }

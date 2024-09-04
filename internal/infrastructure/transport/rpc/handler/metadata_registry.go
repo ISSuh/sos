@@ -34,33 +34,40 @@ import (
 )
 
 type metadataRegistry struct {
-	logger log.Logger
-
 	objectMetadata service.ObjectMetadata
 }
 
-func NewMetadataRegistry(l log.Logger, objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryHandler, error) {
+func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataRegistryHandler, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(objectMetadata):
+		return nil, fmt.Errorf("ObjectMetadata service is nil")
 	}
 
 	return &metadataRegistry{
-		logger:         l,
 		objectMetadata: objectMetadata,
 	}, nil
 }
 
-func (h *metadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
+func (h *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
 	return &message.ObjectMetadata{}, nil
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, msg *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
+func (h *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
+	return true, nil
+}
+
+func (h *metadataRegistry) GetByObjectName(c context.Context, rew *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
 	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
 			Id: 1,
 		},
 	}, nil
+}
+
+func (h *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
+	return &rpc.ObjectMetadataList{}, nil
 }

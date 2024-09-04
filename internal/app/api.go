@@ -24,6 +24,7 @@ package app
 
 import (
 	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/factory"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/router"
 	"github.com/ISSuh/sos/pkg/http"
@@ -35,9 +36,6 @@ type Api struct {
 
 	config config.SosConfig
 	server http.Server
-
-	services *factory.APIServices
-	handlers *factory.RestHandlers
 }
 
 func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
@@ -58,39 +56,35 @@ func (a *Api) Run() error {
 }
 
 func (a *Api) init() error {
-	if err := a.initService(); err != nil {
-		return err
-	}
-
-	if err := a.initHandler(); err != nil {
-		return err
-	}
-
-	router.Route(a.logger, &a.server, a.handlers)
-	return nil
-}
-
-func (a *Api) initService() error {
-	metadataRequestor, err := factory.NewMetadataRegistryRequestor(a.logger, a.config.MetadataRegistry.Address.Host)
+	service, err := a.initService()
 	if err != nil {
 		return err
 	}
 
-	storageRequestor, err := factory.NewBlockStorageRequestor(a.logger, a.config.BlockStorage.Address.Host)
+	handler, err := factory.NewExplorerHandler(service)
 	if err != nil {
 		return err
 	}
 
-	if a.services, err = factory.NewAPIServices(a.logger, metadataRequestor, storageRequestor); err != nil {
-		return err
-	}
+	router.Route(a.logger, &a.server, handler)
 	return nil
 }
 
-func (a *Api) initHandler() error {
-	var err error
-	if a.handlers, err = factory.NewHandlers(a.logger, a.services); err != nil {
-		return err
+func (a *Api) initService() (service.Explorer, error) {
+	metadataRequestor, err := factory.NewMetadataRegistryRequestor(a.config.MetadataRegistry.Address.Host)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	storageRequestor, err := factory.NewBlockStorageRequestor(a.config.BlockStorage.Address.Host)
+	if err != nil {
+		return nil, err
+	}
+
+	explorer, err := factory.NewExplorerService(metadataRequestor, storageRequestor)
+	if err != nil {
+		return nil, err
+	}
+
+	return explorer, nil
 }

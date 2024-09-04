@@ -32,18 +32,16 @@ import (
 )
 
 type blockStorage struct {
-	logger log.Logger
 	engine rpc.BlockStorageClient
 }
 
-func NewBlockStorage(l log.Logger, address string) (rpc.BlockStorageRequestor, error) {
+func NewBlockStorage(address string) (rpc.BlockStorageRequestor, error) {
 	conn, err := sosrpc.NewClientConnection(address)
 	if err != nil {
 		return nil, err
 	}
 
 	return &blockStorage{
-		logger: l,
 		engine: rpc.NewBlockStorageClient(conn),
 	}, nil
 }

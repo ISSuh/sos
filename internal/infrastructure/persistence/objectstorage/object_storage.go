@@ -33,14 +33,11 @@ import (
 )
 
 type localObjectStorage struct {
-	logger log.Logger
-
 	storage map[string]entity.Block
 }
 
-func NewLocalObjectStorage(l log.Logger) (repository.ObjectStorage, error) {
+func NewLocalObjectStorage() (repository.ObjectStorage, error) {
 	return &localObjectStorage{
-			logger:  l,
 			storage: make(map[string]entity.Block),
 		},
 		nil

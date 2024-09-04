@@ -45,6 +45,10 @@ const (
 	ObjectNameQueryName = "name"
 	ObjectSizeQueryName = "size"
 	ChunkSizeQueryName  = "chunk_size"
+
+	ObjectNameHeader = "X-SOS-Object-Name"
+	ObjectSizeHeader = "X-SOS-Object-Size"
+	ChunkSizeHeader  = "X-SOS-Chunk-Size"
 )
 
 var args struct {

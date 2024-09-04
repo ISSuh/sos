@@ -117,6 +117,7 @@ func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 		}
 
 		req := dto.RequestFromContext(r.Context(), http.RequestContextKey)
+		req.Name = name
 		req.Size = size
 		req.ChunkSize = chunkSize
 

@@ -29,24 +29,20 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type blockStorage struct {
-	logger log.Logger
-
 	objectStorage service.ObjectStorage
 }
 
-func NewBlockStorage(l log.Logger, objectStorage service.ObjectStorage) (rpc.BlockStorageRequestor, error) {
+func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageRequestor, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(objectStorage):
+		return nil, fmt.Errorf("ObjectStorage service is nil")
 	}
 
 	return &blockStorage{
-		logger:        l,
 		objectStorage: objectStorage,
 	}, nil
 }

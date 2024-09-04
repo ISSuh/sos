@@ -28,7 +28,6 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -47,23 +46,16 @@ type ObjectStorage interface {
 }
 
 type objectStorage struct {
-	logger log.Logger
-
 	storageRepository repository.ObjectStorage
 }
 
-func NewObjectStorage(
-	l log.Logger, storageRepository repository.ObjectStorage,
-) (ObjectStorage, error) {
+func NewObjectStorage(storageRepository repository.ObjectStorage) (ObjectStorage, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(storageRepository):
 		return nil, fmt.Errorf("StorageRepository is nil")
 	}
 
 	return &objectStorage{
-		logger:            l,
 		storageRepository: storageRepository,
 	}, nil
 }

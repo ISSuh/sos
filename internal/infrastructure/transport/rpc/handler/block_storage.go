@@ -34,19 +34,16 @@ import (
 )
 
 type blockStorage struct {
-	logger log.Logger
-
 	objectStorage service.ObjectStorage
 }
 
-func NewBlockStorage(l log.Logger, objectStorage service.ObjectStorage) (rpc.BlockStorageHandler, error) {
+func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageHandler, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
+	case validation.IsNil(objectStorage):
+		return nil, fmt.Errorf("ObjectStorage service is nil")
 	}
 
 	return &blockStorage{
-		logger:        l,
 		objectStorage: objectStorage,
 	}, nil
 }

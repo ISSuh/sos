@@ -25,7 +25,7 @@ package router
 import (
 	gohttp "net/http"
 
-	"github.com/ISSuh/sos/internal/factory"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/middleware"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/log"
@@ -46,7 +46,7 @@ const (
 	URLObjectMetadataList = URLDefault + URLMetadata
 )
 
-func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
+func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 	s.Use(middleware.Recover)
 	s.Use(middleware.WithLog(logger))
 	s.Use(middleware.GenerateRequestID)
@@ -58,7 +58,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLDefault,
 			Method:  gohttp.MethodPost,
-			Handler: h.Uploader.Upload,
+			Handler: h.Upload,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseQueryParam,
 			},
@@ -67,7 +67,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLObject,
 			Method:  gohttp.MethodGet,
-			Handler: h.Downloader.Download,
+			Handler: h.Download,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -76,7 +76,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLObject,
 			Method:  gohttp.MethodPut,
-			Handler: h.Uploader.Update,
+			Handler: h.Update,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -85,7 +85,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLObject,
 			Method:  gohttp.MethodDelete,
-			Handler: h.Eraser.Delete,
+			Handler: h.Delete,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -94,7 +94,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLObjectMetadata,
 			Method:  gohttp.MethodGet,
-			Handler: h.Explorer.Find,
+			Handler: h.Find,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -103,7 +103,7 @@ func Route(logger log.Logger, s *http.Server, h *factory.RestHandlers) {
 		http.RouteItem{
 			URL:     URLDefault,
 			Method:  gohttp.MethodGet,
-			Handler: h.Explorer.List,
+			Handler: h.List,
 		},
 	}
 

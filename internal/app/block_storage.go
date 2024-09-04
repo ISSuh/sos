@@ -54,17 +54,17 @@ func (a *BlockStorage) Run() error {
 }
 
 func (a *BlockStorage) init() error {
-	repository, err := factory.NewObjectStorageRepository(a.logger)
+	repository, err := factory.NewObjectStorageRepository()
 	if err != nil {
 		return err
 	}
 
-	service, err := factory.NewObjectStorageService(a.logger, repository)
+	service, err := factory.NewObjectStorageService(repository)
 	if err != nil {
 		return err
 	}
 
-	registers, err := factory.BlockStorageHandler(a.logger, service)
+	registers, err := factory.BlockStorageHandler(service)
 	if err != nil {
 		return err
 	}

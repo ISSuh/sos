@@ -54,17 +54,17 @@ func (a *MetadataRegistry) Run() error {
 }
 
 func (a *MetadataRegistry) init() error {
-	repository, err := factory.NewObjectMetadataRepository(a.logger)
+	repository, err := factory.NewObjectMetadataRepository()
 	if err != nil {
 		return err
 	}
 
-	service, err := factory.NewObjectMetadataService(a.logger, repository)
+	service, err := factory.NewObjectMetadataService(repository)
 	if err != nil {
 		return err
 	}
 
-	registers, err := factory.MetadataRegistryHandler(a.logger, service)
+	registers, err := factory.MetadataRegistryHandler(service)
 	if err != nil {
 		return err
 	}

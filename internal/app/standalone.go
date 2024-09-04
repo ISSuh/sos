@@ -25,6 +25,7 @@ package app
 import (
 	"github.com/ISSuh/sos/internal/app/standalone"
 	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/factory"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/router"
 	"github.com/ISSuh/sos/pkg/http"
@@ -36,9 +37,6 @@ type Standalone struct {
 
 	config config.SosConfig
 	server http.Server
-
-	services *factory.APIServices
-	handlers *factory.RestHandlers
 }
 
 func NewStandalone(c config.SosConfig, l log.Logger) (Standalone, error) {
@@ -59,60 +57,55 @@ func (a *Standalone) Run() error {
 }
 
 func (a *Standalone) init() error {
-	if err := a.initService(); err != nil {
+	service, err := a.initService()
+	if err != nil {
 		return err
 	}
 
-	if err := a.initHandler(); err != nil {
+	handler, err := factory.NewExplorerHandler(service)
+	if err != nil {
 		return err
 	}
 
-	router.Route(a.logger, &a.server, a.handlers)
+	router.Route(a.logger, &a.server, handler)
 	return nil
 }
 
-func (a *Standalone) initService() error {
-	metadataRepo, err := factory.NewObjectMetadataRepository(a.logger)
+func (a *Standalone) initService() (service.Explorer, error) {
+	metadataRepo, err := factory.NewObjectMetadataRepository()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	metadataService, err := factory.NewObjectMetadataService(a.logger, metadataRepo)
+	metadataService, err := factory.NewObjectMetadataService(metadataRepo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	storageRepo, err := factory.NewObjectStorageRepository(a.logger)
+	storageRepo, err := factory.NewObjectStorageRepository()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	storageService, err := factory.NewObjectStorageService(a.logger, storageRepo)
+	storageService, err := factory.NewObjectStorageService(storageRepo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	metadataRegistry, err := standalone.NewMetadataRegistry(a.logger, metadataService)
+	metadataRegistry, err := standalone.NewMetadataRegistry(metadataService)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	blockStorage, err := standalone.NewBlockStorage(a.logger, storageService)
+	blockStorage, err := standalone.NewBlockStorage(storageService)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if a.services, err = factory.NewAPIServices(a.logger, metadataRegistry, blockStorage); err != nil {
-		return err
+	explorer, err := factory.NewExplorerService(metadataRegistry, blockStorage)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
-}
-
-func (a *Standalone) initHandler() error {
-	var err error
-	if a.handlers, err = factory.NewHandlers(a.logger, a.services); err != nil {
-		return err
-	}
-	return nil
+	return explorer, nil
 }

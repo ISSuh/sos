@@ -32,15 +32,12 @@ import (
 )
 
 type localObjectMetadata struct {
-	logger log.Logger
-
 	db map[string]map[string]entity.ObjectMetadata
 }
 
-func NewLocalObjectMetadata(l log.Logger) (repository.ObjectMetadata, error) {
+func NewLocalObjectMetadata() (repository.ObjectMetadata, error) {
 	return &localObjectMetadata{
-			logger: l,
-			db:     make(map[string]map[string]entity.ObjectMetadata),
+			db: make(map[string]map[string]entity.ObjectMetadata),
 		},
 		nil
 }

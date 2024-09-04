@@ -28,20 +28,17 @@ import (
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/adapter"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/handler"
-	"github.com/ISSuh/sos/pkg/log"
 	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-func MetadataRegistryHandler(l log.Logger, metadataService service.ObjectMetadata) ([]sosrpc.RegisterFunc, error) {
+func MetadataRegistryHandler(metadataService service.ObjectMetadata) ([]sosrpc.RegisterFunc, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(metadataService):
 		return nil, fmt.Errorf("ObjectMetadata service is nil")
 	}
 
-	metadataHandler, err := handler.NewMetadataRegistry(l, metadataService)
+	metadataHandler, err := handler.NewMetadataRegistry(metadataService)
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +53,13 @@ func MetadataRegistryHandler(l log.Logger, metadataService service.ObjectMetadat
 	}, nil
 }
 
-func BlockStorageHandler(l log.Logger, storageService service.ObjectStorage) ([]sosrpc.RegisterFunc, error) {
+func BlockStorageHandler(storageService service.ObjectStorage) ([]sosrpc.RegisterFunc, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
 	case validation.IsNil(storageService):
 		return nil, fmt.Errorf("ObjectStorage service is nil")
 	}
 
-	storageHandler, err := handler.NewBlockStorage(l, storageService)
+	storageHandler, err := handler.NewBlockStorage(storageService)
 	if err != nil {
 		return nil, err
 	}

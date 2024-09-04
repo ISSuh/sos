@@ -36,6 +36,9 @@ vendor:
 .PHONY: all
 all: vendor generate build_api
 
+build_standalone:
+	go build -o bin/standalone ${build_options} cmd/standalone/main.go 
+
 build_api:
 	go build -o bin/api ${build_options} cmd/api/main.go 
 

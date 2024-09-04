@@ -30,6 +30,7 @@ import (
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	sosrpc "github.com/ISSuh/sos/pkg/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type MetadataRegistry struct {
@@ -48,12 +49,24 @@ func NewMetadataRegistry(handler rpc.MetadataRegistryHandler) (rpc.Adapter, erro
 	}, nil
 }
 
-func (a *MetadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	return a.handler.Create(c, metadata)
+func (a *MetadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+	return a.handler.Put(c, metadata)
 }
 
-func (a *MetadataRegistry) GetByObjectName(c context.Context, req *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
+func (a *MetadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (*wrapperspb.BoolValue, error) {
+	res, err := a.handler.Delete(c, metadata)
+	if err != nil {
+		return &wrapperspb.BoolValue{Value: false}, err
+	}
+	return &wrapperspb.BoolValue{Value: res}, nil
+}
+
+func (a *MetadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	return a.handler.GetByObjectName(c, req)
+}
+
+func (a *MetadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
+	return a.handler.FindMetadataOnPath(c, req)
 }
 
 func (a *MetadataRegistry) Regist() sosrpc.RegisterFunc {

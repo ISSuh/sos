@@ -25,53 +25,22 @@ package factory
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	resthandler "github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
-type RestHandlers struct {
-	Uploader   rest.Uploader
-	Downloader rest.Downloader
-	Explorer   rest.Explorer
-	Eraser     rest.Eraser
-}
-
-func NewHandlers(l log.Logger, serviceFactory *APIServices) (*RestHandlers, error) {
+func NewExplorerHandler(explorer service.Explorer) (rest.Explorer, error) {
 	switch {
-	case validation.IsNil(l):
-		return nil, fmt.Errorf("logger is nil")
-	case validation.IsNil(serviceFactory):
-		return nil, fmt.Errorf("service factory is nil")
+	case validation.IsNil(explorer):
+		return nil, fmt.Errorf("explorer service is nil")
 	}
 
-	explorer, err := resthandler.NewExplorer(l, serviceFactory.Explorer)
+	handler, err := handler.NewExplorer(explorer)
 	if err != nil {
 		return nil, err
 	}
 
-	uploader, err := resthandler.NewUploader(l, serviceFactory.Uploader)
-	if err != nil {
-		return nil, err
-	}
-
-	downloader, err := resthandler.NewDownloader(l, serviceFactory.Downloader)
-	if err != nil {
-		return nil, err
-	}
-
-	eraser, err := resthandler.NewEraser(l, serviceFactory.Eraser)
-	if err != nil {
-		return nil, err
-	}
-
-	h := &RestHandlers{
-		Explorer:   explorer,
-		Uploader:   uploader,
-		Downloader: downloader,
-		Eraser:     eraser,
-	}
-
-	return h, nil
+	return handler, nil
 }

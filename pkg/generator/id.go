@@ -46,6 +46,7 @@ func InitIdentifier(nodeID int64) {
 			node: node,
 		}
 	})
+
 }
 
 func ID() *identifier {

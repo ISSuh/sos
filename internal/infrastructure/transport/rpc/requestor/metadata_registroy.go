@@ -32,28 +32,41 @@ import (
 )
 
 type metadataRegistry struct {
-	logger log.Logger
 	engine rpc.MetadataRegistryClient
 }
 
-func NewMetadataRegistry(l log.Logger, address string) (rpc.MetadataRegistryRequestor, error) {
+func NewMetadataRegistry(address string) (rpc.MetadataRegistryRequestor, error) {
 	conn, err := sosrpc.NewClientConnection(address)
 	if err != nil {
 		return nil, err
 	}
 
 	return &metadataRegistry{
-		logger: l,
 		engine: rpc.NewMetadataRegistryClient(conn),
 	}, nil
 }
 
-func (r *metadataRegistry) Create(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	log.FromContext(c).Debugf("[MetadataRegistry.Create]")
-	return r.engine.Create(c, metadata)
+func (r *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
+	return r.engine.Put(c, metadata)
 }
 
-func (r *metadataRegistry) GetByObjectName(c context.Context, metadata *message.MetadataFindRequest) (*message.ObjectMetadata, error) {
+func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
+	res, err := r.engine.Delete(c, metadata)
+	if err != nil {
+		return false, err
+	}
+
+	return res.Value, nil
+}
+
+func (r *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
-	return r.engine.GetByObjectName(c, metadata)
+	return r.engine.GetByObjectName(c, req)
+}
+
+func (r *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
+	return r.engine.FindMetadataOnPath(c, req)
 }
