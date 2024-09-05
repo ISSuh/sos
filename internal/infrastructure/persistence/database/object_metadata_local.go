@@ -28,6 +28,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/log"
 )
 
@@ -83,7 +84,7 @@ func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, par
 	key := d.makeKey(group, partition, path)
 	_, exist := d.db[key]
 	if !exist {
-		return entity.NewEmptyObjectMetadata(), nil
+		return empty.Struct[entity.ObjectMetadata](), nil
 	}
 	return d.db[key][name], nil
 }

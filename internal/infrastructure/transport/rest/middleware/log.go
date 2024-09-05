@@ -33,10 +33,8 @@ import (
 func WithLog(logger log.Logger) http.MiddlewareFunc {
 	return func(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 		return func(w gohttp.ResponseWriter, r *gohttp.Request) {
-			logger.Infof("[WithLog] start")
 			ctx := context.WithValue(r.Context(), log.LoggerKey, logger)
 			next.ServeHTTP(w, r.WithContext(ctx))
-			logger.Infof("[WithLog] end")
 		}
 	}
 }

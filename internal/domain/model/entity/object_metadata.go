@@ -37,10 +37,6 @@ type ObjectMetadata struct {
 	ModifiedTime
 }
 
-func NewEmptyObjectMetadata() ObjectMetadata {
-	return ObjectMetadata{}
-}
-
 func (e ObjectMetadata) ID() ObjectID {
 	return e.id
 }
@@ -73,7 +69,7 @@ func (e ObjectMetadata) BlockHeaders() BlockHeaders {
 	return e.blockHeaders
 }
 
-func (e ObjectMetadata) IsEmpty() bool {
+func (e ObjectMetadata) IsValid() bool {
 	return e.id.IsValid()
 }
 

@@ -27,6 +27,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -42,7 +43,7 @@ type Metadata struct {
 	ModifiedAt time.Time       `json:"modified_at"`
 }
 
-func NewMetadataFromModel(m *entity.ObjectMetadata) Metadata {
+func NewMetadataFromModel(m entity.ObjectMetadata) Metadata {
 	return Metadata{
 		ID:         m.ID(),
 		Group:      m.Group(),
@@ -58,10 +59,11 @@ func NewMetadataFromModel(m *entity.ObjectMetadata) Metadata {
 func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 	switch {
 	case validation.IsNil(m):
-		return Metadata{}
+		return empty.Struct[Metadata]()
 	case validation.IsNil(m.GetId()):
-		return Metadata{}
+		return empty.Struct[Metadata]()
 	}
+
 	return Metadata{
 		ID:        entity.ObjectID(m.GetId().Id),
 		Group:     m.Group,

@@ -20,24 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package empty
 
-type Object struct {
-	metadata ObjectMetadata
-
-	ModifiedTime
-}
-
-func NewObject(metadata ObjectMetadata) Object {
-	return Object{
-		metadata: metadata,
-	}
-}
-
-func (e Object) ID() ObjectID {
-	return e.metadata.ID()
-}
-
-func (e Object) Metadata() ObjectMetadata {
-	return e.metadata
+func Struct[T any]() T {
+	var t T
+	return t
 }

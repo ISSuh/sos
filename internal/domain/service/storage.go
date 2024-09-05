@@ -28,6 +28,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -70,7 +71,7 @@ func (s *objectStorage) Put(c context.Context, block entity.Block) error {
 func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.Block, error) {
 	block, err := s.storageRepository.GetBlock(c, objectID, blockID, index)
 	if err != nil {
-		return entity.Block{}, err
+		return empty.Struct[entity.Block](), err
 	}
 	return block, nil
 }
@@ -78,7 +79,7 @@ func (s *objectStorage) GetBlock(c context.Context, objectID entity.ObjectID, bl
 func (s *objectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.BlockHeader, error) {
 	header, err := s.storageRepository.GetBlockHeader(c, objectID, blockID, index)
 	if err != nil {
-		return entity.BlockHeader{}, err
+		return empty.Struct[entity.BlockHeader](), err
 	}
 	return header, nil
 }

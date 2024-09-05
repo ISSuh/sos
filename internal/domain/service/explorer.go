@@ -32,6 +32,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service/object"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
@@ -39,6 +40,7 @@ type Explorer interface {
 	GetObjectMetadataByID(c context.Context, req dto.Request) (dto.Metadata, error)
 	FindObjectMetadataOnPath(c context.Context, req dto.Request) (dto.MetadataList, error)
 	Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Metadata, error)
+	Delete(c context.Context, req dto.Request) error
 }
 
 type explorer struct {
@@ -65,13 +67,13 @@ func NewExplorer(
 func (s *explorer) GetObjectMetadataByID(c context.Context, req dto.Request) (dto.Metadata, error) {
 	switch {
 	case !req.ObjectID.IsValid():
-		return dto.NewEmptyMetadata(), fmt.Errorf("object id is invalid")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("object id is invalid")
 	case validation.IsEmpty(req.Group):
-		return dto.NewEmptyMetadata(), fmt.Errorf("group is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return dto.NewEmptyMetadata(), fmt.Errorf("partition is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return dto.NewEmptyMetadata(), fmt.Errorf("path is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("path is empty")
 	}
 
 	message := rpc.ObjectMetadataRequest{
@@ -83,7 +85,7 @@ func (s *explorer) GetObjectMetadataByID(c context.Context, req dto.Request) (dt
 
 	metadata, err := s.metadataRequestor.GetByObjectName(c, &message)
 	if err != nil {
-		return dto.NewEmptyMetadata(), err
+		return empty.Struct[dto.Metadata](), err
 	}
 
 	return dto.NewMetadataFromMessage(metadata), nil
@@ -123,35 +125,36 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Metadata, error) {
 	switch {
 	case validation.IsEmpty(req.Group):
-		return dto.NewEmptyMetadata(), fmt.Errorf("group is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return dto.NewEmptyMetadata(), fmt.Errorf("partition is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return dto.NewEmptyMetadata(), fmt.Errorf("path is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("path is empty")
 	case validation.IsEmpty(req.Name):
-		return dto.NewEmptyMetadata(), fmt.Errorf("name is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("name is empty")
 	case req.Size == 0:
-		return dto.NewEmptyMetadata(), fmt.Errorf("size is 0")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("size is 0")
 	case validation.IsNil(bodyStream):
-		return dto.NewEmptyMetadata(), fmt.Errorf("body stream is nil")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("body stream is nil")
 	case req.ChunkSize == 0:
-		return dto.NewEmptyMetadata(), fmt.Errorf("chunk size is 0")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("chunk size is 0")
 	}
 
-	exist, err := s.isObjectExist(c, req)
+	exist, err :=
+		s.isObjectExist(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
-		return dto.NewEmptyMetadata(), err
+		return empty.Struct[dto.Metadata](), err
 	}
 
 	if exist {
-		return dto.NewEmptyMetadata(), fmt.Errorf("object already exist")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("object already exist")
 	}
 
 	objectID := entity.NewObjectID()
 	uploader := object.NewUploader(s.storageRequestor)
 	blockheaders, err := uploader.Upload(c, objectID, bodyStream)
 	if err != nil {
-		return dto.NewEmptyMetadata(), err
+		return empty.Struct[dto.Metadata](), err
 	}
 
 	metadataBuilder := entity.NewObjectMetadataBuilder()
@@ -166,28 +169,60 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 
 	metadata := metadataBuilder.Build()
 	if err := s.upsertObjectMetadata(c, metadata); err != nil {
-		return dto.NewEmptyMetadata(), err
+		return empty.Struct[dto.Metadata](), err
 	}
 
-	return dto.NewMetadataFromModel(&metadata), nil
+	return dto.NewMetadataFromModel(metadata), nil
 }
 
-func (s *explorer) getObjectMetadataByNameOnPath(c context.Context, req dto.Request) (entity.ObjectMetadata, error) {
+func (s *explorer) Delete(c context.Context, req dto.Request) error {
 	switch {
+	case validation.IsEmpty(req.Group):
+		return fmt.Errorf("group is empty")
+	case validation.IsEmpty(req.Partition):
+		return fmt.Errorf("partition is empty")
+	case validation.IsEmpty(req.Path):
+		return fmt.Errorf("path is empty")
 	case validation.IsEmpty(req.Name):
-		return entity.NewEmptyObjectMetadata(), fmt.Errorf("name is empty")
+		return fmt.Errorf("name is empty")
+	}
+
+	metadata, err :=
+		s.getObjectMetadataByNameOnPath(c, req.Group, req.Partition, req.Path, req.Name)
+	if err != nil {
+		return err
+	}
+
+	if !metadata.IsValid() {
+		return fmt.Errorf("object not exist")
+	}
+
+	deleter := object.NewDeleter(s.metadataRequestor, s.storageRequestor)
+	if err := deleter.Delete(c, metadata); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *explorer) getObjectMetadataByNameOnPath(
+	c context.Context, group, partition, path, name string,
+) (entity.ObjectMetadata, error) {
+	switch {
+	case validation.IsEmpty(name):
+		return empty.Struct[entity.ObjectMetadata](), fmt.Errorf("name is empty")
 	}
 
 	message := rpc.ObjectMetadataRequest{
-		Group:     req.Group,
-		Partition: req.Partition,
-		Path:      req.Path,
-		Name:      req.Name,
+		Group:     group,
+		Partition: partition,
+		Path:      path,
+		Name:      name,
 	}
 
 	resp, err := s.metadataRequestor.GetByObjectName(c, &message)
 	if err != nil {
-		return entity.NewEmptyObjectMetadata(), err
+		return empty.Struct[entity.ObjectMetadata](), err
 	}
 
 	builder := entity.NewObjectMetadataBuilder()
@@ -201,12 +236,12 @@ func (s *explorer) getObjectMetadataByNameOnPath(c context.Context, req dto.Requ
 	return builder.Build(), nil
 }
 
-func (s *explorer) isObjectExist(c context.Context, req dto.Request) (bool, error) {
-	metadata, err := s.getObjectMetadataByNameOnPath(c, req)
+func (s *explorer) isObjectExist(c context.Context, group, partition, path, name string) (bool, error) {
+	metadata, err := s.getObjectMetadataByNameOnPath(c, group, partition, path, name)
 	if err != nil {
 		return false, err
 	}
-	return !metadata.IsEmpty(), nil
+	return metadata.IsValid(), nil
 }
 
 func (s *explorer) upsertObjectMetadata(c context.Context, metadata entity.ObjectMetadata) error {

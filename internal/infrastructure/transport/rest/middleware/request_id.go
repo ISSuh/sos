@@ -23,16 +23,11 @@
 package middleware
 
 import (
-	"fmt"
 	gohttp "net/http"
 )
 
 func GenerateRequestID(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("[GenerateRequestID] start\n")
-
 		next.ServeHTTP(w, r)
-
-		fmt.Printf("[GenerateRequestID] end\n")
 	})
 }

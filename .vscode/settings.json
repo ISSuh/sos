@@ -15,6 +15,7 @@
     "bwmarrin",
     "blockheaders",
     "wrapperspb",
+    "Deleter"
   ],
 
   "protoc": {

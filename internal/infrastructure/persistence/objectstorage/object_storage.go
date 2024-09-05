@@ -29,6 +29,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/log"
 )
 
@@ -56,7 +57,7 @@ func (s *localObjectStorage) GetBlock(c context.Context, objectID entity.ObjectI
 	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
-		return entity.Empty[entity.Block](), fmt.Errorf("block not found")
+		return empty.Struct[entity.Block](), fmt.Errorf("block not found")
 	}
 	return block, nil
 }
@@ -66,7 +67,7 @@ func (s *localObjectStorage) GetBlockHeader(c context.Context, objectID entity.O
 	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
-		return entity.Empty[entity.BlockHeader](), fmt.Errorf("block not found")
+		return empty.Struct[entity.BlockHeader](), fmt.Errorf("block not found")
 	}
 	return block.Header(), nil
 }

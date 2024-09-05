@@ -23,17 +23,14 @@
 package middleware
 
 import (
-	"fmt"
 	gohttp "net/http"
 )
 
 func Recover(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("[Recover] start\n")
+		defer func() {
+		}()
 
 		next.ServeHTTP(w, r)
-
-		fmt.Printf("[Recover] end\n")
-
 	})
 }

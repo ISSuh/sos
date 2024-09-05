@@ -59,13 +59,13 @@ func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 	metadata, err := h.explorerService.GetObjectMetadataByID(c, dto)
 	if err != nil {
-		h.logger.Errorf(err.Error())
+		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
 
 	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
+		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
@@ -74,18 +74,18 @@ func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
 func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("[explorer.Find]")
+	log.FromContext(c).Debugf("[explorer.List]")
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 
 	metadata, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
 	if err != nil {
-		h.logger.Errorf(err.Error())
+		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
 
 	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
+		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
@@ -144,19 +144,20 @@ func (h *explorer) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("[uploader.chunkedUpload]")
+	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
 
 	metadata, err := h.explorerService.Upload(c, dto, r.Body)
 	if err != nil {
+		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
-	// defer r.Body.Close()
+	defer r.Body.Close()
 
 	if err := http.Json(w, metadata); err != nil {
-		h.logger.Errorf(err.Error())
+		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
@@ -169,4 +170,16 @@ func (h *explorer) Download(w gohttp.ResponseWriter, r *gohttp.Request) {
 }
 
 func (h *explorer) Delete(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+	log.FromContext(c).Debugf("[uploader.chunkedUpload]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	err := h.explorerService.Delete(c, dto)
+	if err != nil {
+		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
+	}
+
+	http.NoContent(w)
 }

@@ -24,7 +24,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	gohttp "net/http"
 	"strconv"
 
@@ -36,8 +35,6 @@ import (
 
 func ParseDefaultParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("[ParseDefaultParam] start\n")
-
 		params := http.ParseParm(r)
 
 		group := params[http.GroupParamName]
@@ -63,15 +60,11 @@ func ParseDefaultParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
-
-		fmt.Printf("[ParseDefaultParam] end\n")
 	})
 }
 
 func ParseObjectIDParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("[ParseObjectIDParam] start\n")
-
 		params := http.ParseParm(r)
 
 		objectID := params[http.ObjectIDParamName]
@@ -90,15 +83,11 @@ func ParseObjectIDParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
-
-		fmt.Printf("[ParseObjectIDParam] end\n")
 	})
 }
 
 func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
-		fmt.Printf("[ParseQueryParam] start\n")
-
 		name := r.URL.Query().Get(http.ObjectName)
 		if validation.IsEmpty(name) {
 			return
@@ -123,7 +112,5 @@ func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
-
-		fmt.Printf("[ParseQueryParam] end\n")
 	})
 }

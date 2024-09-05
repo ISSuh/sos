@@ -23,17 +23,13 @@
 package middleware
 
 import (
-	"fmt"
 	gohttp "net/http"
 )
 
 func ErrorHandler(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
 		defer func() {
-			fmt.Printf("[ErrorHandler] end\n")
 		}()
-
-		fmt.Printf("[ErrorHandler] start\n")
 
 		next.ServeHTTP(w, r)
 	})

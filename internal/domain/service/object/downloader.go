@@ -20,9 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package object
 
-func Empty[T any]() T {
-	var t T
-	return t
+import (
+	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+)
+
+type Downloader struct {
+	storageRequestor rpc.BlockStorageRequestor
+}
+
+func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Uploader {
+	return Uploader{
+		storageRequestor: storageRequestor,
+	}
 }

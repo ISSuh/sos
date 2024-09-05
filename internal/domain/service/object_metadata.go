@@ -81,9 +81,19 @@ func (s *objectMetadata) MetadataByObjectName(c context.Context, req dto.Request
 	if err != nil {
 		return dto.NewEmptyMetadata(), err
 	}
-	return dto.NewMetadataFromModel(&metadata), nil
+	return dto.NewMetadataFromModel(metadata), nil
 }
 
 func (s *objectMetadata) MetadataListOnPath(c context.Context, req dto.Request) (dto.MetadataList, error) {
-	return nil, nil
+	items, err := s.metadataRepository.FindMetadata(c, req.Group, req.Partition, req.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make(dto.MetadataList, len(items))
+	for i, item := range items {
+		list[i] = dto.NewMetadataFromModel(item)
+	}
+
+	return list, nil
 }
