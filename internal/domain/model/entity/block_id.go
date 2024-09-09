@@ -34,6 +34,10 @@ func NewBlockID() BlockID {
 	return BlockID(generator.ID().Generate())
 }
 
+func NewBlockIDFrom(id int64) BlockID {
+	return BlockID(id)
+}
+
 func (i BlockID) ToInt64() int64 {
 	return int64(i)
 }

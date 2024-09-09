@@ -31,6 +31,8 @@ const (
 	BlockSize = 4 * 1024 * 1024
 )
 
+type Blocks []Block
+
 type Block struct {
 	header BlockHeader
 	buffer []byte
@@ -38,14 +40,16 @@ type Block struct {
 	ModifiedTime
 }
 
-type Blocks []Block
-
 func (b *Block) ObjectID() ObjectID {
 	return b.header.ObjectID()
 }
 
 func (b *Block) BlockID() BlockID {
 	return b.header.BlockID()
+}
+
+func (b *Block) Index() int {
+	return b.header.Index()
 }
 
 func (b *Block) Header() BlockHeader {

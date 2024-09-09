@@ -82,10 +82,13 @@ type BlockHeaderBuilder struct {
 	checksum  string
 }
 
-func NewBlockHeaderBuilder(objectID ObjectID) *BlockHeaderBuilder {
-	return &BlockHeaderBuilder{
-		objectID: objectID,
-	}
+func NewBlockHeaderBuilder() *BlockHeaderBuilder {
+	return &BlockHeaderBuilder{}
+}
+
+func (b *BlockHeaderBuilder) ObjectID(objectID ObjectID) *BlockHeaderBuilder {
+	b.objectID = objectID
+	return b
 }
 
 func (b *BlockHeaderBuilder) BlockID(blockID BlockID) *BlockHeaderBuilder {

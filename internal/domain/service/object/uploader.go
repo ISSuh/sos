@@ -28,8 +28,14 @@ import (
 	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
+	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/log"
+)
+
+const (
+	kilobyte          = 1024
+	defaultBufferSize = 4 * kilobyte
 )
 
 type Uploader struct {
@@ -50,7 +56,7 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 	blockBuilder := entity.NewBlockBuilder()
 
 	for {
-		buf := make([]byte, 4096)
+		buf := make([]byte, defaultBufferSize)
 		n, err := bodyStream.Read(buf)
 		if err != nil && err != io.EOF {
 			return nil, err
@@ -58,6 +64,10 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 
 		if n == 0 {
 			block := o.buildBlock(objectID, blockIndex, blockBuilder)
+			if err := o.uploadBlock(c, block); err != nil {
+				return nil, err
+			}
+
 			blockheaders = append(blockheaders, block.Header())
 			break
 		}
@@ -66,6 +76,9 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 		totalReadSize += uint64(n)
 		if totalReadSize >= entity.BlockSize {
 			block := o.buildBlock(objectID, blockIndex, blockBuilder)
+			if err := o.uploadBlock(c, block); err != nil {
+				return nil, err
+			}
 
 			blockheaders = append(blockheaders, block.Header())
 
@@ -84,8 +97,9 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 func (o *Uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder *entity.BlockBuilder) entity.Block {
 	c := blockBuilder.CalculateChecksum()
 
-	blockerHeaderBuilder := entity.NewBlockHeaderBuilder(objectID)
+	blockerHeaderBuilder := entity.NewBlockHeaderBuilder()
 	blockerHeaderBuilder.
+		ObjectID(objectID).
 		BlockID(entity.NewBlockID()).
 		Index(index).
 		Size(blockBuilder.BufferSize()).
@@ -97,4 +111,19 @@ func (o *Uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder 
 
 	blockBuilder.Header(blockHeader)
 	return blockBuilder.Build()
+}
+
+func (o *Uploader) uploadBlock(c context.Context, block entity.Block) error {
+	msg := message.FromBlock(block)
+	resp, err := o.storageRequestor.Put(c, msg)
+	if err != nil {
+		log.FromContext(c).Errorf("Upload Error: %s", err.Error())
+		return err
+	}
+
+	if !resp.Success {
+		log.FromContext(c).Errorf("Upload fail. message : %s", resp.Message)
+		return err
+	}
+	return nil
 }

@@ -23,7 +23,12 @@
 package object
 
 import (
+	"context"
+
+	"github.com/ISSuh/sos/internal/domain/model/entity"
+	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/pkg/empty"
 )
 
 type Downloader struct {
@@ -34,4 +39,28 @@ func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Uploader {
 	return Uploader{
 		storageRequestor: storageRequestor,
 	}
+}
+
+func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata) (entity.Blocks, error) {
+	blocks := make(entity.Blocks, len(metadata.BlockHeaders()))
+	for _, blockHeader := range metadata.BlockHeaders() {
+		block, err := o.downloadBlock(c, blockHeader)
+		if err != nil {
+			return nil, err
+		}
+
+		blocks[block.Index()] = block
+	}
+
+	return blocks, nil
+}
+
+func (o *Downloader) downloadBlock(c context.Context, blockHeader entity.BlockHeader) (entity.Block, error) {
+	msg := message.FromBlockHeader(blockHeader)
+	resp, err := o.storageRequestor.Get(c, msg)
+	if err != nil {
+		return empty.Struct[entity.Block](), err
+	}
+
+	return message.ToBlock(resp), nil
 }
