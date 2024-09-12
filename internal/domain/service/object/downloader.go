@@ -24,35 +24,58 @@ package object
 
 import (
 	"context"
+	"sync"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/empty"
+	"github.com/ISSuh/sos/pkg/http"
 )
 
 type Downloader struct {
 	storageRequestor rpc.BlockStorageRequestor
 }
 
-func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Uploader {
-	return Uploader{
+func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Downloader {
+	return Downloader{
 		storageRequestor: storageRequestor,
 	}
 }
 
-func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata) (entity.Blocks, error) {
-	blocks := make(entity.Blocks, len(metadata.BlockHeaders()))
+func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata, writer http.DownloadBodyWriter) error {
+	blockChan := make([]chan entity.Block, len(metadata.BlockHeaders()))
+	wg := sync.WaitGroup{}
 	for _, blockHeader := range metadata.BlockHeaders() {
-		block, err := o.downloadBlock(c, blockHeader)
-		if err != nil {
-			return nil, err
-		}
+		wg.Add(1)
+		go func(blockHeader entity.BlockHeader) {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					return
+				}
+			}()
 
-		blocks[block.Index()] = block
+			block, err := o.downloadBlock(c, blockHeader)
+			if err != nil {
+				return
+			}
+
+			blockChan[block.Index()] <- block
+		}(blockHeader)
 	}
 
-	return blocks, nil
+	wg.Wait()
+
+	for _, ch := range blockChan {
+		block := <-ch
+		err := writer(block.Buffer())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (o *Downloader) downloadBlock(c context.Context, blockHeader entity.BlockHeader) (entity.Block, error) {

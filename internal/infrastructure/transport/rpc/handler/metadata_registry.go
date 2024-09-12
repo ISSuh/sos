@@ -67,6 +67,15 @@ func (h *metadataRegistry) GetByObjectName(c context.Context, rew *rpc.ObjectMet
 	}, nil
 }
 
+func (h *metadataRegistry) GetByObjectID(c context.Context, rew *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectID]")
+	return &message.ObjectMetadata{
+		Id: &message.ObjectID{
+			Id: 1,
+		},
+	}, nil
+}
+
 func (h *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
 	return &rpc.ObjectMetadataList{}, nil

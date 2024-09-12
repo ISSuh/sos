@@ -53,11 +53,12 @@ func NewExplorer(explorerService service.Explorer) (rest.Explorer, error) {
 
 func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("[explorer.Find]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 
-	metadata, err := h.explorerService.GetObjectMetadataByID(c, dto)
+	metadata, err := h.explorerService.GetObjectMetadata(c, dto)
 	if err != nil {
 		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
@@ -73,8 +74,9 @@ func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("[explorer.List]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 
 	metadata, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
@@ -143,8 +145,9 @@ func (h *explorer) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
 
@@ -164,14 +167,49 @@ func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 }
 
 func (h *explorer) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+	log.FromContext(c).Debugf("[explorer.Update]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	log.FromContext(c).Debugf("Request: %+v\n", dto)
 }
 
 func (h *explorer) Download(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	log.FromContext(c).Debugf("[explorer.Download]")
+	log.FromContext(c).Debugf("Request: %+v\n", dto)
+
+	err := h.explorerService.Download(c, dto, h.headerWriter(w), h.bodyWriter(w))
+	if err != nil {
+		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
+		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *explorer) headerWriter(w gohttp.ResponseWriter) http.DownloadHeaderWriter {
+	return func(name string, size int) {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", name))
+		w.Header().Set("Content-Type", "multipart/form-data; boundary=boundary")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", size))
+	}
+}
+
+func (h *explorer) bodyWriter(w gohttp.ResponseWriter) http.DownloadBodyWriter {
+	return func(buffer []byte) error {
+		_, err := w.Write(buffer)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func (h *explorer) Delete(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	log.FromContext(c).Debugf("[uploader.chunkedUpload]")
+	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
 
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	err := h.explorerService.Delete(c, dto)

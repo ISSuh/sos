@@ -66,6 +66,11 @@ func (r *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMet
 	return r.engine.GetByObjectName(c, req)
 }
 
+func (r *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectID]")
+	return r.engine.GetByObjectID(c, req)
+}
+
 func (r *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
 	return r.engine.FindMetadataOnPath(c, req)

@@ -36,6 +36,7 @@ import (
 type ObjectMetadata interface {
 	Create(c context.Context, req dto.Request) error
 	MetadataByObjectName(c context.Context, req dto.Request) (dto.Metadata, error)
+	MetadataByObjectID(c context.Context, req dto.Request) (dto.Metadata, error)
 	MetadataListOnPath(c context.Context, req dto.Request) (dto.MetadataList, error)
 }
 
@@ -77,6 +78,14 @@ func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
 }
 
 func (s *objectMetadata) MetadataByObjectName(c context.Context, req dto.Request) (dto.Metadata, error) {
+	metadata, err := s.metadataRepository.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
+	if err != nil {
+		return dto.NewEmptyMetadata(), err
+	}
+	return dto.NewMetadataFromModel(metadata), nil
+}
+
+func (s *objectMetadata) MetadataByObjectID(c context.Context, req dto.Request) (dto.Metadata, error) {
 	metadata, err := s.metadataRepository.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
 		return dto.NewEmptyMetadata(), err

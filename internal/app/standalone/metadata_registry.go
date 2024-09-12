@@ -96,6 +96,32 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMet
 	}, nil
 }
 
+func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	d := dto.Request{
+		ObjectID:  entity.NewObjectIDFrom(req.GetObjectID()),
+		Group:     req.GetGroup(),
+		Partition: req.GetPartition(),
+		Path:      req.GetPath(),
+		Name:      req.GetName(),
+	}
+
+	item, err := s.objectMetadata.MetadataByObjectID(c, d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &message.ObjectMetadata{
+		Id: &message.ObjectID{
+			Id: item.ID.ToInt64(),
+		},
+		Name:      item.Name,
+		Group:     item.Group,
+		Partition: item.Partition,
+		Path:      item.Path,
+		Size:      int32(item.Size),
+	}, nil
+}
+
 func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
 	d := dto.Request{
 		Group:     req.GetGroup(),

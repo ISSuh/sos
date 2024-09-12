@@ -65,6 +65,7 @@ func NewZapLogger(c config.Logger) Logger {
 
 	enccoderConfig := zap.NewProductionEncoderConfig()
 	enccoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	enccoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	config.EncoderConfig = enccoderConfig
 	logger, err := config.Build(zap.AddCallerSkip(1))

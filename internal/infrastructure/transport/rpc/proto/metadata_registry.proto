@@ -8,7 +8,7 @@ import "google/protobuf/wrappers.proto";
 import "domain/model/message/object_metadata.proto";
 
 message ObjectMetadataRequest {
-  int64 id = 1;
+  int64 objectID = 1;
   string group = 2;
   string partition = 3;
   string path = 4;
@@ -23,5 +23,6 @@ service MetadataRegistry {
   rpc Put(message.ObjectMetadata) returns (message.ObjectMetadata) {}
   rpc Delete(message.ObjectMetadata) returns (google.protobuf.BoolValue) {}
   rpc GetByObjectName(ObjectMetadataRequest) returns (message.ObjectMetadata) {}
+  rpc GetByObjectID(ObjectMetadataRequest) returns (message.ObjectMetadata) {}
   rpc FindMetadataOnPath(ObjectMetadataRequest) returns (ObjectMetadataList) {}
 }
