@@ -13,6 +13,7 @@ message StorageResponse {
 
 service BlockStorage {
   rpc Put(message.Block) returns (StorageResponse) {}
-  rpc Get(message.BlockHeader) returns (message.Block) {}
+  rpc GetBlock(message.BlockHeader) returns (message.Block) {}
+  rpc GetBlockHeader(message.BlockHeader) returns (message.BlockHeader) {}
   rpc Delete(message.BlockHeader) returns (StorageResponse) {}
 }

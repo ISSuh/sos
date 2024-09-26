@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
@@ -47,14 +48,44 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageReque
 	}, nil
 }
 
-func (r *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
+func (r *blockStorage) Put(ctx context.Context, msg *message.Block) (*rpc.StorageResponse, error) {
+	blockHeader := r.blockHeaderFromMessage(msg)
+	blockBuilder := entity.NewBlockBuilder()
+	blockBuilder.
+		Buffer(msg.Data).
+		Header(blockHeader)
+
+	err := r.objectStorage.Put(ctx, blockBuilder.Build())
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &rpc.StorageResponse{
+		Success: true,
+	}
+	return resp, nil
+}
+
+func (r *blockStorage) Get(ctx context.Context, msg *message.BlockHeader) (*message.Block, error) {
+
 	return nil, nil
 }
 
-func (r *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
+func (r *blockStorage) Delete(ctx context.Context, msg *message.BlockHeader) (*rpc.StorageResponse, error) {
 	return nil, nil
 }
 
-func (r *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
-	return nil, nil
+func (r *blockStorage) blockHeaderFromMessage(msg *message.Block) entity.BlockHeader {
+	header := msg.GetHeader()
+	headerBuilder := entity.NewBlockHeaderBuilder()
+	headerBuilder.
+		BlockID(entity.BlockID(header.BlockID.Id)).
+		ObjectID(entity.ObjectID(header.ObjectID.Id)).
+		Index(int(header.Index)).
+		Size(int(header.Size)).
+		Timestamp(header.Timestamp.AsTime()).
+		Checksum(header.Checksum)
+
+	return headerBuilder.Build()
+
 }

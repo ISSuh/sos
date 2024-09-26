@@ -49,7 +49,6 @@ func NewUploader(storageRequestor rpc.BlockStorageRequestor) Uploader {
 }
 
 func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStream io.ReadCloser) (entity.BlockHeaders, error) {
-	defer bodyStream.Close()
 	var blockheaders entity.BlockHeaders
 	var totalReadSize uint64
 	var blockIndex int

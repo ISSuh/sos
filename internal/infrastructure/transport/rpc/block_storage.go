@@ -30,12 +30,14 @@ import (
 
 type BlockStorageHandler interface {
 	Put(ctx context.Context, block *message.Block) (*StorageResponse, error)
-	Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	GetBlock(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	GetBlockHeader(ctx context.Context, header *message.BlockHeader) (*message.BlockHeader, error)
 	Delete(ctx context.Context, header *message.BlockHeader) (*StorageResponse, error)
 }
 
 type BlockStorageRequestor interface {
 	Put(ctx context.Context, block *message.Block) (*StorageResponse, error)
-	Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	GetBlock(ctx context.Context, header *message.BlockHeader) (*message.Block, error)
+	GetBlockHeader(ctx context.Context, header *message.BlockHeader) (*message.BlockHeader, error)
 	Delete(ctx context.Context, header *message.BlockHeader) (*StorageResponse, error)
 }

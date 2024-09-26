@@ -194,7 +194,7 @@ func (s *explorer) Download(
 	headerWriter(metadata.Name(), metadata.Size())
 
 	downloader := object.NewDownloader(s.storageRequestor)
-	err = downloader.Download(c, metadata, writer)
+	err = downloader.Download(c, metadata, bodyWriter)
 	if err != nil {
 		return err
 	}

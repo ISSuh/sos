@@ -1,0 +1,53 @@
+###########
+# Environment
+###########
+@API_HOST = http://127.0.0.1:33221
+@API_VERSION = v1
+@GROUP = aa
+@PARTITION = bb
+@OBJECT_PATH = "cc
+@OBJECT_ID = dd
+@FILE_PATH = ee
+
+###########
+# API
+###########
+# Upload
+POST {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
+Content-Type: multipart/form-data; boundary=MfnBoundry
+
+--MfnBoundry
+Content-Disposition: form-data; name="image"; filename="1.png"
+Content-Type: image/png
+
+< ./scripts/sample/sample.mp3
+--MfnBoundry--
+
+###
+
+# Download
+GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
+
+###
+
+# Update
+PUT {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
+
+###
+
+# Delete
+DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
+
+###
+
+# Metadata
+GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}}/metadata HTTP/1.1
+Accept: application/json
+
+###
+
+# List
+GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
+Accept: application/json
+
+###

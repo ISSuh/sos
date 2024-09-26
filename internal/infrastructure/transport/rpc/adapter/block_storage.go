@@ -52,8 +52,12 @@ func (a *BlockStorage) Put(c context.Context, block *message.Block) (*rpc.Storag
 	return a.handler.Put(c, block)
 }
 
-func (a *BlockStorage) Get(c context.Context, header *message.BlockHeader) (*message.Block, error) {
-	return a.handler.Get(c, header)
+func (a *BlockStorage) GetBlock(c context.Context, header *message.BlockHeader) (*message.Block, error) {
+	return a.handler.GetBlock(c, header)
+}
+
+func (a *BlockStorage) GetBlockHeader(c context.Context, header *message.BlockHeader) (*message.BlockHeader, error) {
+	return a.handler.GetBlockHeader(c, header)
 }
 
 func (a *BlockStorage) Delete(c context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
