@@ -192,7 +192,8 @@ func (h *explorer) Download(w gohttp.ResponseWriter, r *gohttp.Request) {
 func (h *explorer) headerWriter(w gohttp.ResponseWriter) http.DownloadHeaderWriter {
 	return func(name string, size int) {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", name))
-		w.Header().Set("Content-Type", "multipart/form-data; boundary=boundary")
+		// w.Header().Set("Content-Type", "multipart/form-data; boundary=boundary")
+		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", size))
 	}
 }

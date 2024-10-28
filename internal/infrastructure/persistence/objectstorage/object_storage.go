@@ -45,7 +45,7 @@ func NewLocalObjectStorage() (repository.ObjectStorage, error) {
 }
 
 func (s *localObjectStorage) Put(c context.Context, block entity.Block) error {
-	log.FromContext(c).Debugf("[localObjectStorage.Put] block: %+v", block)
+	log.FromContext(c).Debugf("[localObjectStorage.Put] block header: %+v", block.Header())
 	header := block.Header()
 	key := s.makeKey(header.ObjectID(), header.BlockID(), header.Index())
 	s.storage[key] = block

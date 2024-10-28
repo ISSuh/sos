@@ -29,13 +29,14 @@ import (
 )
 
 type Request struct {
-	ObjectID  entity.ObjectID
-	Group     string
-	Partition string
-	Path      string
-	Name      string
-	Size      int
-	ChunkSize uint64
+	ObjectID     entity.ObjectID
+	Group        string
+	Partition    string
+	Path         string
+	Name         string
+	Size         int
+	ChunkSize    uint64
+	BlockHeaders entity.BlockHeaders
 }
 
 func RequestFromContext(c context.Context, key any) Request {

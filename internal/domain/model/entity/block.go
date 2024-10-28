@@ -84,6 +84,11 @@ func (b *BlockBuilder) AppendBuffer(buffer []byte) *BlockBuilder {
 	return b
 }
 
+func (b *BlockBuilder) ReSizeBuffer(size uint64) *BlockBuilder {
+	b.buffer = b.buffer[0:size]
+	return b
+}
+
 func (b *BlockBuilder) BufferSize() int {
 	return len(b.buffer)
 }

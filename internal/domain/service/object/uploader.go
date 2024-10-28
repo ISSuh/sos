@@ -63,6 +63,8 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 		}
 
 		if n == 0 {
+			blockBuilder.ReSizeBuffer(totalReadSize)
+
 			block := o.buildBlock(objectID, blockIndex, blockBuilder)
 			if err := o.uploadBlock(c, block); err != nil {
 				return nil, err
@@ -72,8 +74,9 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 			break
 		}
 
-		// need data handling
 		totalReadSize += uint64(n)
+		blockBuilder.AppendBuffer(buf)
+
 		if totalReadSize >= entity.BlockSize {
 			block := o.buildBlock(objectID, blockIndex, blockBuilder)
 			if err := o.uploadBlock(c, block); err != nil {
@@ -87,7 +90,6 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 			totalReadSize = 0
 		}
 
-		blockBuilder.AppendBuffer(buf)
 	}
 
 	log.FromContext(c).Infof("Upload objectID: %s, block count: %d", objectID.String(), len(blockheaders))

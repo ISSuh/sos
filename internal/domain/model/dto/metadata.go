@@ -33,26 +33,33 @@ import (
 
 type MetadataList []Metadata
 type Metadata struct {
-	ID         entity.ObjectID `json:"id"`
-	Group      string          `json:"group"`
-	Partition  string          `json:"partition"`
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Size       int             `json:"size"`
-	CreatedAt  time.Time       `json:"created_at"`
-	ModifiedAt time.Time       `json:"modified_at"`
+	ID           entity.ObjectID `json:"object_id"`
+	Group        string          `json:"group"`
+	Partition    string          `json:"partition"`
+	Name         string          `json:"name"`
+	Path         string          `json:"path"`
+	Size         int             `json:"size"`
+	BlockHeaders BlockHeaders    `json:"block_headers"`
+	CreatedAt    time.Time       `json:"created_at"`
+	ModifiedAt   time.Time       `json:"modified_at"`
 }
 
 func NewMetadataFromModel(m entity.ObjectMetadata) Metadata {
+	headers := make(BlockHeaders, 0, len(m.BlockHeaders()))
+	for _, h := range m.BlockHeaders() {
+		headers = append(headers, NewBlockHeaderFromModel(h))
+	}
+
 	return Metadata{
-		ID:         m.ID(),
-		Group:      m.Group(),
-		Partition:  m.Partition(),
-		Name:       m.Name(),
-		Path:       m.Path(),
-		Size:       m.Size(),
-		CreatedAt:  m.CreatedAt,
-		ModifiedAt: m.ModifiedAt,
+		ID:           m.ID(),
+		Group:        m.Group(),
+		Partition:    m.Partition(),
+		Name:         m.Name(),
+		Path:         m.Path(),
+		Size:         m.Size(),
+		BlockHeaders: headers,
+		CreatedAt:    m.CreatedAt,
+		ModifiedAt:   m.ModifiedAt,
 	}
 }
 
@@ -64,13 +71,19 @@ func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 		return empty.Struct[Metadata]()
 	}
 
+	headers := make(BlockHeaders, 0, len(m.BlockHeaders))
+	for _, h := range m.BlockHeaders {
+		headers = append(headers, NewBlockHeaderFromMessage(h))
+	}
+
 	return Metadata{
-		ID:        entity.ObjectID(m.GetId().Id),
-		Group:     m.Group,
-		Partition: m.Partition,
-		Name:      m.Name,
-		Path:      m.Path,
-		Size:      int(m.GetSize()),
+		ID:           entity.ObjectID(m.GetId().Id),
+		Group:        m.Group,
+		Partition:    m.Partition,
+		Name:         m.Name,
+		Path:         m.Path,
+		Size:         int(m.GetSize()),
+		BlockHeaders: headers,
 		// CreatedAt:  m.CreatedAt,
 		// ModifiedAt: m.ModifiedAt,
 	}
@@ -81,5 +94,5 @@ func NewEmptyMetadata() Metadata {
 }
 
 func (d Metadata) IsEmpty() bool {
-	return d == Metadata{}
+	return d.BlockHeaders.Empty() && d.ID == 0
 }

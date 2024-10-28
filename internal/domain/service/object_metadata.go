@@ -68,6 +68,7 @@ func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
 			Path(req.Path).
 			Name(req.Name).
 			Size(req.Size).
+			BlockHeaders(req.BlockHeaders).
 			Build()
 
 	if err := s.metadataRepository.Create(c, metadata); err != nil {
@@ -86,7 +87,7 @@ func (s *objectMetadata) MetadataByObjectName(c context.Context, req dto.Request
 }
 
 func (s *objectMetadata) MetadataByObjectID(c context.Context, req dto.Request) (dto.Metadata, error) {
-	metadata, err := s.metadataRepository.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
+	metadata, err := s.metadataRepository.MetadataByObjectID(c, req.Group, req.Partition, req.Path, req.ObjectID.ToInt64())
 	if err != nil {
 		return dto.NewEmptyMetadata(), err
 	}

@@ -32,6 +32,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type metadataRegistry struct {
@@ -50,13 +51,27 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 }
 
 func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+	blockHeaders := entity.BlockHeaders{}
+	for _, headers := range metadata.BlockHeaders {
+		builder :=
+			entity.NewBlockHeaderBuilder().
+				BlockID(entity.BlockID(headers.BlockID.Id)).
+				ObjectID(entity.ObjectID(headers.ObjectID.Id)).
+				Index(int(headers.Index)).
+				Size(int(headers.Size)).
+				Timestamp(headers.Timestamp.AsTime())
+
+		blockHeaders = append(blockHeaders, builder.Build())
+	}
+
 	d := dto.Request{
-		ObjectID:  entity.NewObjectIDFrom(metadata.GetId().Id),
-		Name:      metadata.GetName(),
-		Group:     metadata.GetGroup(),
-		Partition: metadata.GetPartition(),
-		Path:      metadata.GetPath(),
-		Size:      int(metadata.GetSize()),
+		ObjectID:     entity.NewObjectIDFrom(metadata.GetId().Id),
+		Name:         metadata.GetName(),
+		Group:        metadata.GetGroup(),
+		Partition:    metadata.GetPartition(),
+		Path:         metadata.GetPath(),
+		Size:         int(metadata.GetSize()),
+		BlockHeaders: blockHeaders,
 	}
 
 	err := s.objectMetadata.Create(c, d)
@@ -110,15 +125,33 @@ func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetad
 		return nil, err
 	}
 
+	blockHeaders := make([]*message.BlockHeader, 0)
+	for _, header := range item.BlockHeaders {
+		blockHeader := &message.BlockHeader{
+			ObjectID: &message.ObjectID{
+				Id: header.ObjectID.ToInt64(),
+			},
+			BlockID: &message.BlockID{
+				Id: header.BlockID.ToInt64(),
+			},
+			Index:     int32(header.Index),
+			Size:      int32(header.Size),
+			Timestamp: timestamppb.New(header.Timestamp),
+		}
+
+		blockHeaders = append(blockHeaders, blockHeader)
+	}
+
 	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
 			Id: item.ID.ToInt64(),
 		},
-		Name:      item.Name,
-		Group:     item.Group,
-		Partition: item.Partition,
-		Path:      item.Path,
-		Size:      int32(item.Size),
+		Name:         item.Name,
+		Group:        item.Group,
+		Partition:    item.Partition,
+		Path:         item.Path,
+		Size:         int32(item.Size),
+		BlockHeaders: blockHeaders,
 	}, nil
 }
 
@@ -136,15 +169,33 @@ func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.Object
 
 	list := make([]*message.ObjectMetadata, len(items))
 	for i, item := range items {
+		blockHeaders := make([]*message.BlockHeader, 0)
+		for _, header := range item.BlockHeaders {
+			blockHeader := &message.BlockHeader{
+				ObjectID: &message.ObjectID{
+					Id: header.ObjectID.ToInt64(),
+				},
+				BlockID: &message.BlockID{
+					Id: header.BlockID.ToInt64(),
+				},
+				Index:     int32(header.Index),
+				Size:      int32(header.Size),
+				Timestamp: timestamppb.New(header.Timestamp),
+			}
+
+			blockHeaders = append(blockHeaders, blockHeader)
+		}
+
 		list[i] = &message.ObjectMetadata{
 			Id: &message.ObjectID{
 				Id: item.ID.ToInt64(),
 			},
-			Name:      item.Name,
-			Group:     item.Group,
-			Partition: item.Partition,
-			Path:      item.Path,
-			Size:      int32(item.Size),
+			Name:         item.Name,
+			Group:        item.Group,
+			Partition:    item.Partition,
+			Path:         item.Path,
+			Size:         int32(item.Size),
+			BlockHeaders: blockHeaders,
 		}
 	}
 

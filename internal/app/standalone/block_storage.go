@@ -26,10 +26,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type blockStorage struct {
@@ -47,14 +49,77 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageReque
 	}, nil
 }
 
-func (r *blockStorage) Put(ctx context.Context, block *message.Block) (*rpc.StorageResponse, error) {
-	return nil, nil
+func (s *blockStorage) Put(
+	ctx context.Context, block *message.Block,
+) (*rpc.StorageResponse, error) {
+
+	headerBuilder :=
+		entity.NewBlockHeaderBuilder().
+			BlockID(entity.BlockID(block.Header.BlockID.Id)).
+			ObjectID(entity.ObjectID(block.Header.ObjectID.Id)).
+			Index(int(block.Header.Index)).
+			Timestamp(block.Header.Timestamp.AsTime())
+
+	builder :=
+		entity.NewBlockBuilder().
+			Buffer(block.Data).
+			Header(headerBuilder.Build())
+
+	if err := s.objectStorage.Put(ctx, builder.Build()); err != nil {
+		return &rpc.StorageResponse{
+			Success: false,
+			Message: err.Error(),
+		}, err
+	}
+
+	return &rpc.StorageResponse{
+		Success: true,
+	}, nil
 }
 
-func (r *blockStorage) Get(ctx context.Context, header *message.BlockHeader) (*message.Block, error) {
-	return nil, nil
+func (s *blockStorage) Get(
+	ctx context.Context, header *message.BlockHeader,
+) (*message.Block, error) {
+	block, err := s.objectStorage.GetBlock(
+		ctx, entity.ObjectID(header.ObjectID.Id),
+		entity.BlockID(header.BlockID.Id), int(header.Index),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeader := block.Header()
+	return &message.Block{
+		Header: &message.BlockHeader{
+			ObjectID: &message.ObjectID{
+				Id: blockHeader.ObjectID().ToInt64(),
+			},
+			BlockID: &message.BlockID{
+				Id: blockHeader.ObjectID().ToInt64(),
+			},
+			Index:     int32(blockHeader.Index()),
+			Timestamp: timestamppb.New(blockHeader.Timestamp()),
+		},
+		Data: block.Buffer(),
+	}, nil
 }
 
-func (r *blockStorage) Delete(ctx context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
-	return nil, nil
+func (s *blockStorage) Delete(
+	ctx context.Context, header *message.BlockHeader,
+) (*rpc.StorageResponse, error) {
+	err := s.objectStorage.Delete(
+		ctx, entity.ObjectID(header.ObjectID.Id),
+		entity.BlockID(header.BlockID.Id), int(header.Index),
+	)
+
+	if err != nil {
+		return &rpc.StorageResponse{
+			Success: false,
+			Message: err.Error(),
+		}, err
+	}
+	return &rpc.StorageResponse{
+		Success: true,
+	}, nil
 }
