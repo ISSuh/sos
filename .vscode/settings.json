@@ -23,5 +23,8 @@
     "options": [
         "--proto_path=${workspaceFolder}/internal",
     ]
+  },
+
+  "rest-client.environmentVariables": {
   }
 }

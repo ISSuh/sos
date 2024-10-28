@@ -53,9 +53,14 @@ func (h *blockStorage) Put(c context.Context, block *message.Block) (*rpc.Storag
 	return &rpc.StorageResponse{}, nil
 }
 
-func (h *blockStorage) Get(c context.Context, header *message.BlockHeader) (*message.Block, error) {
-	log.FromContext(c).Debugf("[BlockStorage.Get]")
+func (h *blockStorage) GetBlock(c context.Context, header *message.BlockHeader) (*message.Block, error) {
+	log.FromContext(c).Debugf("[BlockStorage.GetBlock]")
 	return &message.Block{}, nil
+}
+
+func (h *blockStorage) GetBlockHeader(c context.Context, header *message.BlockHeader) (*message.BlockHeader, error) {
+	log.FromContext(c).Debugf("[BlockStorage.GetBlockHeader]")
+	return &message.BlockHeader{}, nil
 }
 
 func (h *blockStorage) Delete(c context.Context, header *message.BlockHeader) (*rpc.StorageResponse, error) {
