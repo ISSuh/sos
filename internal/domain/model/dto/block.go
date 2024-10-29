@@ -78,6 +78,6 @@ func NewEmptyBlockHeader() BlockHeader {
 	return BlockHeader{}
 }
 
-func (d BlockHeader) IsEmpty() bool {
+func (d BlockHeader) Empty() bool {
 	return d == BlockHeader{}
 }

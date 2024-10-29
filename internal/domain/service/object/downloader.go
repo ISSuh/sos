@@ -24,7 +24,6 @@ package object
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
@@ -49,12 +48,8 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 		blockChan[i] = make(chan entity.Block)
 	}
 
-	// wg := sync.WaitGroup{}
 	for _, blockHeader := range metadata.BlockHeaders() {
-		// wg.Add(1)
-
 		go func(blockHeader entity.BlockHeader) {
-			// defer wg.Done()
 			defer func() {
 				if r := recover(); r != nil {
 					return
@@ -66,32 +61,26 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 				return
 			}
 
-			fmt.Println("[TEST] blockHeader.Index() : ", blockHeader.Index())
 			blockChan[blockHeader.Index()] <- block
 		}(blockHeader)
 	}
-
-	// wg.Wait()
 
 	blockSize := 0
 	for _, ch := range blockChan {
 		block := <-ch
 
 		blockSize += len(block.Buffer())
-		fmt.Println("[TEST] blockSize : ", blockSize, ", len : ", len(block.Buffer()))
 		err := writer(block.Buffer())
 		if err != nil {
 			return err
 		}
 	}
-
-	fmt.Println("[TEST] blockSize : ", blockSize)
 	return nil
 }
 
 func (o *Downloader) downloadBlock(c context.Context, blockHeader entity.BlockHeader) (entity.Block, error) {
 	msg := message.FromBlockHeader(blockHeader)
-	resp, err := o.storageRequestor.Get(c, msg)
+	resp, err := o.storageRequestor.GetBlock(c, msg)
 	if err != nil {
 		return empty.Struct[entity.Block](), err
 	}

@@ -35,8 +35,6 @@ import (
 )
 
 type explorer struct {
-	logger log.Logger
-
 	explorerService service.Explorer
 }
 
@@ -58,14 +56,19 @@ func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 
-	metadata, err := h.explorerService.GetObjectMetadata(c, dto)
+	item, err := h.explorerService.GetObjectMetadata(c, dto)
 	if err != nil {
 		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
 
-	if err := http.Json(w, metadata); err != nil {
+	if item.Empty() {
+		http.NoContent(w)
+		return
+	}
+
+	if err := http.Json(w, item); err != nil {
 		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
@@ -79,14 +82,19 @@ func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", dto)
 
-	metadata, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
+	items, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
 	if err != nil {
 		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
 
-	if err := http.Json(w, metadata); err != nil {
+	if items.Empty() {
+		http.NoContent(w)
+		return
+	}
+
+	if err := http.Json(w, items); err != nil {
 		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
@@ -216,7 +224,7 @@ func (h *explorer) Delete(w gohttp.ResponseWriter, r *gohttp.Request) {
 	err := h.explorerService.Delete(c, dto)
 	if err != nil {
 		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+		gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
 		return
 	}
 

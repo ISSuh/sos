@@ -77,7 +77,7 @@ func (s *blockStorage) Put(
 	}, nil
 }
 
-func (s *blockStorage) Get(
+func (s *blockStorage) GetBlock(
 	ctx context.Context, header *message.BlockHeader,
 ) (*message.Block, error) {
 	block, err := s.objectStorage.GetBlock(
@@ -102,6 +102,31 @@ func (s *blockStorage) Get(
 			Timestamp: timestamppb.New(blockHeader.Timestamp()),
 		},
 		Data: block.Buffer(),
+	}, nil
+}
+
+func (s *blockStorage) GetBlockHeader(
+	ctx context.Context, header *message.BlockHeader,
+) (*message.BlockHeader, error) {
+	blockHeader, err := s.objectStorage.GetBlockHeader(
+		ctx, entity.ObjectID(header.ObjectID.Id),
+		entity.BlockID(header.BlockID.Id), int(header.Index),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &message.BlockHeader{
+		ObjectID: &message.ObjectID{
+			Id: blockHeader.ObjectID().ToInt64(),
+		},
+		BlockID: &message.BlockID{
+			Id: blockHeader.BlockID().ToInt64(),
+		},
+		Index:     int32(blockHeader.Index()),
+		Size:      int32(blockHeader.Size()),
+		Timestamp: timestamppb.New(blockHeader.Timestamp()),
 	}, nil
 }
 

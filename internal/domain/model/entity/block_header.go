@@ -68,7 +68,7 @@ func (b *BlockHeader) Checksum() string {
 	return b.checksum
 }
 
-func (b *BlockHeader) IsEmpty() bool {
+func (b *BlockHeader) Empty() bool {
 	return b.blockID == 0
 }
 

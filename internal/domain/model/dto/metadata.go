@@ -32,6 +32,11 @@ import (
 )
 
 type MetadataList []Metadata
+
+func (m MetadataList) Empty() bool {
+	return len(m) == 0
+}
+
 type Metadata struct {
 	ID           entity.ObjectID `json:"object_id"`
 	Group        string          `json:"group"`
@@ -93,6 +98,6 @@ func NewEmptyMetadata() Metadata {
 	return Metadata{}
 }
 
-func (d Metadata) IsEmpty() bool {
+func (d Metadata) Empty() bool {
 	return d.BlockHeaders.Empty() && d.ID == 0
 }

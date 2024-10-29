@@ -83,7 +83,18 @@ func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetada
 }
 
 func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
-	return false, nil
+	d := dto.Request{
+		ObjectID:  entity.NewObjectIDFrom(metadata.GetId().Id),
+		Name:      metadata.GetName(),
+		Group:     metadata.GetGroup(),
+		Partition: metadata.GetPartition(),
+		Path:      metadata.GetPath(),
+	}
+
+	if err := r.objectMetadata.Delete(c, d); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
