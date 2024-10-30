@@ -35,6 +35,7 @@ import (
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/validation"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -85,7 +86,7 @@ func (s *explorer) GetObjectMetadata(c context.Context, req dto.Request) (dto.It
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromModel(metadata), nil
+	return dto.NewItemFromMetadataModel(metadata), nil
 }
 
 func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) (dto.Items, error) {
@@ -102,7 +103,6 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 		Group:     req.Group,
 		Partition: req.Partition,
 		Path:      req.Path,
-		Name:      req.Name,
 	}
 
 	resp, err := s.metadataRequestor.FindMetadataOnPath(c, &message)
@@ -111,12 +111,7 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 	}
 
 	list := resp.GetMetadata()
-	metadataList := make(dto.MetadataList, len(list))
-	for i, item := range list {
-		metadataList[i] = dto.NewMetadataFromMessage(item)
-	}
-
-	return dto.NewItemsFromMetadataList(metadataList), nil
+	return dto.NewItemFromMetadataListMessage(list), nil
 }
 
 func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error) {
@@ -129,12 +124,10 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), fmt.Errorf("path is empty")
 	case validation.IsEmpty(req.Name):
 		return empty.Struct[dto.Item](), fmt.Errorf("name is empty")
-	case req.Size == 0:
-		return empty.Struct[dto.Item](), fmt.Errorf("size is 0")
+	case req.Size <= 0:
+		return empty.Struct[dto.Item](), fmt.Errorf("size is invalid")
 	case validation.IsNil(bodyStream):
 		return empty.Struct[dto.Item](), fmt.Errorf("body stream is nil")
-	case req.ChunkSize == 0:
-		return empty.Struct[dto.Item](), fmt.Errorf("chunk size is 0")
 	}
 
 	exist, err :=
@@ -169,7 +162,7 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromModel(metadata), nil
+	return dto.NewItemFromMetadataModel(metadata), nil
 }
 
 func (s *explorer) Download(
@@ -298,15 +291,16 @@ func (s *explorer) getObjectMetadataByNameOnPath(
 		return empty.Struct[entity.ObjectMetadata](), err
 	}
 
-	builder := entity.NewObjectMetadataBuilder()
-	builder.ID(entity.NewObjectIDFrom(resp.Id.Id)).
-		Group(resp.Group).
-		Partition(resp.Partition).
-		Name(resp.Name).
-		Path(resp.Path).
-		Size(int(resp.Size))
+	metadata :=
+		entity.NewObjectMetadataBuilder().ID(entity.NewObjectIDFrom(resp.Id.Id)).
+			Group(resp.Group).
+			Partition(resp.Partition).
+			Name(resp.Name).
+			Path(resp.Path).
+			Size(int(resp.Size)).
+			Build()
 
-	return builder.Build(), nil
+	return metadata, nil
 }
 
 func (s *explorer) isObjectNameExist(c context.Context, group, partition, path, name string) (bool, error) {

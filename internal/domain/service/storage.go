@@ -28,6 +28,7 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/crc"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
 )
@@ -62,6 +63,16 @@ func NewObjectStorage(storageRepository repository.ObjectStorage) (ObjectStorage
 }
 
 func (s *objectStorage) Put(c context.Context, block entity.Block) error {
+	switch {
+	case !block.Validate():
+		return fmt.Errorf("Block is invalid")
+	}
+
+	header := block.Header()
+	if !crc.Verify(block.Buffer(), header.Checksum()) {
+		return fmt.Errorf("Block checksum is invalid")
+	}
+
 	if err := s.storageRepository.Put(c, block); err != nil {
 		return err
 	}

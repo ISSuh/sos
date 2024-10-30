@@ -101,3 +101,16 @@ func NewEmptyMetadata() Metadata {
 func (d Metadata) Empty() bool {
 	return d.BlockHeaders.Empty() && d.ID == 0
 }
+
+func (d Metadata) ToEntity() entity.ObjectMetadata {
+	headers := d.BlockHeaders.ToEntity()
+	return entity.NewObjectMetadataBuilder().
+		ID(d.ID).
+		Group(d.Group).
+		Partition(d.Partition).
+		Name(d.Name).
+		Path(d.Path).
+		Size(d.Size).
+		BlockHeaders(headers).
+		Build()
+}

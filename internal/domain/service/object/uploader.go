@@ -97,20 +97,17 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 
 func (o *Uploader) buildBlock(objectID entity.ObjectID, index int, blockBuilder *entity.BlockBuilder) entity.Block {
 	c := blockBuilder.CalculateChecksum()
-
-	blockerHeaderBuilder := entity.NewBlockHeaderBuilder()
-	blockerHeaderBuilder.
+	header := entity.NewBlockHeaderBuilder().
 		ObjectID(objectID).
 		BlockID(entity.NewBlockID()).
 		Index(index).
 		Size(blockBuilder.BufferSize()).
 		Node(entity.Node{}).
 		Timestamp(time.Now()).
-		Checksum(c)
+		Checksum(c).
+		Build()
 
-	blockHeader := blockerHeaderBuilder.Build()
-
-	blockBuilder.Header(blockHeader)
+	blockBuilder.Header(header)
 	return blockBuilder.Build()
 }
 

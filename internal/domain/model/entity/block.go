@@ -23,8 +23,7 @@
 package entity
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"github.com/ISSuh/sos/pkg/crc"
 )
 
 const (
@@ -38,6 +37,13 @@ type Block struct {
 	buffer []byte
 
 	ModifiedTime
+}
+
+func (b *Block) Validate() bool {
+	if b.header.Empty() || len(b.buffer) <= 0 {
+		return false
+	}
+	return true
 }
 
 func (b *Block) ObjectID() ObjectID {
@@ -93,9 +99,8 @@ func (b *BlockBuilder) BufferSize() int {
 	return len(b.buffer)
 }
 
-func (b *BlockBuilder) CalculateChecksum() string {
-	checksum := md5.Sum(b.buffer)
-	return hex.EncodeToString(checksum[:])
+func (b *BlockBuilder) CalculateChecksum() uint32 {
+	return crc.Checksum(b.buffer)
 }
 
 func (b *BlockBuilder) Build() Block {

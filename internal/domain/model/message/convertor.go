@@ -88,6 +88,7 @@ func FromBlockHeader(blockHeader entity.BlockHeader) *BlockHeader {
 		BlockID:   FromBlockID(blockHeader.BlockID()),
 		Index:     int32(blockHeader.Index()),
 		Size:      int32(blockHeader.Size()),
+		Checksum:  blockHeader.Checksum(),
 		Timestamp: timestamppb.New(blockHeader.Timestamp()),
 	}
 }

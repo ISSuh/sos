@@ -14,14 +14,27 @@
 ###########
 # multipart Upload
 POST {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
-Content-Type: multipart/form-data; boundary=MfnBoundry
+Content-Type: multipart/form-data; boundary=MyBoundry
 
---MfnBoundry
-Content-Disposition: form-data; name="image"; filename="1.png"
-Content-Type: image/png
+--MyBoundry
+Content-Disposition: form-data; name="1"; filename="sample_1.mp3"
+Content-Type: application/octet-stream
 
 < ./scripts/sample/sample.mp3
---MfnBoundry--
+
+--MyBoundry
+Content-Disposition: form-data; name="1"; filename="sample_2.mp3"
+Content-Type: application/octet-stream
+
+< ./scripts/sample/sample.mp3
+
+--MyBoundry
+Content-Disposition: form-data; name="3"; filename="sample_3.mp3"
+Content-Type: application/octet-stream
+
+< ./scripts/sample/sample.mp3
+
+--MyBoundry--
 
 ###
 

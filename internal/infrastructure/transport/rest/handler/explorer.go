@@ -89,11 +89,6 @@ func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 		return
 	}
 
-	if items.Empty() {
-		http.NoContent(w)
-		return
-	}
-
 	if err := http.Json(w, items); err != nil {
 		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
@@ -102,77 +97,89 @@ func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 }
 
 func (h *explorer) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	h.chunkedUpload(w, r)
+	// h.chunkedUpload(w, r)
+	h.multipartUpload(w, r)
 }
 
 func (h *explorer) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
+	log.FromContext(c).Debugf("[explorer.multipartUpload]")
 
-	// 최대 메모리 사용량 설정 (32MB)
-	r.ParseMultipartForm(32 << 20)
-
-	// 파일을 가져옵니다.
-	file, handler, err := r.FormFile(http.MultiPartUploadKey)
-	if err != nil {
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-	defer file.Close()
-
-	tempFile := r.MultipartForm.File
-	for k, v := range tempFile {
-		log.FromContext(c).Debugf("tempFile => Key: %s, Value: %+v\n", k, v)
-	}
-
-	tempValue := r.MultipartForm.Value
-	for k, v := range tempValue {
-		log.FromContext(c).Debugf("tempValue => Key: %s, Value: %+v\n", k, v)
-	}
-
-	// 업로드된 파일 정보를 출력합니다.
-	log.FromContext(c).Debugf("Uploaded File: %+v\n", handler.Filename)
-	log.FromContext(c).Debugf("File Size: %+v\n", handler.Size)
-	log.FromContext(c).Debugf("MIME Header: %+v\n", handler.Header)
-
-	// // 파일을 서버에 저장합니다.
-	// dst, err := os.Create("./uploads/" + handler.Filename)
-	// if err != nil {
-	// 	gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-	// 	return
-	// }
-	// defer dst.Close()
-
-	// // 파일을 복사합니다.
-	// if _, err := io.Copy(dst, file); err != nil {
-	// 	gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-	// 	return
-	// }
-
-	log.FromContext(c).Debugf("Successfully Uploaded File\n")
-}
-
-func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
-
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("Request: %+v\n", dto)
+	req := dto.RequestFromContext(c, http.RequestContextKey)
+	log.FromContext(c).Debugf("Request: %+v\n", req)
 	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
 
-	metadata, err := h.explorerService.Upload(c, dto, r.Body)
-	if err != nil {
-		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
 
-	if err := http.Json(w, metadata); err != nil {
-		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+	multipartForm := r.MultipartForm
+
+	var items []dto.Item
+	for key, fileHeaders := range multipartForm.File {
+		for _, fileHeader := range fileHeaders {
+			log.FromContext(c).Debugf("[%s]Uploaded File: %+v\n", key, fileHeader.Filename)
+			log.FromContext(c).Debugf("[%s]File Size: %+v\n", key, fileHeader.Size)
+			log.FromContext(c).Debugf("[%s]MIME Header: %+v\n", key, fileHeader.Header)
+
+			f, err := fileHeader.Open()
+			if err != nil {
+				gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+				return
+			}
+
+			req.Name = fileHeader.Filename
+			req.Size = int(fileHeader.Size)
+
+			item, err := h.explorerService.Upload(c, req, f)
+			if err != nil {
+				log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+				gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+				return
+			}
+
+			items = append(items, item)
+			f.Close()
+		}
+	}
+
+	resp := struct {
+		Items dto.Items `json:"items"`
+	}{
+		Items: items,
+	}
+
+	log.FromContext(c).Debugf("Successfully Uploaded File\n")
+	if err := http.Json(w, resp); err != nil {
+		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
 		return
 	}
 }
+
+// func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
+// 	c := r.Context()
+// 	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
+
+// 	dto := dto.RequestFromContext(c, http.RequestContextKey)
+// 	log.FromContext(c).Debugf("Request: %+v\n", dto)
+// 	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
+
+// 	metadata, err := h.explorerService.Upload(c, dto, r.Body)
+// 	if err != nil {
+// 		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+// 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer r.Body.Close()
+
+// 	if err := http.Json(w, metadata); err != nil {
+// 		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+// 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+// 		return
+// 	}
+// }
 
 func (h *explorer) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()

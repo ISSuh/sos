@@ -31,6 +31,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/validation"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -50,22 +51,24 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageReque
 }
 
 func (s *blockStorage) Put(
-	ctx context.Context, block *message.Block,
+	ctx context.Context, blockMessage *message.Block,
 ) (*rpc.StorageResponse, error) {
-
-	headerBuilder :=
+	header :=
 		entity.NewBlockHeaderBuilder().
-			BlockID(entity.BlockID(block.Header.BlockID.Id)).
-			ObjectID(entity.ObjectID(block.Header.ObjectID.Id)).
-			Index(int(block.Header.Index)).
-			Timestamp(block.Header.Timestamp.AsTime())
+			BlockID(entity.BlockID(blockMessage.Header.BlockID.Id)).
+			ObjectID(entity.ObjectID(blockMessage.Header.ObjectID.Id)).
+			Index(int(blockMessage.Header.Index)).
+			Checksum(blockMessage.Header.Checksum).
+			Timestamp(blockMessage.Header.Timestamp.AsTime()).
+			Build()
 
-	builder :=
+	block :=
 		entity.NewBlockBuilder().
-			Buffer(block.Data).
-			Header(headerBuilder.Build())
+			Buffer(blockMessage.Data).
+			Header(header).
+			Build()
 
-	if err := s.objectStorage.Put(ctx, builder.Build()); err != nil {
+	if err := s.objectStorage.Put(ctx, block); err != nil {
 		return &rpc.StorageResponse{
 			Success: false,
 			Message: err.Error(),
@@ -78,11 +81,11 @@ func (s *blockStorage) Put(
 }
 
 func (s *blockStorage) GetBlock(
-	ctx context.Context, header *message.BlockHeader,
+	ctx context.Context, headerMessage *message.BlockHeader,
 ) (*message.Block, error) {
 	block, err := s.objectStorage.GetBlock(
-		ctx, entity.ObjectID(header.ObjectID.Id),
-		entity.BlockID(header.BlockID.Id), int(header.Index),
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
 	)
 
 	if err != nil {
@@ -106,11 +109,11 @@ func (s *blockStorage) GetBlock(
 }
 
 func (s *blockStorage) GetBlockHeader(
-	ctx context.Context, header *message.BlockHeader,
+	ctx context.Context, headerMessage *message.BlockHeader,
 ) (*message.BlockHeader, error) {
 	blockHeader, err := s.objectStorage.GetBlockHeader(
-		ctx, entity.ObjectID(header.ObjectID.Id),
-		entity.BlockID(header.BlockID.Id), int(header.Index),
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
 	)
 
 	if err != nil {
@@ -131,11 +134,11 @@ func (s *blockStorage) GetBlockHeader(
 }
 
 func (s *blockStorage) Delete(
-	ctx context.Context, header *message.BlockHeader,
+	ctx context.Context, headerMessage *message.BlockHeader,
 ) (*rpc.StorageResponse, error) {
 	err := s.objectStorage.Delete(
-		ctx, entity.ObjectID(header.ObjectID.Id),
-		entity.BlockID(header.BlockID.Id), int(header.Index),
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
 	)
 
 	if err != nil {

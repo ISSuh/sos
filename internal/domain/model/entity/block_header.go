@@ -33,7 +33,7 @@ type BlockHeader struct {
 	size      int
 	node      Node
 	timestamp time.Time
-	checksum  string
+	checksum  uint32
 }
 
 func NewEmptyBlockHeader() BlockHeader {
@@ -64,7 +64,7 @@ func (b *BlockHeader) Timestamp() time.Time {
 	return b.timestamp
 }
 
-func (b *BlockHeader) Checksum() string {
+func (b *BlockHeader) Checksum() uint32 {
 	return b.checksum
 }
 
@@ -79,7 +79,7 @@ type BlockHeaderBuilder struct {
 	size      int
 	node      Node
 	timestamp time.Time
-	checksum  string
+	checksum  uint32
 }
 
 func NewBlockHeaderBuilder() *BlockHeaderBuilder {
@@ -116,7 +116,7 @@ func (b *BlockHeaderBuilder) Timestamp(timestamp time.Time) *BlockHeaderBuilder 
 	return b
 }
 
-func (b *BlockHeaderBuilder) Checksum(checksum string) *BlockHeaderBuilder {
+func (b *BlockHeaderBuilder) Checksum(checksum uint32) *BlockHeaderBuilder {
 	b.checksum = checksum
 	return b
 }

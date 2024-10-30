@@ -27,7 +27,6 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
@@ -51,30 +50,8 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 }
 
 func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	blockHeaders := entity.BlockHeaders{}
-	for _, headers := range metadata.BlockHeaders {
-		builder :=
-			entity.NewBlockHeaderBuilder().
-				BlockID(entity.BlockID(headers.BlockID.Id)).
-				ObjectID(entity.ObjectID(headers.ObjectID.Id)).
-				Index(int(headers.Index)).
-				Size(int(headers.Size)).
-				Timestamp(headers.Timestamp.AsTime())
-
-		blockHeaders = append(blockHeaders, builder.Build())
-	}
-
-	d := dto.Request{
-		ObjectID:     entity.NewObjectIDFrom(metadata.GetId().Id),
-		Name:         metadata.GetName(),
-		Group:        metadata.GetGroup(),
-		Partition:    metadata.GetPartition(),
-		Path:         metadata.GetPath(),
-		Size:         int(metadata.GetSize()),
-		BlockHeaders: blockHeaders,
-	}
-
-	err := s.objectMetadata.Create(c, d)
+	dto := dto.NewMetadataFromMessage(metadata)
+	err := s.objectMetadata.Create(c, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -83,29 +60,15 @@ func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetada
 }
 
 func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
-	d := dto.Request{
-		ObjectID:  entity.NewObjectIDFrom(metadata.GetId().Id),
-		Name:      metadata.GetName(),
-		Group:     metadata.GetGroup(),
-		Partition: metadata.GetPartition(),
-		Path:      metadata.GetPath(),
-	}
-
-	if err := r.objectMetadata.Delete(c, d); err != nil {
+	dto := dto.NewMetadataFromMessage(metadata)
+	if err := r.objectMetadata.Delete(c, dto); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
 func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
-	d := dto.Request{
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-		Name:      req.GetName(),
-	}
-
-	item, err := s.objectMetadata.MetadataByObjectName(c, d)
+	item, err := s.objectMetadata.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -114,24 +77,18 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMet
 		Id: &message.ObjectID{
 			Id: item.ID.ToInt64(),
 		},
-		Name:      item.Name,
-		Group:     item.Group,
-		Partition: item.Partition,
-		Path:      item.Path,
-		Size:      int32(item.Size),
+		Name:       item.Name,
+		Group:      item.Group,
+		Partition:  item.Partition,
+		Path:       item.Path,
+		Size:       int32(item.Size),
+		CreatedAt:  timestamppb.New(item.CreatedAt),
+		ModifiedAt: timestamppb.New(item.ModifiedAt),
 	}, nil
 }
 
 func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
-	d := dto.Request{
-		ObjectID:  entity.NewObjectIDFrom(req.GetObjectID()),
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-		Name:      req.GetName(),
-	}
-
-	item, err := s.objectMetadata.MetadataByObjectID(c, d)
+	item, err := s.objectMetadata.MetadataByObjectID(c, req.Group, req.Partition, req.Path, req.GetObjectID())
 	if err != nil {
 		return nil, err
 	}
@@ -163,17 +120,13 @@ func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetad
 		Path:         item.Path,
 		Size:         int32(item.Size),
 		BlockHeaders: blockHeaders,
+		CreatedAt:    timestamppb.New(item.CreatedAt),
+		ModifiedAt:   timestamppb.New(item.ModifiedAt),
 	}, nil
 }
 
 func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
-	d := dto.Request{
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-	}
-
-	items, err := s.objectMetadata.MetadataListOnPath(c, d)
+	items, err := s.objectMetadata.MetadataListOnPath(c, req.Group, req.Partition, req.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +160,8 @@ func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.Object
 			Path:         item.Path,
 			Size:         int32(item.Size),
 			BlockHeaders: blockHeaders,
+			CreatedAt:    timestamppb.New(item.CreatedAt),
+			ModifiedAt:   timestamppb.New(item.ModifiedAt),
 		}
 	}
 

@@ -14,6 +14,6 @@ message BlockHeader {
     int32 index = 3;
     int32 size = 4;
     string node = 5;
+    uint32 checksum = 7;
     google.protobuf.Timestamp timestamp = 6;
-    string checksum = 7;
 }

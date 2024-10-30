@@ -56,12 +56,10 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 	routes := http.RouteList{
 		// Upload
 		http.RouteItem{
-			URL:     URLDefault,
-			Method:  gohttp.MethodPost,
-			Handler: h.Upload,
-			Middlewares: []http.MiddlewareFunc{
-				middleware.ParseQueryParam,
-			},
+			URL:         URLDefault,
+			Method:      gohttp.MethodPost,
+			Handler:     h.Upload,
+			Middlewares: []http.MiddlewareFunc{},
 		},
 		// Download
 		http.RouteItem{

@@ -25,6 +25,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
@@ -52,6 +53,9 @@ func (d *localObjectMetadata) Create(c context.Context, metadata entity.ObjectMe
 		d.db[key] = make(map[int64]entity.ObjectMetadata)
 	}
 
+	metadata.CreatedAt = time.Now()
+	metadata.ModifiedAt = time.Now()
+
 	d.db[key][metadata.ID().ToInt64()] = metadata
 	return nil
 }
@@ -65,6 +69,8 @@ func (d *localObjectMetadata) Update(c context.Context, metadata entity.ObjectMe
 	if !exist {
 		return fmt.Errorf("metadata not exist")
 	}
+
+	metadata.ModifiedAt = time.Now()
 
 	d.db[key][metadata.ID().ToInt64()] = metadata
 	return nil

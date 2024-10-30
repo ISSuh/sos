@@ -37,6 +37,14 @@ func (h BlockHeaders) Empty() bool {
 	return len(h) == 0
 }
 
+func (h BlockHeaders) ToEntity() entity.BlockHeaders {
+	headers := make(entity.BlockHeaders, 0, len(h))
+	for _, header := range h {
+		headers = append(headers, header.ToEntity())
+	}
+	return headers
+}
+
 type BlockHeader struct {
 	BlockID   entity.BlockID  `json:"block_id"`
 	ObjectID  entity.ObjectID `json:"object_id"`
@@ -80,4 +88,14 @@ func NewEmptyBlockHeader() BlockHeader {
 
 func (d BlockHeader) Empty() bool {
 	return d == BlockHeader{}
+}
+
+func (d BlockHeader) ToEntity() entity.BlockHeader {
+	return entity.NewBlockHeaderBuilder().
+		BlockID(d.BlockID).
+		ObjectID(d.ObjectID).
+		Index(d.Index).
+		Size(d.Size).
+		Timestamp(d.Timestamp).
+		Build()
 }

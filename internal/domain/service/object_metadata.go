@@ -27,18 +27,17 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type ObjectMetadata interface {
-	Create(c context.Context, req dto.Request) error
-	Delete(c context.Context, req dto.Request) error
-	MetadataByObjectName(c context.Context, req dto.Request) (dto.Metadata, error)
-	MetadataByObjectID(c context.Context, req dto.Request) (dto.Metadata, error)
-	MetadataListOnPath(c context.Context, req dto.Request) (dto.MetadataList, error)
+	Create(c context.Context, dto dto.Metadata) error
+	Delete(c context.Context, dto dto.Metadata) error
+	MetadataByObjectName(c context.Context, group, partition, path, objectName string) (dto.Metadata, error)
+	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (dto.Metadata, error)
+	MetadataListOnPath(c context.Context, group, partition, path string) (dto.MetadataList, error)
 }
 
 type objectMetadata struct {
@@ -58,20 +57,10 @@ func NewObjectMetadata(metadataRepository repository.ObjectMetadata) (ObjectMeta
 	}, nil
 }
 
-func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
-	log.FromContext(c).Debugf("[objectMetadata.Create] request: %+v", req)
+func (s *objectMetadata) Create(c context.Context, dto dto.Metadata) error {
+	log.FromContext(c).Debugf("[objectMetadata.Create] request: %+v", dto)
 
-	builder := entity.NewObjectMetadataBuilder()
-	metadata :=
-		builder.ID(req.ObjectID).
-			Group(req.Group).
-			Partition(req.Partition).
-			Path(req.Path).
-			Name(req.Name).
-			Size(req.Size).
-			BlockHeaders(req.BlockHeaders).
-			Build()
-
+	metadata := dto.ToEntity()
 	if err := s.metadataRepository.Create(c, metadata); err != nil {
 		return err
 	}
@@ -79,18 +68,10 @@ func (s *objectMetadata) Create(c context.Context, req dto.Request) error {
 	return nil
 }
 
-func (s *objectMetadata) Delete(c context.Context, req dto.Request) error {
-	log.FromContext(c).Debugf("[objectMetadata.Delete] request: %+v", req)
+func (s *objectMetadata) Delete(c context.Context, dto dto.Metadata) error {
+	log.FromContext(c).Debugf("[objectMetadata.Delete] request: %+v", dto)
 
-	builder := entity.NewObjectMetadataBuilder()
-	metadata :=
-		builder.ID(req.ObjectID).
-			Group(req.Group).
-			Partition(req.Partition).
-			Path(req.Path).
-			Name(req.Name).
-			Build()
-
+	metadata := dto.ToEntity()
 	if err := s.metadataRepository.Delete(c, metadata); err != nil {
 		return err
 	}
@@ -98,24 +79,31 @@ func (s *objectMetadata) Delete(c context.Context, req dto.Request) error {
 	return nil
 }
 
-func (s *objectMetadata) MetadataByObjectName(c context.Context, req dto.Request) (dto.Metadata, error) {
-	metadata, err := s.metadataRepository.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
+func (s *objectMetadata) MetadataByObjectName(
+	c context.Context, group, partition, path, objectName string,
+) (dto.Metadata, error) {
+	metadata, err :=
+		s.metadataRepository.MetadataByObjectName(c, group, partition, path, objectName)
 	if err != nil {
 		return dto.NewEmptyMetadata(), err
 	}
 	return dto.NewMetadataFromModel(metadata), nil
 }
 
-func (s *objectMetadata) MetadataByObjectID(c context.Context, req dto.Request) (dto.Metadata, error) {
-	metadata, err := s.metadataRepository.MetadataByObjectID(c, req.Group, req.Partition, req.Path, req.ObjectID.ToInt64())
+func (s *objectMetadata) MetadataByObjectID(
+	c context.Context, group, partition, path string, objectID int64,
+) (dto.Metadata, error) {
+	metadata, err :=
+		s.metadataRepository.MetadataByObjectID(c, group, partition, path, objectID)
 	if err != nil {
 		return dto.NewEmptyMetadata(), err
 	}
 	return dto.NewMetadataFromModel(metadata), nil
 }
 
-func (s *objectMetadata) MetadataListOnPath(c context.Context, req dto.Request) (dto.MetadataList, error) {
-	items, err := s.metadataRepository.FindMetadata(c, req.Group, req.Partition, req.Path)
+func (s *objectMetadata) MetadataListOnPath(c context.Context, group, partition, path string) (dto.MetadataList, error) {
+	items, err :=
+		s.metadataRepository.FindMetadata(c, group, partition, path)
 	if err != nil {
 		return nil, err
 	}
@@ -124,6 +112,5 @@ func (s *objectMetadata) MetadataListOnPath(c context.Context, req dto.Request) 
 	for i, item := range items {
 		list[i] = dto.NewMetadataFromModel(item)
 	}
-
 	return list, nil
 }

@@ -24,10 +24,12 @@ package object
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/pkg/crc"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/http"
 )
@@ -43,13 +45,26 @@ func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Downloader {
 }
 
 func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata, writer http.DownloadBodyWriter) error {
-	blockChan := make([]chan entity.Block, len(metadata.BlockHeaders()))
+	blockHeader := metadata.BlockHeaders()
+	blockNum := len(metadata.BlockHeaders())
+
+	blockChan := make([]chan entity.Block, blockNum)
 	for i := range blockChan {
 		blockChan[i] = make(chan entity.Block)
 	}
 
-	for _, blockHeader := range metadata.BlockHeaders() {
-		go func(blockHeader entity.BlockHeader) {
+	errChan := make([]chan error, blockNum)
+	for i := range errChan {
+		errChan[i] = make(chan error)
+	}
+
+	stopChan := make([]chan struct{}, blockNum)
+	for i := range stopChan {
+		stopChan[i] = make(chan struct{})
+	}
+
+	for i := 0; i < blockNum; i++ {
+		go func(index int, blockHeader entity.BlockHeader, blockChan chan<- entity.Block, errChan chan<- error, stopChan <-chan struct{}) {
 			defer func() {
 				if r := recover(); r != nil {
 					return
@@ -61,18 +76,28 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 				return
 			}
 
-			blockChan[blockHeader.Index()] <- block
-		}(blockHeader)
+			header := block.Header()
+			if crc.Verify(block.Buffer(), header.Checksum()) {
+				errChan <- errors.New("Block checksum is invalid")
+				return
+			}
+
+			select {
+			case blockChan <- block:
+			case <-stopChan:
+			}
+		}(i, blockHeader[i], blockChan[i], errChan[i], stopChan[i])
 	}
 
-	blockSize := 0
-	for _, ch := range blockChan {
-		block := <-ch
-
-		blockSize += len(block.Buffer())
-		err := writer(block.Buffer())
-		if err != nil {
+	for i := 0; i < len(metadata.BlockHeaders()); i++ {
+		select {
+		case err := <-errChan[i]:
 			return err
+		case block := <-blockChan[i]:
+			err := writer(block.Buffer())
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
