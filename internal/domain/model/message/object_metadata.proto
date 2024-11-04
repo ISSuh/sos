@@ -7,6 +7,7 @@ option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
 import "google/protobuf/timestamp.proto";
 import "domain/model/message/object_id.proto";
 import "domain/model/message/block_header.proto";
+import "domain/model/message/version.proto";
 
 message ObjectMetadata {
     ObjectID id  = 1;
@@ -16,8 +17,9 @@ message ObjectMetadata {
     string name = 5;
     int32 size = 6;
     repeated BlockHeader blockHeaders = 7;
-    google.protobuf.Timestamp createdAt = 8;
-    google.protobuf.Timestamp modifiedAt = 9;
+    repeated Version versions = 8;
+    google.protobuf.Timestamp createdAt = 9;
+    google.protobuf.Timestamp modifiedAt = 10;
 }
 
 message ObjectMetadataRequest {

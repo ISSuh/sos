@@ -33,6 +33,7 @@ type ObjectMetadata struct {
 	size         int
 	node         Node
 	blockHeaders BlockHeaders
+	versions     Versions
 
 	ModifiedTime
 }
@@ -69,6 +70,10 @@ func (e ObjectMetadata) BlockHeaders() BlockHeaders {
 	return e.blockHeaders
 }
 
+func (e ObjectMetadata) Versions() Versions {
+	return e.versions
+}
+
 func (e ObjectMetadata) IsValid() bool {
 	return e.id.IsValid()
 }
@@ -79,6 +84,7 @@ type ObjectMetadataBuilder struct {
 	partition    string
 	name         string
 	path         string
+	versions     Versions
 	size         int
 	node         Node
 	blockHeaders BlockHeaders
@@ -123,6 +129,11 @@ func (b *ObjectMetadataBuilder) Node(node Node) *ObjectMetadataBuilder {
 	return b
 }
 
+func (b *ObjectMetadataBuilder) Versions(versions Versions) *ObjectMetadataBuilder {
+	b.versions = versions
+	return b
+}
+
 func (b *ObjectMetadataBuilder) BlockHeaders(blockHeaders BlockHeaders) *ObjectMetadataBuilder {
 	b.blockHeaders = blockHeaders
 	return b
@@ -137,6 +148,7 @@ func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 		path:         b.path,
 		size:         b.size,
 		node:         b.node,
+		versions:     b.versions,
 		blockHeaders: b.blockHeaders,
 	}
 }

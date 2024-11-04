@@ -34,6 +34,7 @@ import (
 
 type ObjectMetadata interface {
 	Create(c context.Context, dto dto.Metadata) error
+	Update(c context.Context, dto dto.Metadata) error
 	Delete(c context.Context, dto dto.Metadata) error
 	MetadataByObjectName(c context.Context, group, partition, path, objectName string) (dto.Metadata, error)
 	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (dto.Metadata, error)
@@ -62,6 +63,18 @@ func (s *objectMetadata) Create(c context.Context, dto dto.Metadata) error {
 
 	metadata := dto.ToEntity()
 	if err := s.metadataRepository.Create(c, metadata); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *objectMetadata) Update(c context.Context, dto dto.Metadata) error {
+	log.FromContext(c).Debugf("[objectMetadata.Delete] Update: %+v", dto)
+
+	metadata := dto.ToEntity()
+	object, err := s.metadataRepository.MetadataByObjectID(c, metadata.Group(), metadata.Partition(), metadata.Path(), metadata.ID().ToInt64())
+	if err != nil {
 		return err
 	}
 

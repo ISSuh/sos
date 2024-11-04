@@ -97,13 +97,8 @@ func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
 }
 
 func (h *explorer) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	// h.chunkedUpload(w, r)
-	h.multipartUpload(w, r)
-}
-
-func (h *explorer) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.multipartUpload]")
+	log.FromContext(c).Debugf("[explorer.Upload]")
 
 	req := dto.RequestFromContext(c, http.RequestContextKey)
 	log.FromContext(c).Debugf("Request: %+v\n", req)
@@ -157,29 +152,6 @@ func (h *explorer) multipartUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
 		return
 	}
 }
-
-// func (h *explorer) chunkedUpload(w gohttp.ResponseWriter, r *gohttp.Request) {
-// 	c := r.Context()
-// 	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
-
-// 	dto := dto.RequestFromContext(c, http.RequestContextKey)
-// 	log.FromContext(c).Debugf("Request: %+v\n", dto)
-// 	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
-
-// 	metadata, err := h.explorerService.Upload(c, dto, r.Body)
-// 	if err != nil {
-// 		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
-// 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer r.Body.Close()
-
-// 	if err := http.Json(w, metadata); err != nil {
-// 		log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
-// 		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-// 		return
-// 	}
-// }
 
 func (h *explorer) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
