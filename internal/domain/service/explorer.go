@@ -29,14 +29,11 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/domain/service/object"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/http"
 	"github.com/ISSuh/sos/pkg/validation"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Explorer interface {
@@ -86,7 +83,7 @@ func (s *explorer) GetObjectMetadata(c context.Context, req dto.Request) (dto.It
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromMetadataModel(metadata), nil
+	return dto.NewItemFromMetadata(metadata), nil
 }
 
 func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) (dto.Items, error) {
@@ -147,22 +144,21 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), err
 	}
 
-	metadataBuilder := entity.NewObjectMetadataBuilder()
-	metadataBuilder.
-		ID(objectID).
-		Group(req.Group).
-		Partition(req.Partition).
-		Name(req.Name).
-		Path(req.Path).
-		Size(req.Size).
-		BlockHeaders(blockheaders)
+	metadata := dto.Metadata{
+		ID:           objectID,
+		Group:        req.Group,
+		Partition:    req.Partition,
+		Name:         req.Name,
+		Path:         req.Path,
+		Size:         req.Size,
+		BlockHeaders: blockheaders,
+	}
 
-	metadata := metadataBuilder.Build()
 	if err := s.upsertObjectMetadata(c, metadata); err != nil {
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromMetadataModel(metadata), nil
+	return dto.NewItemFromMetadata(metadata), nil
 }
 
 func (s *explorer) Download(
@@ -185,7 +181,7 @@ func (s *explorer) Download(
 		return err
 	}
 
-	headerWriter(metadata.Name(), metadata.Size())
+	headerWriter(metadata.Name, metadata.Size)
 
 	downloader := object.NewDownloader(s.storageRequestor)
 	err = downloader.Download(c, metadata, bodyWriter)
@@ -214,7 +210,7 @@ func (s *explorer) Delete(c context.Context, req dto.Request) error {
 		return err
 	}
 
-	if !metadata.IsValid() {
+	if !metadata.ID.IsValid() {
 		return fmt.Errorf("object not exist")
 	}
 
@@ -228,7 +224,7 @@ func (s *explorer) Delete(c context.Context, req dto.Request) error {
 
 func (s *explorer) getObjectMetadataByObjectID(
 	c context.Context, objectID entity.ObjectID, group, partition, path string,
-) (entity.ObjectMetadata, error) {
+) (dto.Metadata, error) {
 	message := rpc.ObjectMetadataRequest{
 		ObjectID:  objectID.ToInt64(),
 		Group:     group,
@@ -238,45 +234,23 @@ func (s *explorer) getObjectMetadataByObjectID(
 
 	resp, err := s.metadataRequestor.GetByObjectID(c, &message)
 	if err != nil {
-		return empty.Struct[entity.ObjectMetadata](), err
+		return empty.Struct[dto.Metadata](), err
 	}
 
 	//  nned not found
 	if resp.Id.Id <= 0 {
-		return empty.Struct[entity.ObjectMetadata](), nil
+		return empty.Struct[dto.Metadata](), nil
 	}
 
-	blockHeaders := make([]entity.BlockHeader, 0)
-	for _, blockHeader := range resp.BlockHeaders {
-		blockHeaderBuilder :=
-			entity.NewBlockHeaderBuilder().
-				ObjectID(entity.NewObjectIDFrom(blockHeader.ObjectID.Id)).
-				BlockID(entity.NewBlockIDFrom(blockHeader.BlockID.Id)).
-				Index(int(blockHeader.Index)).
-				Size(int(blockHeader.Size)).
-				Timestamp(blockHeader.Timestamp.AsTime())
-
-		blockHeaders = append(blockHeaders, blockHeaderBuilder.Build())
-	}
-
-	builder := entity.NewObjectMetadataBuilder()
-	builder.ID(entity.NewObjectIDFrom(resp.Id.Id)).
-		Group(resp.Group).
-		Partition(resp.Partition).
-		Name(resp.Name).
-		Path(resp.Path).
-		Size(int(resp.Size)).
-		BlockHeaders(blockHeaders)
-
-	return builder.Build(), nil
+	return dto.NewMetadataFromMessage(resp), nil
 }
 
 func (s *explorer) getObjectMetadataByNameOnPath(
 	c context.Context, group, partition, path, name string,
-) (entity.ObjectMetadata, error) {
+) (dto.Metadata, error) {
 	switch {
 	case validation.IsEmpty(name):
-		return empty.Struct[entity.ObjectMetadata](), fmt.Errorf("name is empty")
+		return empty.Struct[dto.Metadata](), fmt.Errorf("name is empty")
 	}
 
 	message := rpc.ObjectMetadataRequest{
@@ -288,19 +262,9 @@ func (s *explorer) getObjectMetadataByNameOnPath(
 
 	resp, err := s.metadataRequestor.GetByObjectName(c, &message)
 	if err != nil {
-		return empty.Struct[entity.ObjectMetadata](), err
+		return empty.Struct[dto.Metadata](), err
 	}
-
-	metadata :=
-		entity.NewObjectMetadataBuilder().ID(entity.NewObjectIDFrom(resp.Id.Id)).
-			Group(resp.Group).
-			Partition(resp.Partition).
-			Name(resp.Name).
-			Path(resp.Path).
-			Size(int(resp.Size)).
-			Build()
-
-	return metadata, nil
+	return dto.NewMetadataFromMessage(resp), nil
 }
 
 func (s *explorer) isObjectNameExist(c context.Context, group, partition, path, name string) (bool, error) {
@@ -308,36 +272,11 @@ func (s *explorer) isObjectNameExist(c context.Context, group, partition, path, 
 	if err != nil {
 		return false, err
 	}
-	return metadata.IsValid(), nil
+	return metadata.ID.IsValid(), nil
 }
 
-func (s *explorer) upsertObjectMetadata(c context.Context, metadata entity.ObjectMetadata) error {
-
-	headers := []*message.BlockHeader{}
-	for _, blockHeader := range metadata.BlockHeaders() {
-		message := &message.BlockHeader{
-			ObjectID:  message.FromObjectID(blockHeader.ObjectID()),
-			BlockID:   message.FromBlockID(blockHeader.BlockID()),
-			Index:     int32(blockHeader.Index()),
-			Size:      int32(blockHeader.Size()),
-			Timestamp: timestamppb.New(blockHeader.Timestamp()),
-		}
-
-		headers = append(headers, message)
-	}
-
-	message := &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: metadata.ID().ToInt64(),
-		},
-		Group:        metadata.Group(),
-		Partition:    metadata.Partition(),
-		Path:         metadata.Path(),
-		Name:         metadata.Name(),
-		Size:         int32(metadata.Size()),
-		BlockHeaders: headers,
-	}
-
+func (s *explorer) upsertObjectMetadata(c context.Context, metadata dto.Metadata) error {
+	message := metadata.ToMessage()
 	if _, err := s.metadataRequestor.Put(c, message); err != nil {
 		return err
 	}

@@ -89,8 +89,8 @@ func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 		Path:         m.Path,
 		Size:         int(m.GetSize()),
 		BlockHeaders: headers,
-		// CreatedAt:  m.CreatedAt,
-		// ModifiedAt: m.ModifiedAt,
+		CreatedAt:    m.CreatedAt.AsTime(),
+		ModifiedAt:   m.ModifiedAt.AsTime(),
 	}
 }
 
@@ -113,4 +113,33 @@ func (d Metadata) ToEntity() entity.ObjectMetadata {
 		Size(d.Size).
 		BlockHeaders(headers).
 		Build()
+}
+
+func (d Metadata) ToEntityWithVersion(versions entity.Versions) entity.ObjectMetadata {
+	headers := d.BlockHeaders.ToEntity()
+	return entity.NewObjectMetadataBuilder().
+		ID(d.ID).
+		Group(d.Group).
+		Partition(d.Partition).
+		Name(d.Name).
+		Path(d.Path).
+		Size(d.Size).
+		BlockHeaders(headers).
+		Versions(versions).
+		Build()
+}
+
+func (d Metadata) ToMessage() *message.ObjectMetadata {
+	headers := d.BlockHeaders.ToMessage()
+	return &message.ObjectMetadata{
+		Id: &message.ObjectID{
+			Id: d.ID.ToInt64(),
+		},
+		Group:        d.Group,
+		Partition:    d.Partition,
+		Path:         d.Path,
+		Name:         d.Name,
+		Size:         int32(d.Size),
+		BlockHeaders: headers,
+	}
 }

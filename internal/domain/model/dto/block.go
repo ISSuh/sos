@@ -29,6 +29,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type BlockHeaders []BlockHeader
@@ -45,12 +46,21 @@ func (h BlockHeaders) ToEntity() entity.BlockHeaders {
 	return headers
 }
 
+func (h BlockHeaders) ToMessage() []*message.BlockHeader {
+	headers := make([]*message.BlockHeader, 0, len(h))
+	for _, header := range h {
+		headers = append(headers, header.ToMessage())
+	}
+	return headers
+}
+
 type BlockHeader struct {
 	BlockID   entity.BlockID  `json:"block_id"`
 	ObjectID  entity.ObjectID `json:"object_id"`
 	Index     int             `json:"index"`
 	Size      int             `json:"size"`
 	Timestamp time.Time       `json:"timestamp"`
+	Checksum  uint32
 }
 
 func NewBlockHeaderFromModel(h entity.BlockHeader) BlockHeader {
@@ -98,4 +108,27 @@ func (d BlockHeader) ToEntity() entity.BlockHeader {
 		Size(d.Size).
 		Timestamp(d.Timestamp).
 		Build()
+}
+
+func (d BlockHeader) ToMessage() *message.BlockHeader {
+	return &message.BlockHeader{
+		ObjectID:  message.FromObjectID(d.ObjectID),
+		BlockID:   message.FromBlockID(d.BlockID),
+		Index:     int32(d.BlockID),
+		Size:      int32(d.Size),
+		Checksum:  d.Checksum,
+		Timestamp: timestamppb.New(d.Timestamp),
+	}
+}
+
+type Block struct {
+	Header BlockHeader
+	Data   []byte
+}
+
+func (d Block) ToMessage() *message.Block {
+	return &message.Block{
+		Header: d.Header.ToMessage(),
+		Data:   d.Data,
+	}
 }

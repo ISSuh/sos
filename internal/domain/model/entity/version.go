@@ -60,22 +60,22 @@ func NewVersionBuilder() *VersionBuilder {
 	return &VersionBuilder{}
 }
 
-func (b *VersionBuilder) SetNumber(number int) *VersionBuilder {
+func (b *VersionBuilder) Number(number int) *VersionBuilder {
 	b.number = number
 	return b
 }
 
-func (b *VersionBuilder) SetSize(size int) *VersionBuilder {
+func (b *VersionBuilder) Size(size int) *VersionBuilder {
 	b.size = size
 	return b
 }
 
-func (b *VersionBuilder) SetNode(node Node) *VersionBuilder {
+func (b *VersionBuilder) Node(node Node) *VersionBuilder {
 	b.node = node
 	return b
 }
 
-func (b *VersionBuilder) SetBlockHeaders(blockHeaders BlockHeaders) *VersionBuilder {
+func (b *VersionBuilder) BlockHeaders(blockHeaders BlockHeaders) *VersionBuilder {
 	b.blockHeaders = blockHeaders
 	return b
 }

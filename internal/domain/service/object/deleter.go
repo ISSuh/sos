@@ -25,7 +25,7 @@ package object
 import (
 	"context"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
 )
@@ -42,7 +42,7 @@ func NewDeleter(objectRequestor rpc.MetadataRegistryRequestor, storageRequestor 
 	}
 }
 
-func (o *Deleter) Delete(c context.Context, metadata entity.ObjectMetadata) error {
+func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
 	if err := o.deleteBlocks(c, metadata); err != nil {
 		return err
 	}
@@ -54,15 +54,15 @@ func (o *Deleter) Delete(c context.Context, metadata entity.ObjectMetadata) erro
 	return nil
 }
 
-func (o *Deleter) deleteObjectMetadata(c context.Context, metadata entity.ObjectMetadata) error {
+func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata) error {
 	msg := &message.ObjectMetadata{
 		Id: &message.ObjectID{
-			Id: metadata.ID().ToInt64(),
+			Id: metadata.ID.ToInt64(),
 		},
-		Group:     metadata.Group(),
-		Partition: metadata.Partition(),
-		Path:      metadata.Path(),
-		Name:      metadata.Name(),
+		Group:     metadata.Group,
+		Partition: metadata.Partition,
+		Path:      metadata.Path,
+		Name:      metadata.Name,
 	}
 
 	if _, err := o.objectRequestor.Delete(c, msg); err != nil {
@@ -72,17 +72,17 @@ func (o *Deleter) deleteObjectMetadata(c context.Context, metadata entity.Object
 	return nil
 }
 
-func (o *Deleter) deleteBlocks(c context.Context, metadata entity.ObjectMetadata) error {
-	blockHeaders := metadata.BlockHeaders()
+func (o *Deleter) deleteBlocks(c context.Context, metadata dto.Metadata) error {
+	blockHeaders := metadata.BlockHeaders
 	for _, blockHeader := range blockHeaders {
 		msg := &message.BlockHeader{
 			ObjectID: &message.ObjectID{
-				Id: blockHeader.ObjectID().ToInt64(),
+				Id: blockHeader.ObjectID.ToInt64(),
 			},
 			BlockID: &message.BlockID{
-				Id: blockHeader.BlockID().ToInt64(),
+				Id: blockHeader.BlockID.ToInt64(),
 			},
-			Index: int32(blockHeader.Index()),
+			Index: int32(blockHeader.Index),
 		}
 
 		if _, err := o.storageRequestor.Delete(c, msg); err != nil {

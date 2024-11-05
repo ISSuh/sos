@@ -27,6 +27,7 @@ import (
 	"fmt"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
+	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
@@ -61,7 +62,15 @@ func NewObjectMetadata(metadataRepository repository.ObjectMetadata) (ObjectMeta
 func (s *objectMetadata) Create(c context.Context, dto dto.Metadata) error {
 	log.FromContext(c).Debugf("[objectMetadata.Create] request: %+v", dto)
 
-	metadata := dto.ToEntity()
+	version := entity.Versions{
+		entity.NewVersionBuilder().
+			Number(0).
+			Size(dto.Size).
+			BlockHeaders(dto.BlockHeaders.ToEntity()).
+			Build(),
+	}
+
+	metadata := dto.ToEntityWithVersion(version)
 	if err := s.metadataRepository.Create(c, metadata); err != nil {
 		return err
 	}
@@ -72,11 +81,11 @@ func (s *objectMetadata) Create(c context.Context, dto dto.Metadata) error {
 func (s *objectMetadata) Update(c context.Context, dto dto.Metadata) error {
 	log.FromContext(c).Debugf("[objectMetadata.Delete] Update: %+v", dto)
 
-	metadata := dto.ToEntity()
-	object, err := s.metadataRepository.MetadataByObjectID(c, metadata.Group(), metadata.Partition(), metadata.Path(), metadata.ID().ToInt64())
-	if err != nil {
-		return err
-	}
+	// metadata := dto.ToEntity()
+	// object, err := s.metadataRepository.MetadataByObjectID(c, metadata.Group(), metadata.Partition(), metadata.Path(), metadata.ID().ToInt64())
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

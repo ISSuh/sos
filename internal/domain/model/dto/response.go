@@ -76,6 +76,19 @@ func NewItemFromMetadataModel(e entity.ObjectMetadata) Item {
 	}
 }
 
+func NewItemFromMetadata(m Metadata) Item {
+	return Item{
+		ID:         m.ID,
+		Group:      m.Group,
+		Partition:  m.Partition,
+		Path:       m.Path,
+		Name:       m.Name,
+		Size:       m.Size,
+		CreatedAt:  m.CreatedAt,
+		ModifiedAt: m.ModifiedAt,
+	}
+}
+
 func (i Item) Empty() bool {
 	return i.ID == 0
 }

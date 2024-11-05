@@ -26,6 +26,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
@@ -44,9 +45,9 @@ func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Downloader {
 	}
 }
 
-func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata, writer http.DownloadBodyWriter) error {
-	blockHeader := metadata.BlockHeaders()
-	blockNum := len(metadata.BlockHeaders())
+func (o *Downloader) Download(c context.Context, metadata dto.Metadata, writer http.DownloadBodyWriter) error {
+	blockHeaders := metadata.BlockHeaders
+	blockNum := len(metadata.BlockHeaders)
 
 	blockChan := make([]chan entity.Block, blockNum)
 	for i := range blockChan {
@@ -64,7 +65,7 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 	}
 
 	for i := 0; i < blockNum; i++ {
-		go func(index int, blockHeader entity.BlockHeader, blockChan chan<- entity.Block, errChan chan<- error, stopChan <-chan struct{}) {
+		go func(index int, blockHeader dto.BlockHeader, blockChan chan<- entity.Block, errChan chan<- error, stopChan <-chan struct{}) {
 			defer func() {
 				if r := recover(); r != nil {
 					return
@@ -86,10 +87,10 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 			case blockChan <- block:
 			case <-stopChan:
 			}
-		}(i, blockHeader[i], blockChan[i], errChan[i], stopChan[i])
+		}(i, blockHeaders[i], blockChan[i], errChan[i], stopChan[i])
 	}
 
-	for i := 0; i < len(metadata.BlockHeaders()); i++ {
+	for i := 0; i < len(metadata.BlockHeaders); i++ {
 		select {
 		case err := <-errChan[i]:
 			return err
@@ -103,8 +104,8 @@ func (o *Downloader) Download(c context.Context, metadata entity.ObjectMetadata,
 	return nil
 }
 
-func (o *Downloader) downloadBlock(c context.Context, blockHeader entity.BlockHeader) (entity.Block, error) {
-	msg := message.FromBlockHeader(blockHeader)
+func (o *Downloader) downloadBlock(c context.Context, blockHeader dto.BlockHeader) (entity.Block, error) {
+	msg := blockHeader.ToMessage()
 	resp, err := o.storageRequestor.GetBlock(c, msg)
 	if err != nil {
 		return empty.Struct[entity.Block](), err
