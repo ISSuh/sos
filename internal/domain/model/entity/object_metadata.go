@@ -38,44 +38,55 @@ type ObjectMetadata struct {
 	ModifiedTime
 }
 
-func (e ObjectMetadata) ID() ObjectID {
+func (e *ObjectMetadata) ID() ObjectID {
 	return e.id
 }
 
-func (e ObjectMetadata) Group() string {
+func (e *ObjectMetadata) Group() string {
 	return e.group
 }
 
-func (e ObjectMetadata) Partition() string {
+func (e *ObjectMetadata) Partition() string {
 	return e.partition
 }
 
-func (e ObjectMetadata) Name() string {
+func (e *ObjectMetadata) Name() string {
 	return e.name
 }
 
-func (e ObjectMetadata) Path() string {
+func (e *ObjectMetadata) Path() string {
 	return e.path
 }
 
-func (e ObjectMetadata) Size() int {
+func (e *ObjectMetadata) Size() int {
 	return e.size
 }
 
-func (e ObjectMetadata) Node() Node {
+func (e *ObjectMetadata) Node() Node {
 	return e.node
 }
 
-func (e ObjectMetadata) BlockHeaders() BlockHeaders {
+func (e *ObjectMetadata) BlockHeaders() BlockHeaders {
 	return e.blockHeaders
 }
 
-func (e ObjectMetadata) Versions() Versions {
+func (e *ObjectMetadata) Versions() Versions {
 	return e.versions
 }
 
-func (e ObjectMetadata) IsValid() bool {
+func (e *ObjectMetadata) IsValid() bool {
 	return e.id.IsValid()
+}
+
+func (e *ObjectMetadata) AppendVersion(version Version) {
+	e.versions = append(e.versions, version)
+}
+
+func (e *ObjectMetadata) LastVersion() int {
+	if len(e.versions) == 0 {
+		return -1
+	}
+	return e.versions[len(e.versions)-1].Number()
 }
 
 type ObjectMetadataBuilder struct {

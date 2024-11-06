@@ -26,15 +26,14 @@ import (
 	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
 )
 
 type Items []Item
 
-func NewItemFromMetadataListMessage(list []*message.ObjectMetadata) Items {
-	items := Items{}
-	for _, m := range list {
-		items = append(items, NewItemFromMetadataMessage(m))
+func NewItemsFromMetadataList(m MetadataList) Items {
+	items := make(Items, 0, len(m))
+	for _, metadata := range m {
+		items = append(items, NewItemFromMetadata(metadata))
 	}
 	return items
 }
@@ -45,35 +44,9 @@ type Item struct {
 	Partition  string          `json:"partition"`
 	Path       string          `json:"path"`
 	Name       string          `json:"name"`
-	Size       int             `json:"size"`
+	Versions   Versions        `json:"versions"`
 	CreatedAt  time.Time       `json:"created_at"`
 	ModifiedAt time.Time       `json:"modified_at"`
-}
-
-func NewItemFromMetadataMessage(m *message.ObjectMetadata) Item {
-	return Item{
-		ID:         entity.ObjectID(m.Id.Id),
-		Group:      m.Group,
-		Partition:  m.Partition,
-		Path:       m.Path,
-		Name:       m.Name,
-		Size:       int(m.Size),
-		CreatedAt:  m.CreatedAt.AsTime(),
-		ModifiedAt: m.ModifiedAt.AsTime(),
-	}
-}
-
-func NewItemFromMetadataModel(e entity.ObjectMetadata) Item {
-	return Item{
-		ID:         e.ID(),
-		Group:      e.Group(),
-		Partition:  e.Partition(),
-		Path:       e.Path(),
-		Name:       e.Name(),
-		Size:       e.Size(),
-		CreatedAt:  e.CreatedAt,
-		ModifiedAt: e.ModifiedAt,
-	}
 }
 
 func NewItemFromMetadata(m Metadata) Item {
@@ -83,7 +56,7 @@ func NewItemFromMetadata(m Metadata) Item {
 		Partition:  m.Partition,
 		Path:       m.Path,
 		Name:       m.Name,
-		Size:       m.Size,
+		Versions:   m.Versions,
 		CreatedAt:  m.CreatedAt,
 		ModifiedAt: m.ModifiedAt,
 	}

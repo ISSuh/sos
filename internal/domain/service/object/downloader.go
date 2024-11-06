@@ -46,8 +46,9 @@ func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Downloader {
 }
 
 func (o *Downloader) Download(c context.Context, metadata dto.Metadata, writer http.DownloadBodyWriter) error {
-	blockHeaders := metadata.BlockHeaders
-	blockNum := len(metadata.BlockHeaders)
+	version := metadata.LasterVersion()
+	blockHeaders := version.BlockHeaders
+	blockNum := len(version.BlockHeaders)
 
 	blockChan := make([]chan entity.Block, blockNum)
 	for i := range blockChan {
@@ -90,7 +91,7 @@ func (o *Downloader) Download(c context.Context, metadata dto.Metadata, writer h
 		}(i, blockHeaders[i], blockChan[i], errChan[i], stopChan[i])
 	}
 
-	for i := 0; i < len(metadata.BlockHeaders); i++ {
+	for i := 0; i < blockNum; i++ {
 		select {
 		case err := <-errChan[i]:
 			return err

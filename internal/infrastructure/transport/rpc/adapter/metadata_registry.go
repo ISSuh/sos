@@ -49,12 +49,12 @@ func NewMetadataRegistry(handler rpc.MetadataRegistryHandler) (rpc.Adapter, erro
 	}, nil
 }
 
-func (a *MetadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	return a.handler.Put(c, metadata)
+func (a *MetadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
+	return a.handler.Put(c, object)
 }
 
-func (a *MetadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (*wrapperspb.BoolValue, error) {
-	res, err := a.handler.Delete(c, metadata)
+func (a *MetadataRegistry) Delete(c context.Context, object *message.Object) (*wrapperspb.BoolValue, error) {
+	res, err := a.handler.Delete(c, object)
 	if err != nil {
 		return &wrapperspb.BoolValue{Value: false}, err
 	}

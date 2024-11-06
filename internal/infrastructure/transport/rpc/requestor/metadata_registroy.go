@@ -46,14 +46,14 @@ func NewMetadataRegistry(address string) (rpc.MetadataRegistryRequestor, error) 
 	}, nil
 }
 
-func (r *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+func (r *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
-	return r.engine.Put(c, metadata)
+	return r.engine.Put(c, object)
 }
 
-func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+func (r *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
-	res, err := r.engine.Delete(c, metadata)
+	res, err := r.engine.Delete(c, object)
 	if err != nil {
 		return false, err
 	}

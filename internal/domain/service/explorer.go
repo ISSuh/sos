@@ -107,8 +107,8 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 		return nil, err
 	}
 
-	list := resp.GetMetadata()
-	return dto.NewItemFromMetadataListMessage(list), nil
+	list := dto.NewMetadataListFromMessage(resp.GetMetadata())
+	return dto.NewItemsFromMetadataList(list), nil
 }
 
 func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error) {
@@ -127,24 +127,23 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), fmt.Errorf("body stream is nil")
 	}
 
-	exist, err :=
-		s.isObjectNameExist(c, req.Group, req.Partition, req.Path, req.Name)
+	metadata, err := s.getObjectMetadataByNameOnPath(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
 		return empty.Struct[dto.Item](), err
 	}
 
-	if exist {
-		return empty.Struct[dto.Item](), fmt.Errorf("object already exist")
+	objectID := entity.NewObjectID()
+	if metadata.ID.IsValid() {
+		objectID = metadata.ID
 	}
 
-	objectID := entity.NewObjectID()
 	uploader := object.NewUploader(s.storageRequestor)
 	blockheaders, err := uploader.Upload(c, objectID, bodyStream)
 	if err != nil {
 		return empty.Struct[dto.Item](), err
 	}
 
-	metadata := dto.Metadata{
+	newObject := dto.Object{
 		ID:           objectID,
 		Group:        req.Group,
 		Partition:    req.Partition,
@@ -154,11 +153,12 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		BlockHeaders: blockheaders,
 	}
 
-	if err := s.upsertObjectMetadata(c, metadata); err != nil {
+	resp, err := s.upsertObjectMetadata(c, newObject)
+	if err != nil {
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromMetadata(metadata), nil
+	return dto.NewItemFromMetadata(resp), nil
 }
 
 func (s *explorer) Download(
@@ -181,7 +181,12 @@ func (s *explorer) Download(
 		return err
 	}
 
-	headerWriter(metadata.Name, metadata.Size)
+	version := metadata.LasterVersion()
+	if !version.IsValid() {
+		return fmt.Errorf("object version is invalid")
+	}
+
+	headerWriter(metadata.Name, version.Size)
 
 	downloader := object.NewDownloader(s.storageRequestor)
 	err = downloader.Download(c, metadata, bodyWriter)
@@ -267,18 +272,11 @@ func (s *explorer) getObjectMetadataByNameOnPath(
 	return dto.NewMetadataFromMessage(resp), nil
 }
 
-func (s *explorer) isObjectNameExist(c context.Context, group, partition, path, name string) (bool, error) {
-	metadata, err := s.getObjectMetadataByNameOnPath(c, group, partition, path, name)
+func (s *explorer) upsertObjectMetadata(c context.Context, object dto.Object) (dto.Metadata, error) {
+	message := object.ToMessage()
+	resp, err := s.metadataRequestor.Put(c, message)
 	if err != nil {
-		return false, err
+		return empty.Struct[dto.Metadata](), err
 	}
-	return metadata.ID.IsValid(), nil
-}
-
-func (s *explorer) upsertObjectMetadata(c context.Context, metadata dto.Metadata) error {
-	message := metadata.ToMessage()
-	if _, err := s.metadataRequestor.Put(c, message); err != nil {
-		return err
-	}
-	return nil
+	return dto.NewMetadataFromMessage(resp), nil
 }

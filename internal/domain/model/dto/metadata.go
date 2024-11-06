@@ -33,38 +33,39 @@ import (
 
 type MetadataList []Metadata
 
+func NewMetadataListFromMessage(m []*message.ObjectMetadata) MetadataList {
+	list := make(MetadataList, 0, len(m))
+	for _, metadata := range m {
+		list = append(list, NewMetadataFromMessage(metadata))
+	}
+	return list
+}
+
 func (m MetadataList) Empty() bool {
 	return len(m) == 0
 }
 
 type Metadata struct {
-	ID           entity.ObjectID `json:"object_id"`
-	Group        string          `json:"group"`
-	Partition    string          `json:"partition"`
-	Name         string          `json:"name"`
-	Path         string          `json:"path"`
-	Size         int             `json:"size"`
-	BlockHeaders BlockHeaders    `json:"block_headers"`
-	CreatedAt    time.Time       `json:"created_at"`
-	ModifiedAt   time.Time       `json:"modified_at"`
+	ID         entity.ObjectID `json:"object_id"`
+	Group      string          `json:"group"`
+	Partition  string          `json:"partition"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Versions   Versions        `json:"versions"`
+	CreatedAt  time.Time       `json:"created_at"`
+	ModifiedAt time.Time       `json:"modified_at"`
 }
 
 func NewMetadataFromModel(m entity.ObjectMetadata) Metadata {
-	headers := make(BlockHeaders, 0, len(m.BlockHeaders()))
-	for _, h := range m.BlockHeaders() {
-		headers = append(headers, NewBlockHeaderFromModel(h))
-	}
-
 	return Metadata{
-		ID:           m.ID(),
-		Group:        m.Group(),
-		Partition:    m.Partition(),
-		Name:         m.Name(),
-		Path:         m.Path(),
-		Size:         m.Size(),
-		BlockHeaders: headers,
-		CreatedAt:    m.CreatedAt,
-		ModifiedAt:   m.ModifiedAt,
+		ID:         m.ID(),
+		Group:      m.Group(),
+		Partition:  m.Partition(),
+		Name:       m.Name(),
+		Path:       m.Path(),
+		Versions:   NewVersionsFromModel(m.Versions()),
+		CreatedAt:  m.CreatedAt,
+		ModifiedAt: m.ModifiedAt,
 	}
 }
 
@@ -76,21 +77,15 @@ func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 		return empty.Struct[Metadata]()
 	}
 
-	headers := make(BlockHeaders, 0, len(m.BlockHeaders))
-	for _, h := range m.BlockHeaders {
-		headers = append(headers, NewBlockHeaderFromMessage(h))
-	}
-
 	return Metadata{
-		ID:           entity.ObjectID(m.GetId().Id),
-		Group:        m.Group,
-		Partition:    m.Partition,
-		Name:         m.Name,
-		Path:         m.Path,
-		Size:         int(m.GetSize()),
-		BlockHeaders: headers,
-		CreatedAt:    m.CreatedAt.AsTime(),
-		ModifiedAt:   m.ModifiedAt.AsTime(),
+		ID:         entity.ObjectID(m.GetId().Id),
+		Group:      m.Group,
+		Partition:  m.Partition,
+		Name:       m.Name,
+		Path:       m.Path,
+		Versions:   NewVersionsFromMessage(m.Versions),
+		CreatedAt:  m.CreatedAt.AsTime(),
+		ModifiedAt: m.ModifiedAt.AsTime(),
 	}
 }
 
@@ -98,48 +93,34 @@ func NewEmptyMetadata() Metadata {
 	return Metadata{}
 }
 
-func (d Metadata) Empty() bool {
-	return d.BlockHeaders.Empty() && d.ID == 0
+func (d *Metadata) Empty() bool {
+	return d.Versions.Empty() && d.ID == 0
 }
 
-func (d Metadata) ToEntity() entity.ObjectMetadata {
-	headers := d.BlockHeaders.ToEntity()
+func (d *Metadata) ToEntity() entity.ObjectMetadata {
 	return entity.NewObjectMetadataBuilder().
 		ID(d.ID).
 		Group(d.Group).
 		Partition(d.Partition).
 		Name(d.Name).
 		Path(d.Path).
-		Size(d.Size).
-		BlockHeaders(headers).
+		Versions(d.Versions.ToEntity()).
 		Build()
 }
 
-func (d Metadata) ToEntityWithVersion(versions entity.Versions) entity.ObjectMetadata {
-	headers := d.BlockHeaders.ToEntity()
-	return entity.NewObjectMetadataBuilder().
-		ID(d.ID).
-		Group(d.Group).
-		Partition(d.Partition).
-		Name(d.Name).
-		Path(d.Path).
-		Size(d.Size).
-		BlockHeaders(headers).
-		Versions(versions).
-		Build()
-}
-
-func (d Metadata) ToMessage() *message.ObjectMetadata {
-	headers := d.BlockHeaders.ToMessage()
+func (d *Metadata) ToMessage() *message.ObjectMetadata {
 	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
 			Id: d.ID.ToInt64(),
 		},
-		Group:        d.Group,
-		Partition:    d.Partition,
-		Path:         d.Path,
-		Name:         d.Name,
-		Size:         int32(d.Size),
-		BlockHeaders: headers,
+		Group:     d.Group,
+		Partition: d.Partition,
+		Path:      d.Path,
+		Name:      d.Name,
+		Versions:  d.Versions.ToMessage(),
 	}
+}
+
+func (d *Metadata) LasterVersion() Version {
+	return d.Versions.LastVersion()
 }

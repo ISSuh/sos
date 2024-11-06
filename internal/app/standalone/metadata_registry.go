@@ -49,18 +49,18 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 	}, nil
 }
 
-func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	dto := dto.NewMetadataFromMessage(metadata)
-	err := s.objectMetadata.Create(c, dto)
+func (s *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
+	dto := dto.NewMObjectFromMessage(object)
+	resp, err := s.objectMetadata.Put(c, dto)
 	if err != nil {
 		return nil, err
 	}
 
-	return metadata, nil
+	return resp.ToMessage(), nil
 }
 
-func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
-	dto := dto.NewMetadataFromMessage(metadata)
+func (r *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
+	dto := dto.NewMObjectFromMessage(object)
 	if err := r.objectMetadata.Delete(c, dto); err != nil {
 		return false, err
 	}
@@ -81,7 +81,7 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMet
 		Group:      item.Group,
 		Partition:  item.Partition,
 		Path:       item.Path,
-		Size:       int32(item.Size),
+		Versions:   item.Versions.ToMessage(),
 		CreatedAt:  timestamppb.New(item.CreatedAt),
 		ModifiedAt: timestamppb.New(item.ModifiedAt),
 	}, nil
@@ -93,35 +93,17 @@ func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetad
 		return nil, err
 	}
 
-	blockHeaders := make([]*message.BlockHeader, 0)
-	for _, header := range item.BlockHeaders {
-		blockHeader := &message.BlockHeader{
-			ObjectID: &message.ObjectID{
-				Id: header.ObjectID.ToInt64(),
-			},
-			BlockID: &message.BlockID{
-				Id: header.BlockID.ToInt64(),
-			},
-			Index:     int32(header.Index),
-			Size:      int32(header.Size),
-			Timestamp: timestamppb.New(header.Timestamp),
-		}
-
-		blockHeaders = append(blockHeaders, blockHeader)
-	}
-
 	return &message.ObjectMetadata{
 		Id: &message.ObjectID{
 			Id: item.ID.ToInt64(),
 		},
-		Name:         item.Name,
-		Group:        item.Group,
-		Partition:    item.Partition,
-		Path:         item.Path,
-		Size:         int32(item.Size),
-		BlockHeaders: blockHeaders,
-		CreatedAt:    timestamppb.New(item.CreatedAt),
-		ModifiedAt:   timestamppb.New(item.ModifiedAt),
+		Name:       item.Name,
+		Group:      item.Group,
+		Partition:  item.Partition,
+		Path:       item.Path,
+		Versions:   item.Versions.ToMessage(),
+		CreatedAt:  timestamppb.New(item.CreatedAt),
+		ModifiedAt: timestamppb.New(item.ModifiedAt),
 	}, nil
 }
 
@@ -133,35 +115,17 @@ func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.Object
 
 	list := make([]*message.ObjectMetadata, len(items))
 	for i, item := range items {
-		blockHeaders := make([]*message.BlockHeader, 0)
-		for _, header := range item.BlockHeaders {
-			blockHeader := &message.BlockHeader{
-				ObjectID: &message.ObjectID{
-					Id: header.ObjectID.ToInt64(),
-				},
-				BlockID: &message.BlockID{
-					Id: header.BlockID.ToInt64(),
-				},
-				Index:     int32(header.Index),
-				Size:      int32(header.Size),
-				Timestamp: timestamppb.New(header.Timestamp),
-			}
-
-			blockHeaders = append(blockHeaders, blockHeader)
-		}
-
 		list[i] = &message.ObjectMetadata{
 			Id: &message.ObjectID{
 				Id: item.ID.ToInt64(),
 			},
-			Name:         item.Name,
-			Group:        item.Group,
-			Partition:    item.Partition,
-			Path:         item.Path,
-			Size:         int32(item.Size),
-			BlockHeaders: blockHeaders,
-			CreatedAt:    timestamppb.New(item.CreatedAt),
-			ModifiedAt:   timestamppb.New(item.ModifiedAt),
+			Name:       item.Name,
+			Group:      item.Group,
+			Partition:  item.Partition,
+			Path:       item.Path,
+			Versions:   item.Versions.ToMessage(),
+			CreatedAt:  timestamppb.New(item.CreatedAt),
+			ModifiedAt: timestamppb.New(item.ModifiedAt),
 		}
 	}
 

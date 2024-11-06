@@ -55,7 +55,7 @@ func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
 }
 
 func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata) error {
-	msg := &message.ObjectMetadata{
+	msg := &message.Object{
 		Id: &message.ObjectID{
 			Id: metadata.ID.ToInt64(),
 		},
@@ -73,7 +73,7 @@ func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata)
 }
 
 func (o *Deleter) deleteBlocks(c context.Context, metadata dto.Metadata) error {
-	blockHeaders := metadata.BlockHeaders
+	blockHeaders := metadata.LasterVersion().BlockHeaders
 	for _, blockHeader := range blockHeaders {
 		msg := &message.BlockHeader{
 			ObjectID: &message.ObjectID{

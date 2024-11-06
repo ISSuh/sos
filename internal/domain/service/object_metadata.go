@@ -29,14 +29,14 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
+	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/log"
 	"github.com/ISSuh/sos/pkg/validation"
 )
 
 type ObjectMetadata interface {
-	Create(c context.Context, dto dto.Metadata) error
-	Update(c context.Context, dto dto.Metadata) error
-	Delete(c context.Context, dto dto.Metadata) error
+	Put(c context.Context, dto dto.Object) (dto.Metadata, error)
+	Delete(c context.Context, dto dto.Object) error
 	MetadataByObjectName(c context.Context, group, partition, path, objectName string) (dto.Metadata, error)
 	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (dto.Metadata, error)
 	MetadataListOnPath(c context.Context, group, partition, path string) (dto.MetadataList, error)
@@ -59,38 +59,46 @@ func NewObjectMetadata(metadataRepository repository.ObjectMetadata) (ObjectMeta
 	}, nil
 }
 
-func (s *objectMetadata) Create(c context.Context, dto dto.Metadata) error {
-	log.FromContext(c).Debugf("[objectMetadata.Create] request: %+v", dto)
-
-	version := entity.Versions{
-		entity.NewVersionBuilder().
-			Number(0).
-			Size(dto.Size).
-			BlockHeaders(dto.BlockHeaders.ToEntity()).
-			Build(),
+func (s *objectMetadata) Put(c context.Context, objectDTO dto.Object) (dto.Metadata, error) {
+	log.FromContext(c).Debugf("[objectMetadata.Put] request: %+v", objectDTO)
+	metadata, err :=
+		s.metadataRepository.MetadataByObjectID(
+			c, objectDTO.Group, objectDTO.Partition, objectDTO.Path, objectDTO.ID.ToInt64(),
+		)
+	if err != nil {
+		return empty.Struct[dto.Metadata](), err
 	}
 
-	metadata := dto.ToEntityWithVersion(version)
-	if err := s.metadataRepository.Create(c, metadata); err != nil {
-		return err
+	isObjectExist := true
+	if !metadata.IsValid() {
+		isObjectExist = false
+		metadata = objectDTO.ToEntity()
 	}
 
-	return nil
+	versionNumber := metadata.LastVersion() + 1
+	version := entity.NewVersionBuilder().
+		Number(versionNumber).
+		Size(objectDTO.Size).
+		BlockHeaders(objectDTO.BlockHeaders.ToEntity()).
+		Build()
+
+	metadata.AppendVersion(version)
+
+	if isObjectExist {
+		if err := s.metadataRepository.Update(c, metadata); err != nil {
+			return empty.Struct[dto.Metadata](), err
+		}
+	} else {
+		if err := s.metadataRepository.Create(c, metadata); err != nil {
+			return empty.Struct[dto.Metadata](), err
+		}
+	}
+
+	resp := dto.NewMetadataFromModel(metadata)
+	return resp, nil
 }
 
-func (s *objectMetadata) Update(c context.Context, dto dto.Metadata) error {
-	log.FromContext(c).Debugf("[objectMetadata.Delete] Update: %+v", dto)
-
-	// metadata := dto.ToEntity()
-	// object, err := s.metadataRepository.MetadataByObjectID(c, metadata.Group(), metadata.Partition(), metadata.Path(), metadata.ID().ToInt64())
-	// if err != nil {
-	// 	return err
-	// }
-
-	return nil
-}
-
-func (s *objectMetadata) Delete(c context.Context, dto dto.Metadata) error {
+func (s *objectMetadata) Delete(c context.Context, dto dto.Object) error {
 	log.FromContext(c).Debugf("[objectMetadata.Delete] request: %+v", dto)
 
 	metadata := dto.ToEntity()

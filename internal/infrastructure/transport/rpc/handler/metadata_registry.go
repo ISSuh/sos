@@ -48,12 +48,12 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 	}, nil
 }
 
-func (h *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
+func (h *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
 	return &message.ObjectMetadata{}, nil
 }
 
-func (h *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+func (h *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
 	return true, nil
 }
