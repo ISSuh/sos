@@ -51,9 +51,9 @@ func (r *metadataRegistry) Put(c context.Context, object *message.Object) (*mess
 	return r.engine.Put(c, object)
 }
 
-func (r *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
+func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
-	res, err := r.engine.Delete(c, object)
+	res, err := r.engine.Delete(c, metadata)
 	if err != nil {
 		return false, err
 	}

@@ -30,7 +30,7 @@ import (
 
 type MetadataRegistryHandler interface {
 	Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error)
-	Delete(c context.Context, object *message.Object) (bool, error)
+	Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error)
 	GetByObjectName(c context.Context, req *ObjectMetadataRequest) (*message.ObjectMetadata, error)
 	GetByObjectID(c context.Context, req *ObjectMetadataRequest) (*message.ObjectMetadata, error)
 	FindMetadataOnPath(c context.Context, req *ObjectMetadataRequest) (*ObjectMetadataList, error)
@@ -38,7 +38,7 @@ type MetadataRegistryHandler interface {
 
 type MetadataRegistryRequestor interface {
 	Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error)
-	Delete(c context.Context, object *message.Object) (bool, error)
+	Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error)
 	GetByObjectName(c context.Context, req *ObjectMetadataRequest) (*message.ObjectMetadata, error)
 	GetByObjectID(c context.Context, req *ObjectMetadataRequest) (*message.ObjectMetadata, error)
 	FindMetadataOnPath(c context.Context, rew *ObjectMetadataRequest) (*ObjectMetadataList, error)

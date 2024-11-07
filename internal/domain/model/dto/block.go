@@ -60,7 +60,7 @@ type BlockHeader struct {
 	Index     int             `json:"index"`
 	Size      int             `json:"size"`
 	Timestamp time.Time       `json:"timestamp"`
-	Checksum  uint32
+	Checksum  uint32          `json:"-"`
 }
 
 func NewBlockHeaderFromModel(h entity.BlockHeader) BlockHeader {

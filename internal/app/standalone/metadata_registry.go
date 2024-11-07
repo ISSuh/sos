@@ -50,7 +50,7 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 }
 
 func (s *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
-	dto := dto.NewMObjectFromMessage(object)
+	dto := dto.NewObjectFromMessage(object)
 	resp, err := s.objectMetadata.Put(c, dto)
 	if err != nil {
 		return nil, err
@@ -59,8 +59,8 @@ func (s *metadataRegistry) Put(c context.Context, object *message.Object) (*mess
 	return resp.ToMessage(), nil
 }
 
-func (r *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
-	dto := dto.NewMObjectFromMessage(object)
+func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+	dto := dto.NewMetadataFromMessage(metadata)
 	if err := r.objectMetadata.Delete(c, dto); err != nil {
 		return false, err
 	}

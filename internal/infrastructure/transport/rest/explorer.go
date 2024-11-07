@@ -31,4 +31,5 @@ type Explorer interface {
 	Update(w http.ResponseWriter, r *http.Request)
 	Download(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
+	DeleteVersion(w http.ResponseWriter, r *http.Request)
 }

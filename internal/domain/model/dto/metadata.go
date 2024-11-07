@@ -29,6 +29,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MetadataList []Metadata
@@ -105,6 +106,8 @@ func (d *Metadata) ToEntity() entity.ObjectMetadata {
 		Name(d.Name).
 		Path(d.Path).
 		Versions(d.Versions.ToEntity()).
+		CreatedAt(d.CreatedAt).
+		ModifiedAt(d.ModifiedAt).
 		Build()
 }
 
@@ -113,11 +116,13 @@ func (d *Metadata) ToMessage() *message.ObjectMetadata {
 		Id: &message.ObjectID{
 			Id: d.ID.ToInt64(),
 		},
-		Group:     d.Group,
-		Partition: d.Partition,
-		Path:      d.Path,
-		Name:      d.Name,
-		Versions:  d.Versions.ToMessage(),
+		Group:      d.Group,
+		Partition:  d.Partition,
+		Path:       d.Path,
+		Name:       d.Name,
+		Versions:   d.Versions.ToMessage(),
+		CreatedAt:  timestamppb.New(d.CreatedAt),
+		ModifiedAt: timestamppb.New(d.ModifiedAt),
 	}
 }
 

@@ -197,12 +197,27 @@ func (h *explorer) bodyWriter(w gohttp.ResponseWriter) http.DownloadBodyWriter {
 
 func (h *explorer) Delete(w gohttp.ResponseWriter, r *gohttp.Request) {
 	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.chunkedUpload]")
+	log.FromContext(c).Debugf("[explorer.Delete]")
 
 	dto := dto.RequestFromContext(c, http.RequestContextKey)
 	err := h.explorerService.Delete(c, dto)
 	if err != nil {
 		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
+		gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
+		return
+	}
+
+	http.NoContent(w)
+}
+
+func (h *explorer) DeleteVersion(w gohttp.ResponseWriter, r *gohttp.Request) {
+	c := r.Context()
+	log.FromContext(c).Debugf("[explorer.DeleteVersion]")
+
+	dto := dto.RequestFromContext(c, http.RequestContextKey)
+	err := h.explorerService.DeleteVersion(c, dto)
+	if err != nil {
+		log.FromContext(c).Errorf("DeleteVersion Error: %s\n", err.Error())
 		gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
 		return
 	}

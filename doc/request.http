@@ -6,8 +6,9 @@
 @GROUP = aa
 @PARTITION = bb
 @OBJECT_PATH = cc
-@OBJECT_ID = 1853397982578216961
+@OBJECT_ID = 1854529599963140096
 @FILE_PATH = ee
+@VERSION = 0
 
 ###########
 # API
@@ -38,15 +39,6 @@ Content-Type: application/octet-stream
 
 ###
 
-# chunk Upload
-POST {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
-Content-Type: application/octet-stream
-Transfer-Encoding: chunked
-
-< ./scripts/sample/sample.mp3
-
-###
-
 # Download
 GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
 
@@ -59,6 +51,11 @@ PUT {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJEC
 
 # Delete
 DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
+
+###
+
+# Delete specific version
+DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}}{{VERSION}} HTTP/1.1
 
 ###
 

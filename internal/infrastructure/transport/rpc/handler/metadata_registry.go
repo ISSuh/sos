@@ -53,7 +53,7 @@ func (h *metadataRegistry) Put(c context.Context, object *message.Object) (*mess
 	return &message.ObjectMetadata{}, nil
 }
 
-func (h *metadataRegistry) Delete(c context.Context, object *message.Object) (bool, error) {
+func (h *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
 	return true, nil
 }

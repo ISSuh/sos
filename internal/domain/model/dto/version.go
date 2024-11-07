@@ -29,6 +29,7 @@ import (
 	"github.com/ISSuh/sos/internal/domain/model/message"
 	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Versions []Version
@@ -69,6 +70,15 @@ func (v Versions) Empty() bool {
 	return len(v) == 0
 }
 
+func (v Versions) Version(versionNum int) Version {
+	for _, version := range v {
+		if version.Number == versionNum {
+			return version
+		}
+	}
+	return empty.Struct[Version]()
+}
+
 func (v Versions) LastVersion() Version {
 	if v.Empty() {
 		return empty.Struct[Version]()
@@ -77,12 +87,11 @@ func (v Versions) LastVersion() Version {
 }
 
 type Version struct {
-	Number     int       `json:"number"`
-	Size       int       `json:"size"`
-	CreatedAt  time.Time `json:"created_at"`
-	ModifiedAt time.Time `json:"modified_at"`
-
-	BlockHeaders BlockHeaders
+	Number       int          `json:"number"`
+	Size         int          `json:"size"`
+	BlockHeaders BlockHeaders `json:"-"`
+	CreatedAt    time.Time    `json:"created_at"`
+	ModifiedAt   time.Time    `json:"modified_at"`
 }
 
 func NewVersionFromModel(v entity.Version) Version {
@@ -126,6 +135,8 @@ func (v *Version) ToEntity() entity.Version {
 		Number(v.Number).
 		Size(v.Size).
 		BlockHeaders(headers).
+		CreatedAt(v.CreatedAt).
+		ModifiedAt(v.ModifiedAt).
 		Build()
 }
 
@@ -135,6 +146,8 @@ func (v *Version) ToMessage() *message.Version {
 		Number:       int32(v.Number),
 		Size:         int32(v.Size),
 		BlockHeaders: headers,
+		CreatedAt:    timestamppb.New(v.CreatedAt),
+		ModifiedAt:   timestamppb.New(v.ModifiedAt),
 	}
 }
 

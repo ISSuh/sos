@@ -22,7 +22,7 @@ message ObjectMetadataList {
 
 service MetadataRegistry {
   rpc Put(message.Object) returns (message.ObjectMetadata) {}
-  rpc Delete(message.Object) returns (google.protobuf.BoolValue) {}
+  rpc Delete(message.ObjectMetadata) returns (google.protobuf.BoolValue) {}
   rpc GetByObjectName(ObjectMetadataRequest) returns (message.ObjectMetadata) {}
   rpc GetByObjectID(ObjectMetadataRequest) returns (message.ObjectMetadata) {}
   rpc FindMetadataOnPath(ObjectMetadataRequest) returns (ObjectMetadataList) {}

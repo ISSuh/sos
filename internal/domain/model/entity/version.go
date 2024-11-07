@@ -22,6 +22,8 @@
 
 package entity
 
+import "time"
+
 type Versions []Version
 
 type Version struct {
@@ -54,6 +56,8 @@ type VersionBuilder struct {
 	size         int
 	node         Node
 	blockHeaders BlockHeaders
+	createdAt    time.Time
+	modifiedAt   time.Time
 }
 
 func NewVersionBuilder() *VersionBuilder {
@@ -80,11 +84,25 @@ func (b *VersionBuilder) BlockHeaders(blockHeaders BlockHeaders) *VersionBuilder
 	return b
 }
 
+func (b *VersionBuilder) CreatedAt(createdAt time.Time) *VersionBuilder {
+	b.createdAt = createdAt
+	return b
+}
+
+func (b *VersionBuilder) ModifiedAt(modifiedAt time.Time) *VersionBuilder {
+	b.modifiedAt = modifiedAt
+	return b
+}
+
 func (b *VersionBuilder) Build() Version {
 	return Version{
 		number:       b.number,
 		size:         b.size,
 		node:         b.node,
 		blockHeaders: b.blockHeaders,
+		ModifiedTime: ModifiedTime{
+			CreatedAt:  b.createdAt,
+			ModifiedAt: b.modifiedAt,
+		},
 	}
 }

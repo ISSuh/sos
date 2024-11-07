@@ -43,8 +43,28 @@ func NewDeleter(objectRequestor rpc.MetadataRegistryRequestor, storageRequestor 
 }
 
 func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
-	if err := o.deleteBlocks(c, metadata); err != nil {
+	for _, version := range metadata.Versions {
+		if err := o.deleteBlocks(c, version); err != nil {
+			return err
+		}
+	}
+
+	metadata.Versions = nil
+	if err := o.deleteObjectMetadata(c, metadata); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (o *Deleter) DeleteVersion(c context.Context, metadata dto.Metadata, deleteVersionNum int) error {
+	version := metadata.Versions.Version(deleteVersionNum)
+	if err := o.deleteBlocks(c, version); err != nil {
+		return err
+	}
+
+	metadata.Versions = dto.Versions{
+		version,
 	}
 
 	if err := o.deleteObjectMetadata(c, metadata); err != nil {
@@ -55,16 +75,7 @@ func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
 }
 
 func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata) error {
-	msg := &message.Object{
-		Id: &message.ObjectID{
-			Id: metadata.ID.ToInt64(),
-		},
-		Group:     metadata.Group,
-		Partition: metadata.Partition,
-		Path:      metadata.Path,
-		Name:      metadata.Name,
-	}
-
+	msg := metadata.ToMessage()
 	if _, err := o.objectRequestor.Delete(c, msg); err != nil {
 		return err
 	}
@@ -72,8 +83,8 @@ func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata)
 	return nil
 }
 
-func (o *Deleter) deleteBlocks(c context.Context, metadata dto.Metadata) error {
-	blockHeaders := metadata.LasterVersion().BlockHeaders
+func (o *Deleter) deleteBlocks(c context.Context, version dto.Version) error {
+	blockHeaders := version.BlockHeaders
 	for _, blockHeader := range blockHeaders {
 		msg := &message.BlockHeader{
 			ObjectID: &message.ObjectID{

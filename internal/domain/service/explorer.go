@@ -42,6 +42,7 @@ type Explorer interface {
 	Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error)
 	Download(c context.Context, req dto.Request, headerWriter http.DownloadHeaderWriter, bodyWriter http.DownloadBodyWriter) error
 	Delete(c context.Context, req dto.Request) error
+	DeleteVersion(c context.Context, req dto.Request) error
 }
 
 type explorer struct {
@@ -221,6 +222,38 @@ func (s *explorer) Delete(c context.Context, req dto.Request) error {
 
 	deleter := object.NewDeleter(s.metadataRequestor, s.storageRequestor)
 	if err := deleter.Delete(c, metadata); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *explorer) DeleteVersion(c context.Context, req dto.Request) error {
+	switch {
+	case !req.ObjectID.IsValid():
+		return fmt.Errorf("object id is invalid")
+	case validation.IsEmpty(req.Group):
+		return fmt.Errorf("group is empty")
+	case validation.IsEmpty(req.Partition):
+		return fmt.Errorf("partition is empty")
+	case validation.IsEmpty(req.Path):
+		return fmt.Errorf("path is empty")
+	case req.Version < 0:
+		return fmt.Errorf("version is invalid")
+	}
+
+	metadata, err :=
+		s.getObjectMetadataByObjectID(c, req.ObjectID, req.Group, req.Partition, req.Path)
+	if err != nil {
+		return err
+	}
+
+	if !metadata.ID.IsValid() {
+		return fmt.Errorf("object not exist")
+	}
+
+	deleter := object.NewDeleter(s.metadataRequestor, s.storageRequestor)
+	if err := deleter.DeleteVersion(c, metadata, req.Version); err != nil {
 		return err
 	}
 

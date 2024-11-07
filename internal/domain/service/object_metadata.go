@@ -25,6 +25,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
 	"github.com/ISSuh/sos/internal/domain/model/entity"
@@ -36,7 +37,7 @@ import (
 
 type ObjectMetadata interface {
 	Put(c context.Context, dto dto.Object) (dto.Metadata, error)
-	Delete(c context.Context, dto dto.Object) error
+	Delete(c context.Context, dto dto.Metadata) error
 	MetadataByObjectName(c context.Context, group, partition, path, objectName string) (dto.Metadata, error)
 	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (dto.Metadata, error)
 	MetadataListOnPath(c context.Context, group, partition, path string) (dto.MetadataList, error)
@@ -69,27 +70,23 @@ func (s *objectMetadata) Put(c context.Context, objectDTO dto.Object) (dto.Metad
 		return empty.Struct[dto.Metadata](), err
 	}
 
+	now := time.Now()
 	isObjectExist := true
 	if !metadata.IsValid() {
 		isObjectExist = false
-		metadata = objectDTO.ToEntity()
 	}
 
-	versionNumber := metadata.LastVersion() + 1
-	version := entity.NewVersionBuilder().
-		Number(versionNumber).
-		Size(objectDTO.Size).
-		BlockHeaders(objectDTO.BlockHeaders.ToEntity()).
-		Build()
-
-	metadata.AppendVersion(version)
-
-	if isObjectExist {
-		if err := s.metadataRepository.Update(c, metadata); err != nil {
+	metadata.ModifiedAt = now
+	if !isObjectExist {
+		metadata, err = s.createMetadata(c, objectDTO, now)
+		if err != nil {
 			return empty.Struct[dto.Metadata](), err
 		}
+
+		metadata.CreatedAt = now
 	} else {
-		if err := s.metadataRepository.Create(c, metadata); err != nil {
+		metadata, err = s.updateMetadata(c, metadata, objectDTO, now)
+		if err != nil {
 			return empty.Struct[dto.Metadata](), err
 		}
 	}
@@ -98,11 +95,29 @@ func (s *objectMetadata) Put(c context.Context, objectDTO dto.Object) (dto.Metad
 	return resp, nil
 }
 
-func (s *objectMetadata) Delete(c context.Context, dto dto.Object) error {
+func (s *objectMetadata) Delete(c context.Context, dto dto.Metadata) error {
 	log.FromContext(c).Debugf("[objectMetadata.Delete] request: %+v", dto)
+	if dto.Versions.Empty() {
+		deletedMetadata := dto.ToEntity()
+		if err := s.metadataRepository.Delete(c, deletedMetadata); err != nil {
+			return err
+		}
+		return nil
+	}
 
-	metadata := dto.ToEntity()
-	if err := s.metadataRepository.Delete(c, metadata); err != nil {
+	metadata, err :=
+		s.metadataRepository.MetadataByObjectID(
+			c, dto.Group, dto.Partition, dto.Path, dto.ID.ToInt64(),
+		)
+	if err != nil {
+		return err
+	}
+
+	for _, version := range dto.Versions {
+		metadata.DeleteVersion(version.Number)
+	}
+
+	if err := s.metadataRepository.Update(c, metadata); err != nil {
 		return err
 	}
 
@@ -143,4 +158,53 @@ func (s *objectMetadata) MetadataListOnPath(c context.Context, group, partition,
 		list[i] = dto.NewMetadataFromModel(item)
 	}
 	return list, nil
+}
+
+func (s *objectMetadata) createMetadata(
+	c context.Context, object dto.Object, now time.Time,
+) (entity.ObjectMetadata, error) {
+	metadata := object.ToEntity()
+	metadata.CreatedAt = now
+	metadata.ModifiedAt = now
+
+	versionNumber := 0
+	blockHeaders := object.BlockHeaders.ToEntity()
+	version := s.newVersion(versionNumber, object.Size, blockHeaders, now)
+	metadata.AppendVersion(version)
+
+	if err := s.metadataRepository.Create(c, metadata); err != nil {
+		return empty.Struct[entity.ObjectMetadata](), err
+	}
+
+	return metadata, nil
+}
+
+func (s *objectMetadata) updateMetadata(
+	c context.Context, metadata entity.ObjectMetadata, object dto.Object, now time.Time,
+) (entity.ObjectMetadata, error) {
+	versionNumber := metadata.LastVersion() + 1
+	blockHeaders := object.BlockHeaders.ToEntity()
+	version := s.newVersion(versionNumber, object.Size, blockHeaders, now)
+	metadata.AppendVersion(version)
+
+	if err := s.metadataRepository.Update(c, metadata); err != nil {
+		return empty.Struct[entity.ObjectMetadata](), err
+	}
+
+	return metadata, nil
+}
+
+func (s *objectMetadata) newVersion(
+	versionNum int, size int, blockHeaders entity.BlockHeaders, now time.Time,
+) entity.Version {
+	versionNumber := versionNum
+	version := entity.NewVersionBuilder().
+		Number(versionNumber).
+		Size(size).
+		BlockHeaders(blockHeaders).
+		Build()
+
+	version.CreatedAt = now
+	version.ModifiedAt = now
+	return version
 }

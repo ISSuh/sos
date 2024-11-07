@@ -36,10 +36,11 @@ type Object struct {
 	Name         string          `json:"name"`
 	Path         string          `json:"path"`
 	Size         int             `json:"size"`
+	VersionNum   int             `json:"version"`
 	BlockHeaders BlockHeaders    `json:"block_headers"`
 }
 
-func NewMObjectFromMessage(m *message.Object) Object {
+func NewObjectFromMessage(m *message.Object) Object {
 	switch {
 	case validation.IsNil(m):
 		return empty.Struct[Object]()

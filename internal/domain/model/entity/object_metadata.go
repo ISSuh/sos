@@ -22,6 +22,8 @@
 
 package entity
 
+import "time"
+
 type ObjectMetadataList []ObjectMetadata
 
 type ObjectMetadata struct {
@@ -82,6 +84,15 @@ func (e *ObjectMetadata) AppendVersion(version Version) {
 	e.versions = append(e.versions, version)
 }
 
+func (e *ObjectMetadata) DeleteVersion(versionNum int) {
+	for i, version := range e.versions {
+		if version.Number() == versionNum {
+			e.versions = append(e.versions[:i], e.versions[i+1:]...)
+			return
+		}
+	}
+}
+
 func (e *ObjectMetadata) LastVersion() int {
 	if len(e.versions) == 0 {
 		return -1
@@ -99,6 +110,8 @@ type ObjectMetadataBuilder struct {
 	size         int
 	node         Node
 	blockHeaders BlockHeaders
+	createdAt    time.Time
+	modifiedAt   time.Time
 }
 
 func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
@@ -150,6 +163,16 @@ func (b *ObjectMetadataBuilder) BlockHeaders(blockHeaders BlockHeaders) *ObjectM
 	return b
 }
 
+func (b *ObjectMetadataBuilder) CreatedAt(createAt time.Time) *ObjectMetadataBuilder {
+	b.createdAt = createAt
+	return b
+}
+
+func (b *ObjectMetadataBuilder) ModifiedAt(modifiedAt time.Time) *ObjectMetadataBuilder {
+	b.modifiedAt = modifiedAt
+	return b
+}
+
 func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 	return ObjectMetadata{
 		id:           b.id,
@@ -161,5 +184,9 @@ func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 		node:         b.node,
 		versions:     b.versions,
 		blockHeaders: b.blockHeaders,
+		ModifiedTime: ModifiedTime{
+			CreatedAt:  b.createdAt,
+			ModifiedAt: b.modifiedAt,
+		},
 	}
 }

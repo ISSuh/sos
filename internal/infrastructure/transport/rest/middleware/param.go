@@ -52,10 +52,21 @@ func ParseDefaultParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 			return
 		}
 
+		versionStr := params[http.VersionName]
+		if validation.IsEmpty(path) {
+			return
+		}
+
+		version, err := strconv.Atoi(versionStr)
+		if err != nil {
+			version = -1
+		}
+
 		req := dto.Request{
 			Group:     group,
 			Partition: partition,
 			Path:      path,
+			Version:   version,
 		}
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
@@ -99,16 +110,9 @@ func ParseQueryParam(next gohttp.HandlerFunc) gohttp.HandlerFunc {
 			return
 		}
 
-		chunkSizeStr := r.URL.Query().Get(http.ChunkSizeName)
-		chunkSize, err := strconv.ParseUint(chunkSizeStr, 10, 64)
-		if err != nil {
-			return
-		}
-
 		req := dto.RequestFromContext(r.Context(), http.RequestContextKey)
 		req.Name = name
 		req.Size = size
-		req.ChunkSize = chunkSize
 
 		ctx := context.WithValue(r.Context(), http.RequestContextKey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))

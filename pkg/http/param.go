@@ -38,6 +38,7 @@ const (
 	ObjectName          = "name"
 	ObjectSizeName      = "size"
 	ChunkSizeName       = "chunk_size"
+	VersionName         = "version"
 
 	GroupParamContextKey ParamContextKey = GroupParamName
 	PartitionContextKey  ParamContextKey = PartitionParamName

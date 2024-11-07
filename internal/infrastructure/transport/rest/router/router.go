@@ -39,10 +39,12 @@ const (
 	URLObjectPath = "/{" + http.ObjectPathParamName + "}"
 	URLObjectID   = "/{" + http.ObjectIDParamName + "}"
 	URLMetadata   = "/metadata"
+	URLVersion    = "/{" + http.VersionName + "}"
 
 	URLDefault            = URLVersion1 + URLGroup + URLPartition + URLObjectPath
 	URLObject             = URLDefault + URLObjectID
 	URLObjectMetadata     = URLObject + URLMetadata
+	URLObjectVersion      = URLObject + URLVersion
 	URLObjectMetadataList = URLDefault + URLMetadata
 )
 
@@ -84,6 +86,15 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 			URL:     URLObject,
 			Method:  gohttp.MethodDelete,
 			Handler: h.Delete,
+			Middlewares: []http.MiddlewareFunc{
+				middleware.ParseObjectIDParam,
+			},
+		},
+		// Delete Version
+		http.RouteItem{
+			URL:     URLObject,
+			Method:  gohttp.MethodDelete,
+			Handler: h.DeleteVersion,
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
