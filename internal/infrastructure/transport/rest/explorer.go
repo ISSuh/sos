@@ -22,14 +22,14 @@
 
 package rest
 
-import "net/http"
+import (
+	"github.com/ISSuh/sos/pkg/http"
+)
 
 type Explorer interface {
-	Find(w http.ResponseWriter, r *http.Request)
-	List(w http.ResponseWriter, r *http.Request)
-	Upload(w http.ResponseWriter, r *http.Request)
-	Update(w http.ResponseWriter, r *http.Request)
-	Download(w http.ResponseWriter, r *http.Request)
-	Delete(w http.ResponseWriter, r *http.Request)
-	DeleteVersion(w http.ResponseWriter, r *http.Request)
+	Find() http.Handler
+	List() http.Handler
+	Upload() http.Handler
+	Download(lastVersion bool) http.Handler
+	Delete(deleteObject bool) http.Handler
 }

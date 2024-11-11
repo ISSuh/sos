@@ -26,10 +26,12 @@ import (
 	"net/http"
 )
 
+type Handler func(w http.ResponseWriter, r *http.Request)
+
 type RouteItem struct {
 	URL         string
 	Method      string
-	Handler     http.HandlerFunc
+	Handler     Handler
 	Middlewares []MiddlewareFunc
 }
 

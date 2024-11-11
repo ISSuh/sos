@@ -58,7 +58,11 @@ func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
 }
 
 func (o *Deleter) DeleteVersion(c context.Context, metadata dto.Metadata, deleteVersionNum int) error {
-	version := metadata.Versions.Version(deleteVersionNum)
+	version, err := metadata.Versions.Version(deleteVersionNum)
+	if err != nil {
+		return err
+	}
+
 	if err := o.deleteBlocks(c, version); err != nil {
 		return err
 	}

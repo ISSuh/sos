@@ -39,13 +39,13 @@ const (
 	URLObjectPath = "/{" + http.ObjectPathParamName + "}"
 	URLObjectID   = "/{" + http.ObjectIDParamName + "}"
 	URLMetadata   = "/metadata"
-	URLVersion    = "/{" + http.VersionName + "}"
+	URLVersion    = "/version"
+	URLVersionNum = "/{" + http.VersionName + "}"
 
-	URLDefault            = URLVersion1 + URLGroup + URLPartition + URLObjectPath
-	URLObject             = URLDefault + URLObjectID
-	URLObjectMetadata     = URLObject + URLMetadata
-	URLObjectVersion      = URLObject + URLVersion
-	URLObjectMetadataList = URLDefault + URLMetadata
+	URLDefault        = URLVersion1 + URLGroup + URLPartition + URLObjectPath
+	URLObject         = URLDefault + URLObjectID
+	URLObjectMetadata = URLObject + URLMetadata
+	URLObjectVersion  = URLObject + URLVersion + URLVersionNum
 )
 
 func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
@@ -59,24 +59,24 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 		// Upload
 		http.RouteItem{
 			URL:         URLDefault,
-			Method:      gohttp.MethodPost,
-			Handler:     h.Upload,
+			Method:      gohttp.MethodPut,
+			Handler:     h.Upload(),
 			Middlewares: []http.MiddlewareFunc{},
 		},
-		// Download
+		// Download latest version
 		http.RouteItem{
 			URL:     URLObject,
 			Method:  gohttp.MethodGet,
-			Handler: h.Download,
+			Handler: h.Download(true),
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
 		},
-		// Update
+		// Download specific version
 		http.RouteItem{
-			URL:     URLObject,
-			Method:  gohttp.MethodPut,
-			Handler: h.Update,
+			URL:     URLObjectVersion,
+			Method:  gohttp.MethodGet,
+			Handler: h.Download(false),
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -85,16 +85,16 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 		http.RouteItem{
 			URL:     URLObject,
 			Method:  gohttp.MethodDelete,
-			Handler: h.Delete,
+			Handler: h.Delete(false),
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
 		},
-		// Delete Version
+		// Delete specific version
 		http.RouteItem{
-			URL:     URLObject,
+			URL:     URLObjectVersion,
 			Method:  gohttp.MethodDelete,
-			Handler: h.DeleteVersion,
+			Handler: h.Delete(true),
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -103,7 +103,7 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 		http.RouteItem{
 			URL:     URLObjectMetadata,
 			Method:  gohttp.MethodGet,
-			Handler: h.Find,
+			Handler: h.Find(),
 			Middlewares: []http.MiddlewareFunc{
 				middleware.ParseObjectIDParam,
 			},
@@ -112,7 +112,7 @@ func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
 		http.RouteItem{
 			URL:     URLDefault,
 			Method:  gohttp.MethodGet,
-			Handler: h.List,
+			Handler: h.List(),
 		},
 	}
 

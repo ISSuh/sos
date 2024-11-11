@@ -24,7 +24,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/ISSuh/sos/internal/domain/model/dto"
@@ -40,9 +40,10 @@ type Explorer interface {
 	GetObjectMetadata(c context.Context, req dto.Request) (dto.Item, error)
 	FindObjectMetadataOnPath(c context.Context, req dto.Request) (dto.Items, error)
 	Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error)
-	Download(c context.Context, req dto.Request, headerWriter http.DownloadHeaderWriter, bodyWriter http.DownloadBodyWriter) error
-	Delete(c context.Context, req dto.Request) error
-	DeleteVersion(c context.Context, req dto.Request) error
+	Download(
+		c context.Context, req dto.Request, writer http.Writer, lastVersion bool,
+	) error
+	Delete(c context.Context, req dto.Request, deleteVersion bool) error
 }
 
 type explorer struct {
@@ -55,9 +56,9 @@ func NewExplorer(
 ) (Explorer, error) {
 	switch {
 	case validation.IsNil(metadataRequestor):
-		return nil, fmt.Errorf("MetadataRegistry requestor is nil")
+		return nil, errors.New("MetadataRegistry requestor is nil")
 	case validation.IsNil(storageRequestor):
-		return nil, fmt.Errorf("BlockStorage requestor is nil")
+		return nil, errors.New("BlockStorage requestor is nil")
 	}
 
 	return &explorer{
@@ -69,13 +70,13 @@ func NewExplorer(
 func (s *explorer) GetObjectMetadata(c context.Context, req dto.Request) (dto.Item, error) {
 	switch {
 	case !req.ObjectID.IsValid():
-		return empty.Struct[dto.Item](), fmt.Errorf("object id is invalid")
+		return empty.Struct[dto.Item](), errors.New("object id is invalid")
 	case validation.IsEmpty(req.Group):
-		return empty.Struct[dto.Item](), fmt.Errorf("group is empty")
+		return empty.Struct[dto.Item](), errors.New("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return empty.Struct[dto.Item](), fmt.Errorf("partition is empty")
+		return empty.Struct[dto.Item](), errors.New("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return empty.Struct[dto.Item](), fmt.Errorf("path is empty")
+		return empty.Struct[dto.Item](), errors.New("path is empty")
 	}
 
 	metadata, err :=
@@ -84,17 +85,17 @@ func (s *explorer) GetObjectMetadata(c context.Context, req dto.Request) (dto.It
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromMetadata(metadata), nil
+	return dto.NewItemFromMetadata(*metadata), nil
 }
 
 func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) (dto.Items, error) {
 	switch {
 	case validation.IsEmpty(req.Group):
-		return nil, fmt.Errorf("group is empty")
+		return nil, errors.New("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return nil, fmt.Errorf("partition is empty")
+		return nil, errors.New("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return nil, fmt.Errorf("path is empty")
+		return nil, errors.New("path is empty")
 	}
 
 	message := rpc.ObjectMetadataRequest{
@@ -115,17 +116,17 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error) {
 	switch {
 	case validation.IsEmpty(req.Group):
-		return empty.Struct[dto.Item](), fmt.Errorf("group is empty")
+		return empty.Struct[dto.Item](), errors.New("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return empty.Struct[dto.Item](), fmt.Errorf("partition is empty")
+		return empty.Struct[dto.Item](), errors.New("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return empty.Struct[dto.Item](), fmt.Errorf("path is empty")
+		return empty.Struct[dto.Item](), errors.New("path is empty")
 	case validation.IsEmpty(req.Name):
-		return empty.Struct[dto.Item](), fmt.Errorf("name is empty")
+		return empty.Struct[dto.Item](), errors.New("name is empty")
 	case req.Size <= 0:
-		return empty.Struct[dto.Item](), fmt.Errorf("size is invalid")
+		return empty.Struct[dto.Item](), errors.New("size is invalid")
 	case validation.IsNil(bodyStream):
-		return empty.Struct[dto.Item](), fmt.Errorf("body stream is nil")
+		return empty.Struct[dto.Item](), errors.New("body stream is nil")
 	}
 
 	metadata, err := s.getObjectMetadataByNameOnPath(c, req.Group, req.Partition, req.Path, req.Name)
@@ -159,21 +160,21 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), err
 	}
 
-	return dto.NewItemFromMetadata(resp), nil
+	return dto.NewItemFromMetadata(*resp), nil
 }
 
-func (s *explorer) Download(
-	c context.Context, req dto.Request, headerWriter http.DownloadHeaderWriter, bodyWriter http.DownloadBodyWriter,
-) error {
+func (s *explorer) Download(c context.Context, req dto.Request, writer http.Writer, lastVersion bool) error {
 	switch {
 	case validation.IsEmpty(req.Group):
-		return fmt.Errorf("group is empty")
+		return errors.New("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return fmt.Errorf("partition is empty")
+		return errors.New("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return fmt.Errorf("path is empty")
+		return errors.New("path is empty")
 	case !req.ObjectID.IsValid():
-		return fmt.Errorf("object id is invalid")
+		return errors.New("object id is invalid")
+	case !lastVersion && req.Version < 0:
+		return errors.New("version is invalid")
 	}
 
 	metadata, err :=
@@ -182,15 +183,23 @@ func (s *explorer) Download(
 		return err
 	}
 
-	version := metadata.LasterVersion()
-	if !version.IsValid() {
-		return fmt.Errorf("object version is invalid")
+	var version dto.Version
+	if lastVersion {
+		version, err = metadata.Versions.LastVersion()
+		if err != nil {
+			return err
+		}
+	} else {
+		version, err = metadata.Versions.Version(req.Version)
+		if err != nil {
+			return err
+		}
 	}
 
-	headerWriter(metadata.Name, version.Size)
+	writer.Header(metadata.Name, version.Size)
 
 	downloader := object.NewDownloader(s.storageRequestor)
-	err = downloader.Download(c, metadata, bodyWriter)
+	err = downloader.Download(c, version, writer.Body)
 	if err != nil {
 		return err
 	}
@@ -198,16 +207,18 @@ func (s *explorer) Download(
 	return nil
 }
 
-func (s *explorer) Delete(c context.Context, req dto.Request) error {
+func (s *explorer) Delete(c context.Context, req dto.Request, deleteVersion bool) error {
 	switch {
 	case !req.ObjectID.IsValid():
-		return fmt.Errorf("object id is invalid")
+		return errors.New("object id is invalid")
 	case validation.IsEmpty(req.Group):
-		return fmt.Errorf("group is empty")
+		return errors.New("group is empty")
 	case validation.IsEmpty(req.Partition):
-		return fmt.Errorf("partition is empty")
+		return errors.New("partition is empty")
 	case validation.IsEmpty(req.Path):
-		return fmt.Errorf("path is empty")
+		return errors.New("path is empty")
+	case deleteVersion && req.Version < 0:
+		return errors.New("version is invalid")
 	}
 
 	metadata, err :=
@@ -217,44 +228,24 @@ func (s *explorer) Delete(c context.Context, req dto.Request) error {
 	}
 
 	if !metadata.ID.IsValid() {
-		return fmt.Errorf("object not exist")
+		return errors.New("object not exist")
+	}
+
+	if deleteVersion {
+		if !metadata.Versions.HasVersion(req.Version) {
+			return errors.New("version not exist")
+		}
 	}
 
 	deleter := object.NewDeleter(s.metadataRequestor, s.storageRequestor)
-	if err := deleter.Delete(c, metadata); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *explorer) DeleteVersion(c context.Context, req dto.Request) error {
-	switch {
-	case !req.ObjectID.IsValid():
-		return fmt.Errorf("object id is invalid")
-	case validation.IsEmpty(req.Group):
-		return fmt.Errorf("group is empty")
-	case validation.IsEmpty(req.Partition):
-		return fmt.Errorf("partition is empty")
-	case validation.IsEmpty(req.Path):
-		return fmt.Errorf("path is empty")
-	case req.Version < 0:
-		return fmt.Errorf("version is invalid")
-	}
-
-	metadata, err :=
-		s.getObjectMetadataByObjectID(c, req.ObjectID, req.Group, req.Partition, req.Path)
-	if err != nil {
-		return err
-	}
-
-	if !metadata.ID.IsValid() {
-		return fmt.Errorf("object not exist")
-	}
-
-	deleter := object.NewDeleter(s.metadataRequestor, s.storageRequestor)
-	if err := deleter.DeleteVersion(c, metadata, req.Version); err != nil {
-		return err
+	if deleteVersion {
+		if err := deleter.DeleteVersion(c, *metadata, req.Version); err != nil {
+			return err
+		}
+	} else {
+		if err := deleter.Delete(c, *metadata); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -262,7 +253,7 @@ func (s *explorer) DeleteVersion(c context.Context, req dto.Request) error {
 
 func (s *explorer) getObjectMetadataByObjectID(
 	c context.Context, objectID entity.ObjectID, group, partition, path string,
-) (dto.Metadata, error) {
+) (*dto.Metadata, error) {
 	message := rpc.ObjectMetadataRequest{
 		ObjectID:  objectID.ToInt64(),
 		Group:     group,
@@ -272,23 +263,27 @@ func (s *explorer) getObjectMetadataByObjectID(
 
 	resp, err := s.metadataRequestor.GetByObjectID(c, &message)
 	if err != nil {
-		return empty.Struct[dto.Metadata](), err
+		return nil, err
 	}
 
-	//  nned not found
+	//  need not found
 	if resp.Id.Id <= 0 {
-		return empty.Struct[dto.Metadata](), nil
+		return nil, nil
 	}
 
-	return dto.NewMetadataFromMessage(resp), nil
+	dto, err := dto.NewMetadataFromMessage(resp)
+	if err != nil {
+		return nil, err
+	}
+	return dto, nil
 }
 
 func (s *explorer) getObjectMetadataByNameOnPath(
 	c context.Context, group, partition, path, name string,
-) (dto.Metadata, error) {
+) (*dto.Metadata, error) {
 	switch {
 	case validation.IsEmpty(name):
-		return empty.Struct[dto.Metadata](), fmt.Errorf("name is empty")
+		return nil, errors.New("name is empty")
 	}
 
 	message := rpc.ObjectMetadataRequest{
@@ -300,16 +295,28 @@ func (s *explorer) getObjectMetadataByNameOnPath(
 
 	resp, err := s.metadataRequestor.GetByObjectName(c, &message)
 	if err != nil {
-		return empty.Struct[dto.Metadata](), err
+		return nil, err
 	}
-	return dto.NewMetadataFromMessage(resp), nil
+
+	dto, err := dto.NewMetadataFromMessage(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto, nil
 }
 
-func (s *explorer) upsertObjectMetadata(c context.Context, object dto.Object) (dto.Metadata, error) {
+func (s *explorer) upsertObjectMetadata(c context.Context, object dto.Object) (*dto.Metadata, error) {
 	message := object.ToMessage()
 	resp, err := s.metadataRequestor.Put(c, message)
 	if err != nil {
-		return empty.Struct[dto.Metadata](), err
+		return nil, err
 	}
-	return dto.NewMetadataFromMessage(resp), nil
+
+	dto, err := dto.NewMetadataFromMessage(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto, nil
 }

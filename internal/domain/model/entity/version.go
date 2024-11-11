@@ -26,6 +26,10 @@ import "time"
 
 type Versions []Version
 
+func (e Versions) Empty() bool {
+	return len(e) == 0
+}
+
 type Version struct {
 	number       int
 	size         int

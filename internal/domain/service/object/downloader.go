@@ -45,8 +45,7 @@ func NewDownloader(storageRequestor rpc.BlockStorageRequestor) Downloader {
 	}
 }
 
-func (o *Downloader) Download(c context.Context, metadata dto.Metadata, writer http.DownloadBodyWriter) error {
-	version := metadata.LasterVersion()
+func (o *Downloader) Download(c context.Context, version dto.Version, writer http.DownloadBodyWriter) error {
 	blockHeaders := version.BlockHeaders
 	blockNum := len(version.BlockHeaders)
 

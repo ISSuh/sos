@@ -58,6 +58,7 @@ func (s *blockStorage) Put(
 			BlockID(entity.BlockID(blockMessage.Header.BlockID.Id)).
 			ObjectID(entity.ObjectID(blockMessage.Header.ObjectID.Id)).
 			Index(int(blockMessage.Header.Index)).
+			Size(int(blockMessage.Header.Size)).
 			Checksum(blockMessage.Header.Checksum).
 			Timestamp(blockMessage.Header.Timestamp.AsTime()).
 			Build()

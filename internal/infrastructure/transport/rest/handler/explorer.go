@@ -49,137 +49,157 @@ func NewExplorer(explorerService service.Explorer) (rest.Explorer, error) {
 	}, nil
 }
 
-func (h *explorer) Find(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.Find]")
+func (h *explorer) Find() http.Handler {
+	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		c := r.Context()
+		log.FromContext(c).Debugf("[explorer.Find]")
 
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("Request: %+v\n", dto)
+		dto := dto.RequestFromContext(c, http.RequestContextKey)
+		log.FromContext(c).Debugf("Request: %+v\n", dto)
 
-	item, err := h.explorerService.GetObjectMetadata(c, dto)
-	if err != nil {
-		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
+		item, err := h.explorerService.GetObjectMetadata(c, dto)
+		if err != nil {
+			log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
 
-	if item.Empty() {
-		http.NoContent(w)
-		return
-	}
+		if item.Empty() {
+			http.NoContent(w)
+			return
+		}
 
-	if err := http.Json(w, item); err != nil {
-		log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *explorer) List(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.List]")
-
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("Request: %+v\n", dto)
-
-	items, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
-	if err != nil {
-		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-
-	if err := http.Json(w, items); err != nil {
-		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *explorer) Upload(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.Upload]")
-
-	req := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("Request: %+v\n", req)
-	log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
-
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
-
-	multipartForm := r.MultipartForm
-
-	var items []dto.Item
-	for key, fileHeaders := range multipartForm.File {
-		for _, fileHeader := range fileHeaders {
-			log.FromContext(c).Debugf("[%s]Uploaded File: %+v\n", key, fileHeader.Filename)
-			log.FromContext(c).Debugf("[%s]File Size: %+v\n", key, fileHeader.Size)
-			log.FromContext(c).Debugf("[%s]MIME Header: %+v\n", key, fileHeader.Header)
-
-			f, err := fileHeader.Open()
-			if err != nil {
-				gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-				return
-			}
-
-			req.Name = fileHeader.Filename
-			req.Size = int(fileHeader.Size)
-
-			item, err := h.explorerService.Upload(c, req, f)
-			if err != nil {
-				log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
-				gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-				return
-			}
-
-			items = append(items, item)
-			f.Close()
+		if err := http.Json(w, item); err != nil {
+			log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
 		}
 	}
-
-	resp := struct {
-		Items dto.Items `json:"items"`
-	}{
-		Items: items,
-	}
-
-	log.FromContext(c).Debugf("Successfully Uploaded File\n")
-	if err := http.Json(w, resp); err != nil {
-		log.FromContext(c).Errorf("List Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
-	}
 }
 
-func (h *explorer) Update(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.Update]")
+func (h *explorer) List() http.Handler {
+	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		c := r.Context()
+		log.FromContext(c).Debugf("[explorer.List]")
 
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("Request: %+v\n", dto)
-}
+		dto := dto.RequestFromContext(c, http.RequestContextKey)
+		log.FromContext(c).Debugf("Request: %+v\n", dto)
 
-func (h *explorer) Download(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
+		items, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
+		if err != nil {
+			log.FromContext(c).Errorf("List Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
 
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	log.FromContext(c).Debugf("[explorer.Download]")
-	log.FromContext(c).Debugf("Request: %+v\n", dto)
-
-	err := h.explorerService.Download(c, dto, h.headerWriter(w), h.bodyWriter(w))
-	if err != nil {
-		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
-		return
+		if err := http.Json(w, items); err != nil {
+			log.FromContext(c).Errorf("List Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
 	}
 }
 
+func (h *explorer) Upload() http.Handler {
+	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		c := r.Context()
+		log.FromContext(c).Debugf("[explorer.Upload]")
+
+		req := dto.RequestFromContext(c, http.RequestContextKey)
+		log.FromContext(c).Debugf("Request: %+v\n", req)
+		log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
+
+		if err := r.ParseMultipartForm(32 << 20); err != nil {
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
+
+		multipartForm := r.MultipartForm
+
+		var items []dto.Item
+		for key, fileHeaders := range multipartForm.File {
+			for _, fileHeader := range fileHeaders {
+				log.FromContext(c).Debugf("[%s]Uploaded File: %+v\n", key, fileHeader.Filename)
+				log.FromContext(c).Debugf("[%s]File Size: %+v\n", key, fileHeader.Size)
+				log.FromContext(c).Debugf("[%s]MIME Header: %+v\n", key, fileHeader.Header)
+
+				f, err := fileHeader.Open()
+				if err != nil {
+					gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+					return
+				}
+
+				req.Name = fileHeader.Filename
+				req.Size = int(fileHeader.Size)
+
+				item, err := h.explorerService.Upload(c, req, f)
+				if err != nil {
+					log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
+					gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+					return
+				}
+
+				items = append(items, item)
+				f.Close()
+			}
+		}
+
+		resp := struct {
+			Items dto.Items `json:"items"`
+		}{
+			Items: items,
+		}
+
+		log.FromContext(c).Debugf("Successfully Uploaded File\n")
+		if err := http.Json(w, resp); err != nil {
+			log.FromContext(c).Errorf("List Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (h *explorer) Download(lastVersion bool) http.Handler {
+	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		c := r.Context()
+
+		dto := dto.RequestFromContext(c, http.RequestContextKey)
+		log.FromContext(c).Debugf("[explorer.Download]")
+		log.FromContext(c).Debugf("Request: %+v\n", dto)
+
+		writer := http.Writer{
+			Header: h.headerWriter(w),
+			Body:   h.bodyWriter(w),
+		}
+
+		err := h.explorerService.Download(c, dto, writer, lastVersion)
+		if err != nil {
+			log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (h *explorer) Delete(deleteVersion bool) http.Handler {
+	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		c := r.Context()
+		log.FromContext(c).Debugf("[explorer.Delete]")
+
+		dto := dto.RequestFromContext(c, http.RequestContextKey)
+		err := h.explorerService.Delete(c, dto, deleteVersion)
+		if err != nil {
+			log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
+			gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
+			return
+		}
+
+		http.NoContent(w)
+	}
+}
 func (h *explorer) headerWriter(w gohttp.ResponseWriter) http.DownloadHeaderWriter {
 	return func(name string, size int) {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", name))
-		// w.Header().Set("Content-Type", "multipart/form-data; boundary=boundary")
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", size))
 	}
@@ -193,34 +213,4 @@ func (h *explorer) bodyWriter(w gohttp.ResponseWriter) http.DownloadBodyWriter {
 		}
 		return nil
 	}
-}
-
-func (h *explorer) Delete(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.Delete]")
-
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	err := h.explorerService.Delete(c, dto)
-	if err != nil {
-		log.FromContext(c).Errorf("Delete Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
-		return
-	}
-
-	http.NoContent(w)
-}
-
-func (h *explorer) DeleteVersion(w gohttp.ResponseWriter, r *gohttp.Request) {
-	c := r.Context()
-	log.FromContext(c).Debugf("[explorer.DeleteVersion]")
-
-	dto := dto.RequestFromContext(c, http.RequestContextKey)
-	err := h.explorerService.DeleteVersion(c, dto)
-	if err != nil {
-		log.FromContext(c).Errorf("DeleteVersion Error: %s\n", err.Error())
-		gohttp.Error(w, err.Error(), gohttp.StatusBadRequest)
-		return
-	}
-
-	http.NoContent(w)
 }

@@ -23,5 +23,9 @@
 package http
 
 type DownloadHeaderWriter func(name string, size int)
-
 type DownloadBodyWriter func(buffer []byte) error
+
+type Writer struct {
+	Header DownloadHeaderWriter
+	Body   DownloadBodyWriter
+}

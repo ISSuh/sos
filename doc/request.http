@@ -6,15 +6,15 @@
 @GROUP = aa
 @PARTITION = bb
 @OBJECT_PATH = cc
-@OBJECT_ID = 1854529599963140096
+@OBJECT_ID = 1855976962061766656
 @FILE_PATH = ee
-@VERSION = 0
+@VERSION = 1
 
 ###########
 # API
 ###########
 # multipart Upload
-POST {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
+PUT  {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}} HTTP/1.1
 Content-Type: multipart/form-data; boundary=MyBoundry
 
 --MyBoundry
@@ -39,13 +39,13 @@ Content-Type: application/octet-stream
 
 ###
 
-# Download
+# Download last version
 GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
 
 ###
 
-# Update
-PUT {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}} HTTP/1.1
+# Download specific version
+GET {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}}/version/{{VERSION}} HTTP/1.1
 
 ###
 
@@ -55,7 +55,7 @@ DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OB
 ###
 
 # Delete specific version
-DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}}{{VERSION}} HTTP/1.1
+DELETE {{API_HOST}}/{{API_VERSION}}/{{GROUP}}/{{PARTITION}}/{{OBJECT_PATH}}/{{OBJECT_ID}}/version/{{VERSION}} HTTP/1.1
 
 ###
 

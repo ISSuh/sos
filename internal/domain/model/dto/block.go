@@ -69,6 +69,7 @@ func NewBlockHeaderFromModel(h entity.BlockHeader) BlockHeader {
 		ObjectID:  h.ObjectID(),
 		Index:     h.Index(),
 		Size:      h.Size(),
+		Checksum:  h.Checksum(),
 		Timestamp: h.Timestamp(),
 	}
 }
@@ -88,6 +89,7 @@ func NewBlockHeaderFromMessage(h *message.BlockHeader) BlockHeader {
 		ObjectID:  entity.ObjectID(h.ObjectID.Id),
 		Index:     int(h.Index),
 		Size:      int(h.Size),
+		Checksum:  h.Checksum,
 		Timestamp: h.Timestamp.AsTime(),
 	}
 }
@@ -107,6 +109,7 @@ func (d BlockHeader) ToEntity() entity.BlockHeader {
 		Index(d.Index).
 		Size(d.Size).
 		Timestamp(d.Timestamp).
+		Checksum(d.Checksum).
 		Build()
 }
 
@@ -114,7 +117,7 @@ func (d BlockHeader) ToMessage() *message.BlockHeader {
 	return &message.BlockHeader{
 		ObjectID:  message.FromObjectID(d.ObjectID),
 		BlockID:   message.FromBlockID(d.BlockID),
-		Index:     int32(d.BlockID),
+		Index:     int32(d.Index),
 		Size:      int32(d.Size),
 		Checksum:  d.Checksum,
 		Timestamp: timestamppb.New(d.Timestamp),

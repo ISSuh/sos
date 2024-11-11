@@ -23,6 +23,7 @@
 package dto
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
@@ -70,20 +71,29 @@ func (v Versions) Empty() bool {
 	return len(v) == 0
 }
 
-func (v Versions) Version(versionNum int) Version {
+func (v Versions) Version(versionNum int) (Version, error) {
 	for _, version := range v {
 		if version.Number == versionNum {
-			return version
+			return version, nil
 		}
 	}
-	return empty.Struct[Version]()
+	return empty.Struct[Version](), errors.New("version not exist")
 }
 
-func (v Versions) LastVersion() Version {
+func (v Versions) LastVersion() (Version, error) {
 	if v.Empty() {
-		return empty.Struct[Version]()
+		return empty.Struct[Version](), errors.New("version not exist")
 	}
-	return v[len(v)-1]
+	return v[len(v)-1], nil
+}
+
+func (v Versions) HasVersion(versionNum int) bool {
+	for _, version := range v {
+		if version.Number == versionNum {
+			return true
+		}
+	}
+	return false
 }
 
 type Version struct {

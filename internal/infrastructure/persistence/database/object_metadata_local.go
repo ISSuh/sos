@@ -28,35 +28,34 @@ import (
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/log"
 )
 
 type localObjectMetadata struct {
-	db map[string]map[int64]entity.ObjectMetadata
+	db map[string]map[int64]*entity.ObjectMetadata
 }
 
 func NewLocalObjectMetadata() (repository.ObjectMetadata, error) {
 	return &localObjectMetadata{
-		db: make(map[string]map[int64]entity.ObjectMetadata),
+		db: make(map[string]map[int64]*entity.ObjectMetadata),
 	}, nil
 }
 
-func (d *localObjectMetadata) Create(c context.Context, metadata entity.ObjectMetadata) error {
+func (d *localObjectMetadata) Create(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[localObjectMetadata.Create] metadata: %+v", metadata)
 	key := d.makeKey(
 		metadata.Group(), metadata.Partition(), metadata.Path(),
 	)
 	_, exist := d.db[key]
 	if !exist {
-		d.db[key] = make(map[int64]entity.ObjectMetadata)
+		d.db[key] = make(map[int64]*entity.ObjectMetadata)
 	}
 
 	d.db[key][metadata.ID().ToInt64()] = metadata
 	return nil
 }
 
-func (d *localObjectMetadata) Update(c context.Context, metadata entity.ObjectMetadata) error {
+func (d *localObjectMetadata) Update(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[localObjectMetadata.Update] metadata: %+v", metadata)
 	key := d.makeKey(
 		metadata.Group(), metadata.Partition(), metadata.Path(),
@@ -70,7 +69,7 @@ func (d *localObjectMetadata) Update(c context.Context, metadata entity.ObjectMe
 	return nil
 }
 
-func (d *localObjectMetadata) Delete(c context.Context, metadata entity.ObjectMetadata) error {
+func (d *localObjectMetadata) Delete(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[localObjectMetadata.Delete] metadata: %+v", metadata)
 	key := d.makeKey(
 		metadata.Group(), metadata.Partition(), metadata.Path(),
@@ -84,13 +83,13 @@ func (d *localObjectMetadata) Delete(c context.Context, metadata entity.ObjectMe
 	return nil
 }
 
-func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, partition, path, name string) (entity.ObjectMetadata, error) {
+func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, partition, path, name string) (*entity.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[localObjectMetadata.MetadataByObjectID] group: %s, partition: %s, path: %s, name: %s", group, partition, path, name)
 
 	key := d.makeKey(group, partition, path)
 	subDB, exist := d.db[key]
 	if !exist {
-		return empty.Struct[entity.ObjectMetadata](), nil
+		return nil, nil
 	}
 
 	for _, v := range subDB {
@@ -98,28 +97,28 @@ func (d *localObjectMetadata) MetadataByObjectName(c context.Context, group, par
 			return v, nil
 		}
 	}
-	return empty.Struct[entity.ObjectMetadata](), nil
+	return nil, nil
 }
 
-func (d *localObjectMetadata) MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (entity.ObjectMetadata, error) {
+func (d *localObjectMetadata) MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (*entity.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[localObjectMetadata.MetadataByObjectID] group: %s, partition: %s, path: %s, objectID: %d", group, partition, path, objectID)
 	key := d.makeKey(group, partition, path)
 
 	_, exist := d.db[key]
 	if !exist {
-		return empty.Struct[entity.ObjectMetadata](), nil
+		return nil, nil
 	}
 	return d.db[key][objectID], nil
 }
 
-func (d *localObjectMetadata) FindMetadata(c context.Context, group, partition, path string) ([]entity.ObjectMetadata, error) {
+func (d *localObjectMetadata) FindMetadata(c context.Context, group, partition, path string) (entity.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[localObjectMetadata.FindMetadata] group: %s, partition: %s, path: %s", group, partition, path)
 	key := d.makeKey(group, partition, path)
 	list := d.db[key]
 
 	var metadataList []entity.ObjectMetadata
 	for _, v := range list {
-		metadataList = append(metadataList, v)
+		metadataList = append(metadataList, *v)
 	}
 	return metadataList, nil
 }

@@ -29,10 +29,10 @@ import (
 )
 
 type ObjectMetadata interface {
-	Create(c context.Context, metadata entity.ObjectMetadata) error
-	Update(c context.Context, metadata entity.ObjectMetadata) error
-	Delete(c context.Context, metadata entity.ObjectMetadata) error
-	MetadataByObjectName(c context.Context, group, partition, path, name string) (entity.ObjectMetadata, error)
-	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (entity.ObjectMetadata, error)
-	FindMetadata(c context.Context, group, partition, path string) ([]entity.ObjectMetadata, error)
+	Create(c context.Context, metadata *entity.ObjectMetadata) error
+	Update(c context.Context, metadata *entity.ObjectMetadata) error
+	Delete(c context.Context, metadata *entity.ObjectMetadata) error
+	MetadataByObjectName(c context.Context, group, partition, path, name string) (*entity.ObjectMetadata, error)
+	MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (*entity.ObjectMetadata, error)
+	FindMetadata(c context.Context, group, partition, path string) (entity.ObjectMetadataList, error)
 }

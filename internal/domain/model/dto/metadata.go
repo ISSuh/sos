@@ -23,11 +23,11 @@
 package dto
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ISSuh/sos/internal/domain/model/entity"
 	"github.com/ISSuh/sos/internal/domain/model/message"
-	"github.com/ISSuh/sos/pkg/empty"
 	"github.com/ISSuh/sos/pkg/validation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -37,7 +37,11 @@ type MetadataList []Metadata
 func NewMetadataListFromMessage(m []*message.ObjectMetadata) MetadataList {
 	list := make(MetadataList, 0, len(m))
 	for _, metadata := range m {
-		list = append(list, NewMetadataFromMessage(metadata))
+		dto, err := NewMetadataFromMessage(metadata)
+		if err != nil {
+			continue
+		}
+		list = append(list, *dto)
 	}
 	return list
 }
@@ -57,8 +61,8 @@ type Metadata struct {
 	ModifiedAt time.Time       `json:"modified_at"`
 }
 
-func NewMetadataFromModel(m entity.ObjectMetadata) Metadata {
-	return Metadata{
+func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
+	return &Metadata{
 		ID:         m.ID(),
 		Group:      m.Group(),
 		Partition:  m.Partition(),
@@ -70,15 +74,15 @@ func NewMetadataFromModel(m entity.ObjectMetadata) Metadata {
 	}
 }
 
-func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
+func NewMetadataFromMessage(m *message.ObjectMetadata) (*Metadata, error) {
 	switch {
 	case validation.IsNil(m):
-		return empty.Struct[Metadata]()
+		return nil, errors.New("metadata is nil")
 	case validation.IsNil(m.GetId()):
-		return empty.Struct[Metadata]()
+		return nil, errors.New("metadata id is nil")
 	}
 
-	return Metadata{
+	return &Metadata{
 		ID:         entity.ObjectID(m.GetId().Id),
 		Group:      m.Group,
 		Partition:  m.Partition,
@@ -87,11 +91,7 @@ func NewMetadataFromMessage(m *message.ObjectMetadata) Metadata {
 		Versions:   NewVersionsFromMessage(m.Versions),
 		CreatedAt:  m.CreatedAt.AsTime(),
 		ModifiedAt: m.ModifiedAt.AsTime(),
-	}
-}
-
-func NewEmptyMetadata() Metadata {
-	return Metadata{}
+	}, nil
 }
 
 func (d *Metadata) Empty() bool {
@@ -124,8 +124,4 @@ func (d *Metadata) ToMessage() *message.ObjectMetadata {
 		CreatedAt:  timestamppb.New(d.CreatedAt),
 		ModifiedAt: timestamppb.New(d.ModifiedAt),
 	}
-}
-
-func (d *Metadata) LasterVersion() Version {
-	return d.Versions.LastVersion()
 }

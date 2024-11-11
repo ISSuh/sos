@@ -22,20 +22,22 @@
 
 package entity
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type ObjectMetadataList []ObjectMetadata
 
 type ObjectMetadata struct {
-	id           ObjectID
-	group        string
-	partition    string
-	name         string
-	path         string
-	size         int
-	node         Node
-	blockHeaders BlockHeaders
-	versions     Versions
+	id        ObjectID
+	group     string
+	partition string
+	name      string
+	path      string
+	size      int
+	node      Node
+	versions  Versions
 
 	ModifiedTime
 }
@@ -68,10 +70,6 @@ func (e *ObjectMetadata) Node() Node {
 	return e.node
 }
 
-func (e *ObjectMetadata) BlockHeaders() BlockHeaders {
-	return e.blockHeaders
-}
-
 func (e *ObjectMetadata) Versions() Versions {
 	return e.versions
 }
@@ -84,13 +82,14 @@ func (e *ObjectMetadata) AppendVersion(version Version) {
 	e.versions = append(e.versions, version)
 }
 
-func (e *ObjectMetadata) DeleteVersion(versionNum int) {
+func (e *ObjectMetadata) DeleteVersion(versionNum int) error {
 	for i, version := range e.versions {
 		if version.Number() == versionNum {
 			e.versions = append(e.versions[:i], e.versions[i+1:]...)
-			return
+			return nil
 		}
 	}
+	return errors.New("version not exist")
 }
 
 func (e *ObjectMetadata) LastVersion() int {
@@ -101,17 +100,16 @@ func (e *ObjectMetadata) LastVersion() int {
 }
 
 type ObjectMetadataBuilder struct {
-	id           ObjectID
-	group        string
-	partition    string
-	name         string
-	path         string
-	versions     Versions
-	size         int
-	node         Node
-	blockHeaders BlockHeaders
-	createdAt    time.Time
-	modifiedAt   time.Time
+	id         ObjectID
+	group      string
+	partition  string
+	name       string
+	path       string
+	versions   Versions
+	size       int
+	node       Node
+	createdAt  time.Time
+	modifiedAt time.Time
 }
 
 func NewObjectMetadataBuilder() *ObjectMetadataBuilder {
@@ -158,11 +156,6 @@ func (b *ObjectMetadataBuilder) Versions(versions Versions) *ObjectMetadataBuild
 	return b
 }
 
-func (b *ObjectMetadataBuilder) BlockHeaders(blockHeaders BlockHeaders) *ObjectMetadataBuilder {
-	b.blockHeaders = blockHeaders
-	return b
-}
-
 func (b *ObjectMetadataBuilder) CreatedAt(createAt time.Time) *ObjectMetadataBuilder {
 	b.createdAt = createAt
 	return b
@@ -175,15 +168,14 @@ func (b *ObjectMetadataBuilder) ModifiedAt(modifiedAt time.Time) *ObjectMetadata
 
 func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 	return ObjectMetadata{
-		id:           b.id,
-		group:        b.group,
-		partition:    b.partition,
-		name:         b.name,
-		path:         b.path,
-		size:         b.size,
-		node:         b.node,
-		versions:     b.versions,
-		blockHeaders: b.blockHeaders,
+		id:        b.id,
+		group:     b.group,
+		partition: b.partition,
+		name:      b.name,
+		path:      b.path,
+		size:      b.size,
+		node:      b.node,
+		versions:  b.versions,
 		ModifiedTime: ModifiedTime{
 			CreatedAt:  b.createdAt,
 			ModifiedAt: b.modifiedAt,
