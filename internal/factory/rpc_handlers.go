@@ -25,11 +25,11 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/adapter"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/handler"
-	sosrpc "github.com/ISSuh/sos/pkg/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc/adapter"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc/handler"
+	sosrpc "github.com/ISSuh/sos/internal/rpc"
+	"github.com/ISSuh/sos/internal/validation"
 )
 
 func MetadataRegistryHandler(metadataService service.ObjectMetadata) ([]sosrpc.RegisterFunc, error) {

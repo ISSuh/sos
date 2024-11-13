@@ -25,7 +25,7 @@ package main
 import (
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/log"
 
 	"github.com/alexflint/go-arg"
 )

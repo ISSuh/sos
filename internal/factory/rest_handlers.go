@@ -25,10 +25,10 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/handler"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rest"
+	"github.com/ISSuh/sos/infrastructure/transport/rest/handler"
+	"github.com/ISSuh/sos/internal/validation"
 )
 
 func NewExplorerHandler(explorer service.Explorer) (rest.Explorer, error) {

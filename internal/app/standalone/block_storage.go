@@ -26,11 +26,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/model/entity"
+	"github.com/ISSuh/sos/domain/model/message"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	"github.com/ISSuh/sos/internal/validation"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -52,7 +53,7 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageReque
 
 func (s *blockStorage) Put(
 	ctx context.Context, blockMessage *message.Block,
-) (*rpc.StorageResponse, error) {
+) (*rpcmessage.StorageResponse, error) {
 	header :=
 		entity.NewBlockHeaderBuilder().
 			BlockID(entity.BlockID(blockMessage.Header.BlockID.Id)).
@@ -70,13 +71,13 @@ func (s *blockStorage) Put(
 			Build()
 
 	if err := s.objectStorage.Put(ctx, block); err != nil {
-		return &rpc.StorageResponse{
+		return &rpcmessage.StorageResponse{
 			Success: false,
 			Message: err.Error(),
 		}, err
 	}
 
-	return &rpc.StorageResponse{
+	return &rpcmessage.StorageResponse{
 		Success: true,
 	}, nil
 }
@@ -136,19 +137,19 @@ func (s *blockStorage) GetBlockHeader(
 
 func (s *blockStorage) Delete(
 	ctx context.Context, headerMessage *message.BlockHeader,
-) (*rpc.StorageResponse, error) {
+) (*rpcmessage.StorageResponse, error) {
 	err := s.objectStorage.Delete(
 		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
 		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
 	)
 
 	if err != nil {
-		return &rpc.StorageResponse{
+		return &rpcmessage.StorageResponse{
 			Success: false,
 			Message: err.Error(),
 		}, err
 	}
-	return &rpc.StorageResponse{
+	return &rpcmessage.StorageResponse{
 		Success: true,
 	}, nil
 }

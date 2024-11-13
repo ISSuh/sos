@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	"google.golang.org/grpc"
 )
 

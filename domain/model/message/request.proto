@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/ISSuh/sos/domain/model/message";
+
+import "google/protobuf/timestamp.proto";
+
+message Request {
+    string id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+}

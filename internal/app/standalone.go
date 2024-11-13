@@ -23,13 +23,13 @@
 package app
 
 import (
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rest/router"
 	"github.com/ISSuh/sos/internal/app/standalone"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/router"
-	"github.com/ISSuh/sos/pkg/http"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/http"
+	"github.com/ISSuh/sos/internal/log"
 )
 
 type Standalone struct {

@@ -25,9 +25,9 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc/requestor"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc/requestor"
+	"github.com/ISSuh/sos/internal/validation"
 )
 
 func NewMetadataRegistryRequestor(address string) (rpc.MetadataRegistryRequestor, error) {

@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package message;
-
-option go_package = "github.com/ISSuh/sos/internal/domain/model/message";
-
-message Node {
-    string name = 1;
-}

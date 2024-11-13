@@ -26,11 +26,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/model/message"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/model/dto"
+	"github.com/ISSuh/sos/domain/model/message"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	"github.com/ISSuh/sos/internal/validation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -75,7 +76,7 @@ func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMet
 	return true, nil
 }
 
-func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	item, err := s.objectMetadata.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
 		return nil, err
@@ -95,7 +96,7 @@ func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMet
 	}, nil
 }
 
-func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	item, err := s.objectMetadata.MetadataByObjectID(c, req.Group, req.Partition, req.Path, req.GetObjectID())
 	if err != nil {
 		return nil, err
@@ -115,7 +116,7 @@ func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetad
 	}, nil
 }
 
-func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
+func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*rpcmessage.ObjectMetadataList, error) {
 	items, err := s.objectMetadata.MetadataListOnPath(c, req.Group, req.Partition, req.Path)
 	if err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.Object
 		}
 	}
 
-	return &rpc.ObjectMetadataList{
+	return &rpcmessage.ObjectMetadataList{
 		Metadata: list,
 	}, err
 }

@@ -23,9 +23,9 @@
 package factory
 
 import (
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
+	"github.com/ISSuh/sos/domain/repository"
+	"github.com/ISSuh/sos/infrastructure/persistence/database"
+	"github.com/ISSuh/sos/infrastructure/persistence/objectstorage"
 )
 
 func NewObjectMetadataRepository() (repository.ObjectMetadata, error) {
