@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,11 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package mongodb
 
-import "time"
+import (
+	"context"
+	"fmt"
 
-type ModifiedTime struct {
-	CreatedAt  time.Time `bson:"created_at"`
-	ModifiedAt time.Time `bson:"modified_at"`
+	"github.com/ISSuh/sos/internal/config"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+type DB struct {
+	engin *mongo.Database
+}
+
+func Connect(c context.Context, config config.Database) (*DB, error) {
+	options :=
+		options.Client().
+			ApplyURI(config.URI).
+			SetMaxPoolSize(100).
+			SetMinPoolSize(10)
+
+	client, err := mongo.Connect(c, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
+	}
+
+	err = client.Ping(c, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping mongodb: %w", err)
+	}
+
+	db := client.Database(config.Name)
+	return &DB{
+		engin: db,
+	}, nil
+}
+
+func Close(c context.Context, db *DB) error {
+	client := db.engin.Client()
+	return client.Disconnect(c)
+}
+
+func (d *DB) Collection(collection string) *mongo.Collection {
+	return d.engin.Collection(collection)
 }

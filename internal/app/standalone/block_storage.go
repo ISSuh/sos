@@ -70,7 +70,7 @@ func (s *blockStorage) Put(
 			Header(header).
 			Build()
 
-	if err := s.objectStorage.Put(ctx, block); err != nil {
+	if err := s.objectStorage.Put(ctx, &block); err != nil {
 		return &rpcmessage.StorageResponse{
 			Success: false,
 			Message: err.Error(),

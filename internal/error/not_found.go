@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,11 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package error
 
-import "time"
+type NotFound struct {
+	Error
+}
 
-type ModifiedTime struct {
-	CreatedAt  time.Time `bson:"created_at"`
-	ModifiedAt time.Time `bson:"modified_at"`
+func NewNotFoundError(err error) *NotFound {
+	return &NotFound{
+		Error: Error{
+			Code: 404,
+			Err:  err,
+		},
+	}
 }

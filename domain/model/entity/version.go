@@ -31,10 +31,10 @@ func (e Versions) Empty() bool {
 }
 
 type Version struct {
-	number       int
-	size         int
-	node         Node
-	blockHeaders BlockHeaders
+	number       int          `bson:"number"`
+	size         int          `bson:"size"`
+	node         Node         `bson:"node"`
+	blockHeaders BlockHeaders `bson:"block_headers"`
 
 	ModifiedTime
 }

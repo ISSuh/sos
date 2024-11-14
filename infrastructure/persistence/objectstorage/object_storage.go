@@ -29,7 +29,6 @@ import (
 
 	"github.com/ISSuh/sos/domain/model/entity"
 	"github.com/ISSuh/sos/domain/repository"
-	"github.com/ISSuh/sos/internal/empty"
 	"github.com/ISSuh/sos/internal/log"
 )
 
@@ -44,32 +43,34 @@ func NewLocalObjectStorage() (repository.ObjectStorage, error) {
 		nil
 }
 
-func (s *localObjectStorage) Put(c context.Context, block entity.Block) error {
+func (s *localObjectStorage) Put(c context.Context, block *entity.Block) error {
 	log.FromContext(c).Debugf("[localObjectStorage.Put] block header: %+v", block.Header())
 	header := block.Header()
 	key := s.makeKey(header.ObjectID(), header.BlockID(), header.Index())
-	s.storage[key] = block
+	s.storage[key] = *block
 	return nil
 }
 
-func (s *localObjectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.Block, error) {
+func (s *localObjectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.Block, error) {
 	log.FromContext(c).Debugf("[localObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
 	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
-		return empty.Struct[entity.Block](), fmt.Errorf("block not found")
+		return nil, fmt.Errorf("block not found")
 	}
-	return block, nil
+	return &block, nil
 }
 
-func (s *localObjectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (entity.BlockHeader, error) {
+func (s *localObjectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.BlockHeader, error) {
 	log.FromContext(c).Debugf("[localObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
 	key := s.makeKey(objectID, blockID, index)
 	block, exist := s.storage[key]
 	if !exist {
-		return empty.Struct[entity.BlockHeader](), fmt.Errorf("block not found")
+		return nil, fmt.Errorf("block not found")
 	}
-	return block.Header(), nil
+
+	header := block.Header()
+	return &header, nil
 }
 
 func (s *localObjectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error {

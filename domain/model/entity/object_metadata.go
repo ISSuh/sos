@@ -27,17 +27,21 @@ import (
 	"time"
 )
 
+const (
+	ObjectMetadataCollectionName = "object_metadata"
+)
+
 type ObjectMetadataList []ObjectMetadata
 
 type ObjectMetadata struct {
-	id        ObjectID
-	group     string
-	partition string
-	name      string
-	path      string
-	size      int
-	node      Node
-	versions  Versions
+	id        ObjectID `bson:"id"`
+	group     string   `bson:"group"`
+	partition string   `bson:"partition"`
+	name      string   `bson:"name"`
+	path      string   `bson:"path"`
+	size      int      `bson:"size"`
+	node      Node     `bson:"node"`
+	versions  Versions `bson:"versions"`
 
 	ModifiedTime
 }

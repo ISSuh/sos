@@ -20,25 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package entity
+package error
 
-type Item struct {
-	metadata    ObjectMetadataList
-	directories ObjectDirectories
+import "fmt"
+
+type Error struct {
+	Code    int
+	Message string
+	Err     error
 }
 
-func (i *Item) Metadata() ObjectMetadataList {
-	return i.metadata
+func (e *Error) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("Code: %d, Message: %s, Err: %v", e.Code, e.Message, e.Err)
+	}
+	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
 }
 
-func (i *Item) Directories() ObjectDirectories {
-	return i.directories
+// Unwrap 메서드는 errors.Unwrap 함수와 호환되도록 합니다.
+func (e *Error) Unwrap() error {
+	return e.Err
 }
 
-func (i *Item) AddMetadata(metadata ObjectMetadata) {
-	i.metadata = append(i.metadata, metadata)
-}
-
-func (i *Item) AddDirectory(directory ObjectDirectory) {
-	i.directories = append(i.directories, directory)
+func (e *Error) Is(target error) bool {
+	t, ok := target.(*Error)
+	if !ok {
+		return false
+	}
+	return e.Code == t.Code
 }

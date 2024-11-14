@@ -23,5 +23,5 @@
 package entity
 
 type Node struct {
-	Host string
+	Host string `bson:"host"`
 }

@@ -22,22 +22,21 @@
 
 package entity
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type BlockHeaders []BlockHeader
 
 type BlockHeader struct {
-	blockID   BlockID
-	objectID  ObjectID
-	index     int
-	size      int
-	node      Node
-	timestamp time.Time
-	checksum  uint32
-}
-
-func NewEmptyBlockHeader() BlockHeader {
-	return BlockHeader{}
+	blockID   BlockID   `bson:"block_id"`
+	objectID  ObjectID  `bson:"object_id"`
+	index     int       `bson:"index"`
+	size      int       `bson:"size"`
+	node      Node      `bson:"node"`
+	timestamp time.Time `bson:"timestamp"`
+	checksum  uint32    `bson:"checksum"`
 }
 
 func (b *BlockHeader) BlockID() BlockID {
@@ -68,8 +67,20 @@ func (b *BlockHeader) Checksum() uint32 {
 	return b.checksum
 }
 
-func (b *BlockHeader) Empty() bool {
-	return b.blockID == 0
+func (b *BlockHeader) Validate() error {
+	switch {
+	case !b.blockID.IsValid():
+		return errors.New("invalid block id")
+	case !b.objectID.IsValid():
+		return errors.New("invalid object id")
+	case b.index <= 0:
+		return errors.New("invalid block index")
+	case b.size <= 0:
+		return errors.New("invalid block size")
+	case b.timestamp.IsZero():
+		return errors.New("invalid timestamp")
+	}
+	return nil
 }
 
 type BlockHeaderBuilder struct {

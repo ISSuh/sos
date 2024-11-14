@@ -38,6 +38,10 @@ func NewBlockIDFrom(id int64) BlockID {
 	return BlockID(id)
 }
 
+func (i BlockID) IsValid() bool {
+	return i.ToInt64() > 0
+}
+
 func (i BlockID) ToInt64() int64 {
 	return int64(i)
 }

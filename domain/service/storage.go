@@ -29,20 +29,19 @@ import (
 	"github.com/ISSuh/sos/domain/model/entity"
 	"github.com/ISSuh/sos/domain/repository"
 	"github.com/ISSuh/sos/internal/crc"
-	"github.com/ISSuh/sos/internal/empty"
 	"github.com/ISSuh/sos/internal/validation"
 )
 
 type ObjectStorage interface {
-	Put(c context.Context, block entity.Block) error
+	Put(c context.Context, block *entity.Block) error
 
 	GetBlock(
 		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
-	) (entity.Block, error)
+	) (*entity.Block, error)
 
 	GetBlockHeader(
 		c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
-	) (entity.BlockHeader, error)
+	) (*entity.BlockHeader, error)
 
 	Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error
 }
@@ -62,15 +61,15 @@ func NewObjectStorage(storageRepository repository.ObjectStorage) (ObjectStorage
 	}, nil
 }
 
-func (s *objectStorage) Put(c context.Context, block entity.Block) error {
-	switch {
-	case !block.Validate():
-		return fmt.Errorf("Block is invalid")
+func (s *objectStorage) Put(c context.Context, block *entity.Block) error {
+	if err := block.Validate(); err != nil {
+		return err
 	}
 
 	header := block.Header()
 	if !crc.Verify(block.Buffer(), header.Checksum()) {
-		return fmt.Errorf("Block checksum is invalid")
+		crcValue := crc.Checksum(block.Buffer())
+		return fmt.Errorf("Block checksum is invalid(%d / %d)", crcValue, header.Checksum())
 	}
 
 	if err := s.storageRepository.Put(c, block); err != nil {
@@ -81,20 +80,20 @@ func (s *objectStorage) Put(c context.Context, block entity.Block) error {
 
 func (s *objectStorage) GetBlock(
 	c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
-) (entity.Block, error) {
+) (*entity.Block, error) {
 	block, err := s.storageRepository.GetBlock(c, objectID, blockID, index)
 	if err != nil {
-		return empty.Struct[entity.Block](), err
+		return nil, err
 	}
 	return block, nil
 }
 
 func (s *objectStorage) GetBlockHeader(
 	c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int,
-) (entity.BlockHeader, error) {
+) (*entity.BlockHeader, error) {
 	header, err := s.storageRepository.GetBlockHeader(c, objectID, blockID, index)
 	if err != nil {
-		return empty.Struct[entity.BlockHeader](), err
+		return nil, err
 	}
 	return header, nil
 }

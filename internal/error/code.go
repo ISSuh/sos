@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,17 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package repository
+package error
 
-import (
-	"context"
-
-	"github.com/ISSuh/sos/domain/model/entity"
+var (
+	notFound = NewNotFoundError(nil)
 )
-
-type ObjectDirectory interface {
-	Create(c context.Context, dir *entity.ObjectDirectory) error
-	Update(c context.Context, dir *entity.ObjectDirectory) error
-	Delete(c context.Context, dir *entity.ObjectDirectory) error
-	Find(c context.Context, group, partition, name string, depth int) (*entity.ObjectDirectory, error)
-}

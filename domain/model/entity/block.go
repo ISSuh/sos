@@ -23,6 +23,8 @@
 package entity
 
 import (
+	"errors"
+
 	"github.com/ISSuh/sos/internal/crc"
 )
 
@@ -39,11 +41,16 @@ type Block struct {
 	ModifiedTime
 }
 
-func (b *Block) Validate() bool {
-	if b.header.Empty() || len(b.buffer) <= 0 {
-		return false
+func (b *Block) Validate() error {
+	if err := b.header.Validate(); err != nil {
+		return err
 	}
-	return true
+
+	if len(b.buffer) > BlockSize {
+		return errors.New("block size is too large")
+	}
+
+	return nil
 }
 
 func (b *Block) ObjectID() ObjectID {

@@ -18,6 +18,7 @@
     "Deleter",
     "timestamppb",
     "rpcmessage",
+    "bson",
   ],
 
   "protoc": {

@@ -24,7 +24,7 @@ package factory
 
 import (
 	"github.com/ISSuh/sos/domain/repository"
-	"github.com/ISSuh/sos/infrastructure/persistence/database"
+	database "github.com/ISSuh/sos/infrastructure/persistence/database/local"
 	"github.com/ISSuh/sos/infrastructure/persistence/objectstorage"
 )
 

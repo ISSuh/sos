@@ -24,7 +24,13 @@ SOFTWARE.
 
 package config
 
+type Database struct {
+	URI  string `yaml:"uri"`
+	Name string `yaml:"name"`
+}
+
 type MetadataRegistryConfig struct {
-	Log     Logger  `yaml:"logger"`
-	Address Address `yaml:"address"`
+	Log      Logger   `yaml:"logger"`
+	Address  Address  `yaml:"address"`
+	Database Database `yaml:"db"`
 }

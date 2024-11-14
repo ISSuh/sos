@@ -1,0 +1,13 @@
+﻿version: '3.7'
+
+name: sos
+services:
+  metadata_registry_db:
+    image: mongo:4.4
+    container_name: metadata_registry-mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
