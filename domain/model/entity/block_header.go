@@ -25,6 +25,8 @@ package entity
 import (
 	"errors"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type BlockHeaders []BlockHeader
@@ -73,13 +75,61 @@ func (b *BlockHeader) Validate() error {
 		return errors.New("invalid block id")
 	case !b.objectID.IsValid():
 		return errors.New("invalid object id")
-	case b.index <= 0:
+	case b.index < 0:
 		return errors.New("invalid block index")
 	case b.size <= 0:
 		return errors.New("invalid block size")
 	case b.timestamp.IsZero():
 		return errors.New("invalid timestamp")
 	}
+	return nil
+}
+
+func (b *BlockHeader) MarshalBSON() ([]byte, error) {
+	dto := struct {
+		BlockID   BlockID   `bson:"block_id"`
+		ObjectID  ObjectID  `bson:"object_id"`
+		Index     int       `bson:"index"`
+		Size      int       `bson:"size"`
+		Node      Node      `bson:"node"`
+		Timestamp time.Time `bson:"timestamp"`
+		Checksum  uint32    `bson:"checksum"`
+	}{
+		BlockID:   b.blockID,
+		ObjectID:  b.objectID,
+		Index:     b.index,
+		Size:      b.size,
+		Node:      b.node,
+		Timestamp: b.timestamp,
+		Checksum:  b.checksum,
+	}
+
+	return bson.Marshal(dto)
+}
+
+func (b *BlockHeader) UnmarshalBSON(data []byte) error {
+	dto := struct {
+		BlockID   BlockID   `bson:"block_id"`
+		ObjectID  ObjectID  `bson:"object_id"`
+		Index     int       `bson:"index"`
+		Size      int       `bson:"size"`
+		Node      Node      `bson:"node"`
+		Timestamp time.Time `bson:"timestamp"`
+		Checksum  uint32    `bson:"checksum"`
+	}{}
+
+	if err := bson.Unmarshal(data, &dto); err != nil {
+		return err
+	}
+
+	b.blockID = dto.BlockID
+	b.objectID = dto.ObjectID
+	b.index = dto.Index
+	b.size = dto.Size
+	b.node = dto.Node
+	b.timestamp = dto.Timestamp
+	b.checksum = dto.Checksum
+
 	return nil
 }
 

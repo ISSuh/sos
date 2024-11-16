@@ -1,4 +1,5 @@
 sos:
+  standalone: true
   api:
     logger:
       level: debug
@@ -6,3 +7,21 @@ sos:
     address:
       ip: 0.0.0.0
       port: 33221
+  metadata_registry:
+    db:
+      type: mongodb
+      host: mongodb://localhost:27017
+      database: sos
+      credentials:
+        username: root
+        password: root
+      log_level: debug
+  block_storage:
+    db:
+      type: leveldb
+      host: mongodb://localhost:27017
+      database: sos
+      credentials:
+        username: root
+        password: root
+      log_level: debug

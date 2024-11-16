@@ -33,10 +33,24 @@ type SosConfig struct {
 	Api              ApiConfig              `yaml:"api"`
 	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
 	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+	Standalone       bool                   `yaml:"standalone"`
 }
 
 type Config struct {
 	SOS SosConfig `yaml:"sos"`
+}
+
+func (c Config) Validate() error {
+	if err := c.SOS.Api.Validate(); err != nil {
+		return err
+	}
+	if err := c.SOS.MetadataRegistry.Validate(c.SOS.Standalone); err != nil {
+		return err
+	}
+	if err := c.SOS.BlockStorage.Validate(c.SOS.Standalone); err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewConfig(path string) (Config, error) {
@@ -53,6 +67,11 @@ func NewConfig(path string) (Config, error) {
 	if err = yaml.Unmarshal(buffer, &config); err != nil {
 		return Config{}, nil
 	}
+
+	if err = config.Validate(); err != nil {
+		return Config{}, err
+	}
+
 	return config, nil
 }
 

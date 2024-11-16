@@ -23,5 +23,5 @@
 package error
 
 var (
-	notFound = NewNotFoundError(nil)
+	NotFound error = NewNotFoundError(nil)
 )

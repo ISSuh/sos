@@ -72,7 +72,6 @@ func (o *Object) ToEntity() entity.ObjectMetadata {
 		Partition(o.Partition).
 		Name(o.Name).
 		Path(o.Path).
-		Size(o.Size).
 		Build()
 }
 

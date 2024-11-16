@@ -22,7 +22,11 @@
 
 package entity
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 type Versions []Version
 
@@ -39,20 +43,64 @@ type Version struct {
 	ModifiedTime
 }
 
-func (e Version) Number() int {
+func (e *Version) Number() int {
 	return e.number
 }
 
-func (e Version) Size() int {
+func (e *Version) Size() int {
 	return e.size
 }
 
-func (e Version) Node() Node {
+func (e *Version) Node() Node {
 	return e.node
 }
 
-func (e Version) BlockHeaders() BlockHeaders {
+func (e *Version) BlockHeaders() BlockHeaders {
 	return e.blockHeaders
+}
+
+func (e *Version) MarshalBSON() ([]byte, error) {
+	dto := struct {
+		Number       int          `bson:"number"`
+		Size         int          `bson:"size"`
+		Node         Node         `bson:"node"`
+		BlockHeaders BlockHeaders `bson:"block_headers"`
+		CreatedAt    time.Time    `bson:"created_at"`
+		ModifiedAt   time.Time    `bson:"modified_at"`
+	}{
+		Number:       e.number,
+		Size:         e.size,
+		Node:         e.node,
+		BlockHeaders: e.blockHeaders,
+		CreatedAt:    e.CreatedAt,
+		ModifiedAt:   e.ModifiedAt,
+	}
+
+	return bson.Marshal(dto)
+}
+
+func (e *Version) UnmarshalBSON(data []byte) error {
+	dto := struct {
+		Number       int          `bson:"number"`
+		Size         int          `bson:"size"`
+		Node         Node         `bson:"node"`
+		BlockHeaders BlockHeaders `bson:"block_headers"`
+		CreatedAt    time.Time    `bson:"created_at"`
+		ModifiedAt   time.Time    `bson:"modified_at"`
+	}{}
+
+	if err := bson.Unmarshal(data, &dto); err != nil {
+		return err
+	}
+
+	e.number = dto.Number
+	e.size = dto.Size
+	e.node = dto.Node
+	e.blockHeaders = dto.BlockHeaders
+	e.CreatedAt = dto.CreatedAt
+	e.ModifiedAt = dto.ModifiedAt
+
+	return nil
 }
 
 type VersionBuilder struct {

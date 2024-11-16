@@ -28,3 +28,13 @@ type BlockStorageConfig struct {
 	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }
+
+func (c BlockStorageConfig) Validate(isStandalone bool) error {
+	if !isStandalone {
+		if err := c.Address.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

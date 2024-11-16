@@ -26,3 +26,11 @@ type ApiConfig struct {
 	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }
+
+func (c ApiConfig) Validate() error {
+	if err := c.Address.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -24,12 +24,19 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ISSuh/sos/domain/model/entity"
 	"github.com/ISSuh/sos/domain/repository"
-
+	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/log"
 	"github.com/ISSuh/sos/internal/mongodb"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+const (
+	objectMetadataCollectionName = "object_metadata"
 )
 
 type mongoDBObjectMetadata struct {
@@ -44,38 +51,225 @@ func NewMongoDBObjectMetadata(db *mongodb.DB) (repository.ObjectMetadata, error)
 
 func (d *mongoDBObjectMetadata) Create(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.Create] metadata: %+v", metadata)
+	switch {
+	case c == nil:
+		return fmt.Errorf("context is nil")
+	case metadata.Group() == "":
+		return fmt.Errorf("group is invalid")
+	case metadata.Partition() == "":
+		return fmt.Errorf("partition is empty")
+	case metadata.Path() == "":
+		return fmt.Errorf("path is empty")
+	case !metadata.ID().IsValid():
+		return fmt.Errorf("objectID is invalid. %d", metadata.ID())
+	}
 
-	_, err := d.db.Collection(entity.ObjectMetadataCollectionName).
-		InsertOne(c, metadata)
+	collection, err := d.db.Collection(objectMetadataCollectionName)
 	if err != nil {
 		return err
 	}
+
+	res, err := collection.InsertOne(c, metadata)
+	if err != nil {
+		return fmt.Errorf("failed to insert data: %w", err)
+	}
+
+	if !mongodb.ValidateObjectID(res.InsertedID) {
+		return fmt.Errorf("failed to validate objectID")
+	}
+
 	return nil
 }
 
 func (d *mongoDBObjectMetadata) Update(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.Update] metadata: %+v", metadata)
+	switch {
+	case c == nil:
+		return fmt.Errorf("context is nil")
+	case metadata.Group() == "":
+		return fmt.Errorf("group is invalid")
+	case metadata.Partition() == "":
+		return fmt.Errorf("partition is empty")
+	case metadata.Path() == "":
+		return fmt.Errorf("path is empty")
+	case !metadata.ID().IsValid():
+		return fmt.Errorf("objectID is invalid. %d", metadata.ID())
+	}
+
+	collection, err := d.db.Collection(objectMetadataCollectionName)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{
+		{"group", metadata.Group()},
+		{"partition", metadata.Partition()},
+		{"path", metadata.Path()},
+		{"object_id", metadata.ID()},
+	}
+
+	res, err := collection.ReplaceOne(c, filter, metadata)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return soserror.NewNotFoundError(fmt.Errorf("can not find metadata"))
+		}
+		return fmt.Errorf("failed to update data: %w", err)
+	}
+
+	if res.ModifiedCount == 0 {
+		return fmt.Errorf("can not find metadata")
+	}
 
 	return nil
 }
 
 func (d *mongoDBObjectMetadata) Delete(c context.Context, metadata *entity.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.Delete] metadata: %+v", metadata)
+	switch {
+	case c == nil:
+		return fmt.Errorf("context is nil")
+	case metadata.Group() == "":
+		return fmt.Errorf("group is invalid")
+	case metadata.Partition() == "":
+		return fmt.Errorf("partition is empty")
+	case metadata.Path() == "":
+		return fmt.Errorf("path is empty")
+	case !metadata.ID().IsValid():
+		return fmt.Errorf("objectID is invalid. %d", metadata.ID())
+	}
+
+	collection, err := d.db.Collection(objectMetadataCollectionName)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{
+		{"group", metadata.Group()},
+		{"partition", metadata.Partition()},
+		{"path", metadata.Path()},
+		{"object_id", metadata.ID()},
+	}
+
+	res, err := collection.DeleteOne(c, filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return soserror.NewNotFoundError(fmt.Errorf("can not find metadata"))
+		}
+		return fmt.Errorf("failed to delete data: %w", err)
+	}
+
+	if res.DeletedCount == 0 {
+		return fmt.Errorf("can not find metadata")
+	}
+
 	return nil
 }
 
 func (d *mongoDBObjectMetadata) MetadataByObjectName(c context.Context, group, partition, path, name string) (*entity.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.MetadataByObjectID] group: %s, partition: %s, path: %s, name: %s", group, partition, path, name)
-	return nil, nil
+	switch {
+	case c == nil:
+		return nil, fmt.Errorf("context is nil")
+	case group == "":
+		return nil, fmt.Errorf("group is invalid")
+	case partition == "":
+		return nil, fmt.Errorf("partition is empty")
+	case path == "":
+		return nil, fmt.Errorf("path is empty")
+	}
+
+	list, err := d.FindMetadata(c, group, partition, path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, metadata := range list {
+		if metadata.Name() == name {
+			return &metadata, nil
+		}
+	}
+	return nil, soserror.NewNotFoundError(fmt.Errorf("can not find metadata"))
 }
 
 func (d *mongoDBObjectMetadata) MetadataByObjectID(c context.Context, group, partition, path string, objectID int64) (*entity.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.MetadataByObjectID] group: %s, partition: %s, path: %s, objectID: %d", group, partition, path, objectID)
+	switch {
+	case c == nil:
+		return nil, fmt.Errorf("context is nil")
+	case group == "":
+		return nil, fmt.Errorf("group is invalid")
+	case partition == "":
+		return nil, fmt.Errorf("partition is empty")
+	case path == "":
+		return nil, fmt.Errorf("path is empty")
+	case objectID <= 0:
+		return nil, fmt.Errorf("objectID is invalid. %d", objectID)
+	}
 
-	return nil, nil
+	collection, err := d.db.Collection(objectMetadataCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{
+		{"group", group},
+		{"partition", partition},
+		{"path", path},
+		{"object_id", objectID},
+	}
+
+	res := collection.FindOne(c, filter)
+	if res.Err() != nil {
+		if res.Err() == mongo.ErrNoDocuments {
+			return nil, soserror.NewNotFoundError(fmt.Errorf("can not find metadata"))
+		}
+		return nil, fmt.Errorf("failed to find metadata: %w", res.Err())
+	}
+
+	var metadata entity.ObjectMetadata
+	if err := res.Decode(&metadata); err != nil {
+		return nil, fmt.Errorf("failed to decode metadata: %w", err)
+	}
+
+	return &metadata, nil
 }
 
 func (d *mongoDBObjectMetadata) FindMetadata(c context.Context, group, partition, path string) (entity.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[mongoDBObjectMetadata.FindMetadata] group: %s, partition: %s, path: %s", group, partition, path)
-	return nil, nil
+	switch {
+	case c == nil:
+		return nil, fmt.Errorf("context is nil")
+	case group == "":
+		return nil, fmt.Errorf("group is invalid")
+	case partition == "":
+		return nil, fmt.Errorf("partition is empty")
+	case path == "":
+		return nil, fmt.Errorf("path is empty")
+	}
+
+	collection, err := d.db.Collection(objectMetadataCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{
+		{"group", group},
+		{"partition", partition},
+		{"path", path},
+	}
+
+	res, err := collection.Find(c, filter)
+	if err != nil {
+		if res.Err() == mongo.ErrNoDocuments {
+			return nil, soserror.NewNotFoundError(fmt.Errorf("can not find metadata"))
+		}
+		return nil, fmt.Errorf("failed to find metadata: %w", err)
+	}
+
+	var metadataList entity.ObjectMetadataList
+	if err := res.All(c, &metadataList); err != nil {
+		return nil, fmt.Errorf("failed to decode metadata: %w", err)
+	}
+
+	return metadataList, nil
 }

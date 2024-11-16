@@ -20,49 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package mongodb
+package persistence
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/ISSuh/sos/internal/config"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type DB struct {
-	engin *mongo.Database
 }
 
-func Connect(c context.Context, config config.Database) (*DB, error) {
-	options :=
-		options.Client().
-			ApplyURI(config.URI).
-			SetMaxPoolSize(100).
-			SetMinPoolSize(10)
+func NewLevelDB(dbConfig config.Database) (*DB, error) {
+	engin := leveldb.OpenFile("path/to/db", nil)
 
-	client, err := mongo.Connect(c, options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
-	}
-
-	err = client.Ping(c, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to ping mongodb: %w", err)
-	}
-
-	db := client.Database(config.Name)
-	return &DB{
-		engin: db,
-	}, nil
-}
-
-func Close(c context.Context, db *DB) error {
-	client := db.engin.Client()
-	return client.Disconnect(c)
-}
-
-func (d *DB) Collection(collection string) *mongo.Collection {
-	return d.engin.Collection(collection)
+	return &DB{}, nil
 }

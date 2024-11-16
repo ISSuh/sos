@@ -22,15 +22,16 @@
 
 package error
 
-type NotFound struct {
+type NotFoundError struct {
 	Error
 }
 
-func NewNotFoundError(err error) *NotFound {
-	return &NotFound{
+func NewNotFoundError(err error) error {
+	notfoundErr := &NotFoundError{
 		Error: Error{
 			Code: 404,
 			Err:  err,
 		},
 	}
+	return &notfoundErr.Error
 }

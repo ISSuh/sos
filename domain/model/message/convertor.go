@@ -62,7 +62,6 @@ func FromObjectMetadata(objectMetadata entity.ObjectMetadata) *ObjectMetadata {
 		Partition: objectMetadata.Partition(),
 		Path:      objectMetadata.Path(),
 		Name:      objectMetadata.Name(),
-		Size:      int32(objectMetadata.Size()),
 	}
 }
 
@@ -76,8 +75,7 @@ func ToObjectMetadata(objectMetadata *ObjectMetadata) entity.ObjectMetadata {
 		Group(objectMetadata.Group).
 		Partition(objectMetadata.Partition).
 		Path(objectMetadata.Path).
-		Name(objectMetadata.Name).
-		Size(int(objectMetadata.Size))
+		Name(objectMetadata.Name)
 
 	return builder.Build()
 }

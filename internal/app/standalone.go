@@ -72,7 +72,7 @@ func (a *Standalone) init() error {
 }
 
 func (a *Standalone) initService() (service.Explorer, error) {
-	metadataRepo, err := factory.NewObjectMetadataRepository()
+	metadataRepo, err := factory.NewObjectMetadataRepository(a.config.MetadataRegistry.Database)
 	if err != nil {
 		return nil, err
 	}

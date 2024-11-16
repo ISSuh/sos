@@ -15,7 +15,6 @@ message ObjectMetadata {
     string partition = 3;
     string path = 4;
     string name = 5;
-    int32 size = 6;
     repeated BlockHeader blockHeaders = 7;
     repeated Version versions = 8;
     google.protobuf.Timestamp createdAt = 9;

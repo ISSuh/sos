@@ -24,12 +24,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ISSuh/sos/domain/model/dto"
 	"github.com/ISSuh/sos/domain/model/entity"
 	"github.com/ISSuh/sos/domain/repository"
+	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/log"
 	"github.com/ISSuh/sos/internal/validation"
 )
@@ -65,7 +67,7 @@ func (s *objectMetadata) Put(c context.Context, objectDTO *dto.Object) (*dto.Met
 		s.metadataRepository.MetadataByObjectID(
 			c, objectDTO.Group, objectDTO.Partition, objectDTO.Path, objectDTO.ID.ToInt64(),
 		)
-	if err != nil {
+	if err != nil && !errors.Is(err, soserror.NotFound) {
 		return nil, err
 	}
 

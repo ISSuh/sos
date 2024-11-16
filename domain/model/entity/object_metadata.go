@@ -25,22 +25,18 @@ package entity
 import (
 	"errors"
 	"time"
-)
 
-const (
-	ObjectMetadataCollectionName = "object_metadata"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type ObjectMetadataList []ObjectMetadata
 
 type ObjectMetadata struct {
-	id        ObjectID `bson:"id"`
+	id        ObjectID `bson:"object_id"`
 	group     string   `bson:"group"`
 	partition string   `bson:"partition"`
 	name      string   `bson:"name"`
 	path      string   `bson:"path"`
-	size      int      `bson:"size"`
-	node      Node     `bson:"node"`
 	versions  Versions `bson:"versions"`
 
 	ModifiedTime
@@ -64,14 +60,6 @@ func (e *ObjectMetadata) Name() string {
 
 func (e *ObjectMetadata) Path() string {
 	return e.path
-}
-
-func (e *ObjectMetadata) Size() int {
-	return e.size
-}
-
-func (e *ObjectMetadata) Node() Node {
-	return e.node
 }
 
 func (e *ObjectMetadata) Versions() Versions {
@@ -103,6 +91,59 @@ func (e *ObjectMetadata) LastVersion() int {
 	return e.versions[len(e.versions)-1].Number()
 }
 
+func (e *ObjectMetadata) MarshalBSON() ([]byte, error) {
+	dto := struct {
+		ID         ObjectID  `bson:"object_id"`
+		Group      string    `bson:"group"`
+		Partition  string    `bson:"partition"`
+		Name       string    `bson:"name"`
+		Path       string    `bson:"path"`
+		Size       int       `bson:"size"`
+		Node       Node      `bson:"node"`
+		Versions   Versions  `bson:"versions"`
+		CreatedAt  time.Time `bson:"created_at"`
+		ModifiedAt time.Time `bson:"modified_at"`
+	}{
+		ID:         e.id,
+		Group:      e.group,
+		Partition:  e.partition,
+		Name:       e.name,
+		Path:       e.path,
+		Versions:   e.versions,
+		CreatedAt:  e.CreatedAt,
+		ModifiedAt: e.ModifiedAt,
+	}
+
+	return bson.Marshal(dto)
+}
+
+func (e *ObjectMetadata) UnmarshalBSON(data []byte) error {
+	dto := struct {
+		ID         ObjectID  `bson:"object_id"`
+		Group      string    `bson:"group"`
+		Partition  string    `bson:"partition"`
+		Name       string    `bson:"name"`
+		Path       string    `bson:"path"`
+		Versions   Versions  `bson:"versions"`
+		CreatedAt  time.Time `bson:"created_at"`
+		ModifiedAt time.Time `bson:"modified_at"`
+	}{}
+
+	if err := bson.Unmarshal(data, &dto); err != nil {
+		return err
+	}
+
+	e.id = dto.ID
+	e.group = dto.Group
+	e.partition = dto.Partition
+	e.name = dto.Name
+	e.path = dto.Path
+	e.versions = dto.Versions
+	e.CreatedAt = dto.CreatedAt
+	e.ModifiedAt = dto.ModifiedAt
+	return nil
+}
+
 type ObjectMetadataBuilder struct {
 	id         ObjectID
 	group      string
@@ -110,8 +151,6 @@ type ObjectMetadataBuilder struct {
 	name       string
 	path       string
 	versions   Versions
-	size       int
-	node       Node
 	createdAt  time.Time
 	modifiedAt time.Time
 }
@@ -145,16 +184,6 @@ func (b *ObjectMetadataBuilder) Path(path string) *ObjectMetadataBuilder {
 	return b
 }
 
-func (b *ObjectMetadataBuilder) Size(size int) *ObjectMetadataBuilder {
-	b.size = size
-	return b
-}
-
-func (b *ObjectMetadataBuilder) Node(node Node) *ObjectMetadataBuilder {
-	b.node = node
-	return b
-}
-
 func (b *ObjectMetadataBuilder) Versions(versions Versions) *ObjectMetadataBuilder {
 	b.versions = versions
 	return b
@@ -177,8 +206,6 @@ func (b *ObjectMetadataBuilder) Build() ObjectMetadata {
 		partition: b.partition,
 		name:      b.name,
 		path:      b.path,
-		size:      b.size,
-		node:      b.node,
 		versions:  b.versions,
 		ModifiedTime: ModifiedTime{
 			CreatedAt:  b.createdAt,

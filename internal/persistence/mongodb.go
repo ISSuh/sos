@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,45 +20,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package persistence
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/generator"
-	"github.com/ISSuh/sos/internal/log"
-
-	"github.com/alexflint/go-arg"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type args struct {
-	Config string `arg:"-c,--config,required"`
+type MongoDB struct {
+	config config.Database
+	engin  *mongo.Client
 }
 
-func main() {
-	args := args{}
-	arg.MustParse(&args)
+func NewMongoDB(dbConfig config.Database) (*MongoDB, error) {
+	return &MongoDB{
+		config: dbConfig,
+		engin:  nil,
+	}, nil
+}
 
-	generator.InitIdentifier(1)
+func (p *MongoDB) Connect(c context.Context) (*DB, error) {
+	credential := options.Credential{
+		Username: p.config.Credentials.Username,
+		Password: p.config.Credentials.Password,
+	}
 
-	config, err := config.NewConfig(args.Config)
+	options :=
+		options.Client().
+			ApplyURI(p.config.Host).
+			SetAuth(credential)
+
+	client, err := mongo.Connect(c, options)
 	if err != nil {
-		fmt.Printf("failed to load config : %v\n", err)
-		return
+		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
 	}
 
-	l := log.NewZapLogger(config.SOS.Api.Log)
-
-	l.Infof("configure : %+v", config)
-	standalone, err := app.NewStandalone(config.SOS, l)
+	err = client.Ping(c, nil)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to ping mongodb: %w", err)
 	}
 
-	if err := standalone.Run(); err != nil {
-		l.Errorf(err.Error())
-		return
-	}
+	db := client.Database(p.config.DatabaseName)
+	return &DB{
+		p.engin: db,
+	}, nil
+}
+
+func Close(c context.Context, db *DB) error {
+	client := db.engin.Client()
+	return client.Disconnect(c)
+}
+
+func (d *DB) Collection(collection string) *mongo.Collection {
+	return d.engin.Collection(collection)
 }

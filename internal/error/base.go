@@ -37,7 +37,6 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("Code: %d, Message: %s", e.Code, e.Message)
 }
 
-// Unwrap 메서드는 errors.Unwrap 함수와 호환되도록 합니다.
 func (e *Error) Unwrap() error {
 	return e.Err
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
 	"github.com/ISSuh/sos/internal/empty"
+	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/http"
 	"github.com/ISSuh/sos/internal/validation"
 )
@@ -131,12 +132,12 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 	}
 
 	metadata, err := s.getObjectMetadataByNameOnPath(c, req.Group, req.Partition, req.Path, req.Name)
-	if err != nil {
+	if err != nil && !errors.Is(err, soserror.NotFound) {
 		return empty.Struct[dto.Item](), err
 	}
 
 	objectID := entity.NewObjectID()
-	if metadata.ID.IsValid() {
+	if metadata != nil && metadata.ID.IsValid() {
 		objectID = metadata.ID
 	}
 

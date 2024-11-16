@@ -1,4 +1,4 @@
-/*
+﻿/*
 MIT License
 
 Copyright (c) 2024 ISSuh
@@ -24,21 +24,48 @@ SOFTWARE.
 
 package config
 
-type MetadataRegistryConfig struct {
-	Log      Logger   `yaml:"logger"`
-	Address  Address  `yaml:"address"`
-	Database Database `yaml:"db"`
+import "fmt"
+
+type DatabaseType string
+
+const (
+	DatabaseTypeLocal   DatabaseType = "local"
+	DatabaseTypeMongoDB DatabaseType = "mongodb"
+	DatabaseTypeLevelDB DatabaseType = "leveldb"
+)
+
+type Database struct {
+	Type         DatabaseType `yaml:"type"`
+	Host         string       `yaml:"host"`
+	DatabaseName string       `yaml:"database"`
+	Credentials  Credentials  `yaml:"credentials"`
+	Options      Options      `yaml:"options"`
+	LogLevel     string       `yaml:"log_level"`
 }
 
-func (c MetadataRegistryConfig) Validate(isStandalone bool) error {
-	if !isStandalone {
-		if err := c.Address.Validate(); err != nil {
-			return err
-		}
+func (d Database) Validate() error {
+	if d.Type != DatabaseTypeLocal &&
+		d.Type != DatabaseTypeMongoDB &&
+		d.Type != DatabaseTypeLevelDB {
+		return fmt.Errorf("invalid database type. type: %s", d.Type)
 	}
 
-	if err := c.Database.Validate(); err != nil {
-		return err
+	if len(d.Host) == 0 {
+		return fmt.Errorf("database host is empty")
+	}
+	if len(d.DatabaseName) == 0 {
+		return fmt.Errorf("database name is empty")
 	}
 	return nil
+}
+
+type Credentials struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type Options struct {
+	MaxPoolSize uint64 `yaml:"max_pool"`
+	MinPoolSize uint64 `yaml:"min_pool"`
+	MaxConnIdle uint64 `yaml:"max_conn_idle"`
 }
