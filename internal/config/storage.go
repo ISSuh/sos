@@ -25,8 +25,9 @@ SOFTWARE.
 package config
 
 type BlockStorageConfig struct {
-	Log     Logger  `yaml:"logger"`
-	Address Address `yaml:"address"`
+	Log      Logger   `yaml:"logger"`
+	Address  Address  `yaml:"address"`
+	Database Database `yaml:"db"`
 }
 
 func (c BlockStorageConfig) Validate(isStandalone bool) error {

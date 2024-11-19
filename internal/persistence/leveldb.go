@@ -23,15 +23,34 @@
 package persistence
 
 import (
+	"fmt"
+
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-type DB struct {
+type LevelDB struct {
+	engin *leveldb.DB
 }
 
-func NewLevelDB(dbConfig config.Database) (*DB, error) {
-	engin := leveldb.OpenFile("path/to/db", nil)
+func NewLevelDB(dbConfig config.Database) (*LevelDB, error) {
+	db, err := leveldb.OpenFile(dbConfig.Path, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	return &DB{}, nil
+	return &LevelDB{
+		engin: db,
+	}, nil
+}
+
+func CloseLevelDB(db *leveldb.DB) error {
+	return db.Close()
+}
+
+func (l *LevelDB) Engin() (*leveldb.DB, error) {
+	if l.engin == nil {
+		return nil, fmt.Errorf("leveldb is nil")
+	}
+	return l.engin, nil
 }

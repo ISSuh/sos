@@ -30,7 +30,7 @@ import (
 	"github.com/ISSuh/sos/domain/repository"
 	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/log"
-	"github.com/ISSuh/sos/internal/mongodb"
+	"github.com/ISSuh/sos/internal/persistence"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -40,10 +40,10 @@ const (
 )
 
 type mongoDBObjectMetadata struct {
-	db *mongodb.DB
+	db *persistence.MongoDB
 }
 
-func NewMongoDBObjectMetadata(db *mongodb.DB) (repository.ObjectMetadata, error) {
+func NewMongoDBObjectMetadata(db *persistence.MongoDB) (repository.ObjectMetadata, error) {
 	return &mongoDBObjectMetadata{
 		db: db,
 	}, nil
@@ -74,8 +74,8 @@ func (d *mongoDBObjectMetadata) Create(c context.Context, metadata *entity.Objec
 		return fmt.Errorf("failed to insert data: %w", err)
 	}
 
-	if !mongodb.ValidateObjectID(res.InsertedID) {
-		return fmt.Errorf("failed to validate objectID")
+	if res.InsertedID == nil {
+		return fmt.Errorf("invakid insertedID")
 	}
 
 	return nil
@@ -102,10 +102,10 @@ func (d *mongoDBObjectMetadata) Update(c context.Context, metadata *entity.Objec
 	}
 
 	filter := bson.D{
-		{"group", metadata.Group()},
-		{"partition", metadata.Partition()},
-		{"path", metadata.Path()},
-		{"object_id", metadata.ID()},
+		{Key: "group", Value: metadata.Group()},
+		{Key: "partition", Value: metadata.Partition()},
+		{Key: "path", Value: metadata.Path()},
+		{Key: "object_id", Value: metadata.ID()},
 	}
 
 	res, err := collection.ReplaceOne(c, filter, metadata)
@@ -144,10 +144,10 @@ func (d *mongoDBObjectMetadata) Delete(c context.Context, metadata *entity.Objec
 	}
 
 	filter := bson.D{
-		{"group", metadata.Group()},
-		{"partition", metadata.Partition()},
-		{"path", metadata.Path()},
-		{"object_id", metadata.ID()},
+		{Key: "group", Value: metadata.Group()},
+		{Key: "partition", Value: metadata.Partition()},
+		{Key: "path", Value: metadata.Path()},
+		{Key: "object_id", Value: metadata.ID()},
 	}
 
 	res, err := collection.DeleteOne(c, filter)
@@ -212,10 +212,10 @@ func (d *mongoDBObjectMetadata) MetadataByObjectID(c context.Context, group, par
 	}
 
 	filter := bson.D{
-		{"group", group},
-		{"partition", partition},
-		{"path", path},
-		{"object_id", objectID},
+		{Key: "group", Value: group},
+		{Key: "partition", Value: partition},
+		{Key: "path", Value: path},
+		{Key: "object_id", Value: objectID},
 	}
 
 	res := collection.FindOne(c, filter)
@@ -253,9 +253,9 @@ func (d *mongoDBObjectMetadata) FindMetadata(c context.Context, group, partition
 	}
 
 	filter := bson.D{
-		{"group", group},
-		{"partition", partition},
-		{"path", path},
+		{Key: "group", Value: group},
+		{Key: "partition", Value: partition},
+		{Key: "path", Value: path},
 	}
 
 	res, err := collection.Find(c, filter)

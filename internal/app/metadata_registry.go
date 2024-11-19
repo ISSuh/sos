@@ -54,7 +54,7 @@ func (a *MetadataRegistry) Run() error {
 }
 
 func (a *MetadataRegistry) init() error {
-	repository, err := factory.NewObjectMetadataRepository(a.config.MetadataRegistry.Database)
+	repository, err := factory.NewObjectMetadataRepository(a.logger, a.config.MetadataRegistry.Database)
 	if err != nil {
 		return err
 	}

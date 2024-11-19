@@ -23,37 +23,166 @@
 package objectstorage
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
+	"fmt"
 
 	"github.com/ISSuh/sos/domain/model/entity"
 	"github.com/ISSuh/sos/domain/repository"
 	"github.com/ISSuh/sos/internal/log"
+	"github.com/ISSuh/sos/internal/persistence"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
-type localObjectStorage struct {
+type LevelDBObjectStorage struct {
+	storage *persistence.LevelDB
 }
 
-func NewLocalObjectStorage() (repository.ObjectStorage, error) {
-	return &localObjectStorage{},
-		nil
+func NewLevelDBObjectStorage(storage *persistence.LevelDB) (repository.ObjectStorage, error) {
+	return &LevelDBObjectStorage{
+		storage: storage,
+	}, nil
 }
 
-func (s *localObjectStorage) Put(c context.Context, block *entity.Block) error {
-	log.FromContext(c).Debugf("[localObjectStorage.Put] block header: %+v", block.Header())
+func (s *LevelDBObjectStorage) Put(c context.Context, block *entity.Block) error {
+	log.FromContext(c).Debugf("[LevelDBObjectStorage.Put] block header: %+v", block.Header())
+	switch {
+	case c == nil:
+		return fmt.Errorf("context is nil")
+	case block == nil:
+		return fmt.Errorf("block is nil")
+	}
+
+	if err := block.Validate(); err != nil {
+		return err
+	}
+
+	storage, err := s.storage.Engin()
+	if err != nil {
+		return err
+	}
+
+	key := s.makeKey(block.ObjectID(), block.BlockID(), block.Index())
+	data, err := s.encodeBlock(block)
+	if err != nil {
+		return err
+	}
+
+	if err := storage.Put(key, data, &opt.WriteOptions{Sync: true}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *localObjectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.Block, error) {
-	log.FromContext(c).Debugf("[localObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
-	return nil, nil
+func (s *LevelDBObjectStorage) GetBlock(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.Block, error) {
+	log.FromContext(c).Debugf("[LevelDBObjectStorage.GetBlock] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	switch {
+	case c == nil:
+		return nil, fmt.Errorf("context is nil")
+	case !objectID.IsValid():
+		return nil, fmt.Errorf("objectID is invalid")
+	case blockID < 0:
+		return nil, fmt.Errorf("blockID is invalid")
+	case index < 0:
+		return nil, fmt.Errorf("index is invalid")
+	}
+
+	storage, err := s.storage.Engin()
+	if err != nil {
+		return nil, err
+	}
+
+	key := s.makeKey(objectID, blockID, index)
+	data, err := storage.Get(key, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := s.decodeBlock(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
 }
 
-func (s *localObjectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.BlockHeader, error) {
-	log.FromContext(c).Debugf("[localObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
-	return nil, nil
+func (s *LevelDBObjectStorage) GetBlockHeader(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) (*entity.BlockHeader, error) {
+	log.FromContext(c).Debugf("[LevelDBObjectStorage.GetBlockHeader] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	switch {
+	case c == nil:
+		return nil, fmt.Errorf("context is nil")
+	case !objectID.IsValid():
+		return nil, fmt.Errorf("objectID is invalid")
+	case blockID < 0:
+		return nil, fmt.Errorf("blockID is invalid")
+	case index < 0:
+		return nil, fmt.Errorf("index is invalid")
+	}
+
+	block, err := s.GetBlock(c, objectID, blockID, index)
+	if err != nil {
+		return nil, err
+	}
+
+	header := block.Header()
+	return &header, nil
 }
 
-func (s *localObjectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error {
-	log.FromContext(c).Debugf("[localObjectStorage.Delete] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+func (s *LevelDBObjectStorage) Delete(c context.Context, objectID entity.ObjectID, blockID entity.BlockID, index int) error {
+	log.FromContext(c).Debugf("[LevelDBObjectStorage.Delete] objectID: %s, blockID : %d, index: %d", objectID, blockID, index)
+	switch {
+	case c == nil:
+		return fmt.Errorf("context is nil")
+	case !objectID.IsValid():
+		return fmt.Errorf("objectID is invalid")
+	case blockID < 0:
+		return fmt.Errorf("blockID is invalid")
+	case index < 0:
+		return fmt.Errorf("index is invalid")
+	}
+
+	storage, err := s.storage.Engin()
+	if err != nil {
+		return err
+	}
+
+	key := s.makeKey(objectID, blockID, index)
+	if err := storage.Delete(key, &opt.WriteOptions{Sync: true}); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (s *LevelDBObjectStorage) makeKey(objectID entity.ObjectID, blockID entity.BlockID, index int) []byte {
+	key := fmt.Sprintf("%s:%d:%d", objectID, blockID, index)
+	return []byte(key)
+}
+
+func (s *LevelDBObjectStorage) encodeBlock(block *entity.Block) ([]byte, error) {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+
+	if err := encoder.Encode(block); err != nil {
+		return nil, err
+	}
+
+	test, _ := s.decodeBlock(buffer.Bytes())
+	fmt.Println(test.Header())
+
+	return buffer.Bytes(), nil
+}
+
+func (s *LevelDBObjectStorage) decodeBlock(data []byte) (*entity.Block, error) {
+	var block entity.Block
+	reader := bytes.NewReader(data)
+	decoder := gob.NewDecoder(reader)
+
+	if err := decoder.Decode(&block); err != nil {
+		return nil, err
+	}
+
+	return &block, nil
 }

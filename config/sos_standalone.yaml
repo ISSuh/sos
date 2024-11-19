@@ -19,9 +19,4 @@ sos:
   block_storage:
     db:
       type: leveldb
-      host: mongodb://localhost:27017
-      database: sos
-      credentials:
-        username: root
-        password: root
-      log_level: debug
+      path: /Users/issuh/workspace/git/issuh/sos/test

@@ -32,27 +32,24 @@ import (
 )
 
 type MongoDB struct {
-	config config.Database
-	engin  *mongo.Client
+	engin *mongo.Database
 }
 
-func NewMongoDB(dbConfig config.Database) (*MongoDB, error) {
-	return &MongoDB{
-		config: dbConfig,
-		engin:  nil,
-	}, nil
-}
+func ConnectMongoDB(c context.Context, dbConfig config.Database) (*MongoDB, error) {
+	logger := options.
+		Logger().
+		SetComponentLevel(options.LogComponentCommand, logLevel(dbConfig.LogLevel))
 
-func (p *MongoDB) Connect(c context.Context) (*DB, error) {
 	credential := options.Credential{
-		Username: p.config.Credentials.Username,
-		Password: p.config.Credentials.Password,
+		Username: dbConfig.Credentials.Username,
+		Password: dbConfig.Credentials.Password,
 	}
 
 	options :=
 		options.Client().
-			ApplyURI(p.config.Host).
-			SetAuth(credential)
+			ApplyURI(dbConfig.Host).
+			SetAuth(credential).
+			SetLoggerOptions(logger)
 
 	client, err := mongo.Connect(c, options)
 	if err != nil {
@@ -64,17 +61,35 @@ func (p *MongoDB) Connect(c context.Context) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping mongodb: %w", err)
 	}
 
-	db := client.Database(p.config.DatabaseName)
-	return &DB{
-		p.engin: db,
+	db := client.Database(dbConfig.DatabaseName)
+	return &MongoDB{
+		engin: db,
 	}, nil
 }
 
-func Close(c context.Context, db *DB) error {
+func CloseMongoDB(c context.Context, db *MongoDB) error {
 	client := db.engin.Client()
 	return client.Disconnect(c)
 }
 
-func (d *DB) Collection(collection string) *mongo.Collection {
-	return d.engin.Collection(collection)
+func logLevel(level string) options.LogLevel {
+	switch level {
+	case "info":
+		return options.LogLevelInfo
+	case "debug":
+		return options.LogLevelDebug
+	default:
+		return options.LogLevelInfo
+	}
+}
+
+func (d *MongoDB) Collection(collection string) (*mongo.Collection, error) {
+	switch {
+	case d.engin == nil:
+		return nil, fmt.Errorf("database engine is nil")
+	case collection == "":
+		return nil, fmt.Errorf("collection name is empty")
+	}
+
+	return d.engin.Collection(collection), nil
 }

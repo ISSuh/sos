@@ -6,6 +6,7 @@ require (
 	github.com/alexflint/go-arg v1.4.3
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
+	github.com/syndtr/goleveldb v1.0.0
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.63.2

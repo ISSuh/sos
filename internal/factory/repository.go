@@ -29,16 +29,21 @@ import (
 	"github.com/ISSuh/sos/domain/repository"
 	local "github.com/ISSuh/sos/infrastructure/persistence/database/local"
 	mongo "github.com/ISSuh/sos/infrastructure/persistence/database/mongodb"
+	leveldb "github.com/ISSuh/sos/infrastructure/persistence/objectstorage/leveldb"
 	memorystorage "github.com/ISSuh/sos/infrastructure/persistence/objectstorage/memory"
 	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/log"
+	"github.com/ISSuh/sos/internal/persistence"
 )
 
-func NewObjectMetadataRepository(dbConfig config.Database) (repository.ObjectMetadata, error) {
+func NewObjectMetadataRepository(l log.Logger, dbConfig config.Database) (repository.ObjectMetadata, error) {
 	switch dbConfig.Type {
 	case config.DatabaseTypeLocal:
+		l.Infof("[NewObjectMetadataRepository] use local db")
 		return local.NewLocalObjectMetadata()
 	case config.DatabaseTypeMongoDB:
-		db, err := mongodb.Connect(context.Background(), dbConfig)
+		l.Infof("[NewObjectMetadataRepository] use mongodb. host: %s database: %s")
+		db, err := persistence.ConnectMongoDB(context.Background(), dbConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -48,10 +53,19 @@ func NewObjectMetadataRepository(dbConfig config.Database) (repository.ObjectMet
 	}
 }
 
-func NewObjectStorageRepository() (repository.ObjectStorage, error) {
-	objectStorage, err := memorystorage.NewLocalObjectStorage()
-	if err != nil {
-		return nil, err
+func NewObjectStorageRepository(l log.Logger, dbConfig config.Database) (repository.ObjectStorage, error) {
+	switch dbConfig.Type {
+	case config.DatabaseTypeLocal:
+		l.Infof("[NewObjectStorageRepository] use memory storage")
+		return memorystorage.NewLocalObjectStorage()
+	case config.DatabaseTypeLevelDB:
+		l.Infof("[NewObjectStorageRepository] use leveldb storage. path: %s", dbConfig.Path)
+		storage, err := persistence.NewLevelDB(dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		return leveldb.NewLevelDBObjectStorage(storage)
+	default:
+		return nil, fmt.Errorf("invalid database type")
 	}
-	return objectStorage, nil
 }

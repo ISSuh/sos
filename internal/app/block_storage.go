@@ -54,7 +54,7 @@ func (a *BlockStorage) Run() error {
 }
 
 func (a *BlockStorage) init() error {
-	repository, err := factory.NewObjectStorageRepository()
+	repository, err := factory.NewObjectStorageRepository(a.logger, a.config.BlockStorage.Database)
 	if err != nil {
 		return err
 	}

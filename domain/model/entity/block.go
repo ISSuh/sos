@@ -23,6 +23,8 @@
 package entity
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 
 	"github.com/ISSuh/sos/internal/crc"
@@ -71,6 +73,34 @@ func (b *Block) Header() BlockHeader {
 
 func (b *Block) Buffer() []byte {
 	return b.buffer
+}
+
+func (b *Block) GobEncode() ([]byte, error) {
+	var buffer bytes.Buffer
+	enc := gob.NewEncoder(&buffer)
+
+	if err := enc.Encode(&b.header); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.buffer); err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
+}
+
+func (b *Block) GobDecode(data []byte) error {
+	buffer := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buffer)
+
+	if err := dec.Decode(&b.header); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.buffer); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type BlockBuilder struct {

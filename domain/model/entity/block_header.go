@@ -23,6 +23,8 @@
 package entity
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"time"
 
@@ -129,6 +131,63 @@ func (b *BlockHeader) UnmarshalBSON(data []byte) error {
 	b.node = dto.Node
 	b.timestamp = dto.Timestamp
 	b.checksum = dto.Checksum
+
+	return nil
+}
+
+func (b *BlockHeader) GobEncode() ([]byte, error) {
+	var buffer bytes.Buffer
+	enc := gob.NewEncoder(&buffer)
+
+	if err := enc.Encode(b.blockID); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.objectID); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.index); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.size); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.node); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.timestamp); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(b.checksum); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func (b *BlockHeader) GobDecode(data []byte) error {
+	buffer := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buffer)
+
+	if err := dec.Decode(&b.blockID); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.objectID); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.index); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.size); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.node); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.timestamp); err != nil {
+		return err
+	}
+	if err := dec.Decode(&b.checksum); err != nil {
+		return err
+	}
 
 	return nil
 }

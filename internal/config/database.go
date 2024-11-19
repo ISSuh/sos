@@ -41,20 +41,35 @@ type Database struct {
 	Credentials  Credentials  `yaml:"credentials"`
 	Options      Options      `yaml:"options"`
 	LogLevel     string       `yaml:"log_level"`
+	Path         string       `yaml:"path"`
 }
 
 func (d Database) Validate() error {
-	if d.Type != DatabaseTypeLocal &&
-		d.Type != DatabaseTypeMongoDB &&
-		d.Type != DatabaseTypeLevelDB {
-		return fmt.Errorf("invalid database type. type: %s", d.Type)
+	switch d.Type {
+	case DatabaseTypeLocal:
+		return nil
+	case DatabaseTypeMongoDB:
+		return d.validateMogoDBConfig()
+	case DatabaseTypeLevelDB:
+		return d.validateLevelDBConfig()
+	default:
+		return fmt.Errorf("invalid database type. %s", d.Type)
 	}
+}
 
-	if len(d.Host) == 0 {
+func (d Database) validateMogoDBConfig() error {
+	if d.Host == "" {
 		return fmt.Errorf("database host is empty")
 	}
-	if len(d.DatabaseName) == 0 {
+	if d.DatabaseName == "" {
 		return fmt.Errorf("database name is empty")
+	}
+	return nil
+}
+
+func (d Database) validateLevelDBConfig() error {
+	if d.Path == "" {
+		return fmt.Errorf("database path is empty")
 	}
 	return nil
 }
