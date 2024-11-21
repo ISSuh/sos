@@ -50,7 +50,7 @@ func (o *Deleter) Delete(c context.Context, metadata dto.Metadata) error {
 	}
 
 	metadata.Versions = nil
-	if err := o.deleteObjectMetadata(c, metadata); err != nil {
+	if err := o.deleteObjectMetadata(c, &metadata); err != nil {
 		return err
 	}
 
@@ -71,16 +71,16 @@ func (o *Deleter) DeleteVersion(c context.Context, metadata dto.Metadata, delete
 		version,
 	}
 
-	if err := o.deleteObjectMetadata(c, metadata); err != nil {
+	if err := o.deleteObjectMetadata(c, &metadata); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *Deleter) deleteObjectMetadata(c context.Context, metadata dto.Metadata) error {
-	msg := metadata.ToMessage()
-	if _, err := o.objectRequestor.Delete(c, msg); err != nil {
+func (o *Deleter) deleteObjectMetadata(c context.Context, metadata *dto.Metadata) error {
+	msg := message.FromObjectMetadataDTO(metadata)
+	if err := o.objectRequestor.Delete(c, msg); err != nil {
 		return err
 	}
 

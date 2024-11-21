@@ -12,7 +12,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -25,10 +25,10 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetadataRegistryClient interface {
 	Put(ctx context.Context, in *message.Object, opts ...grpc.CallOption) (*message.ObjectMetadata, error)
-	Delete(ctx context.Context, in *message.ObjectMetadata, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
+	Delete(ctx context.Context, in *message.ObjectMetadata, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetByObjectName(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*message.ObjectMetadata, error)
 	GetByObjectID(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*message.ObjectMetadata, error)
-	FindMetadataOnPath(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*ObjectMetadataList, error)
+	FindMetadataOnPath(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*message.ObjectMetadataList, error)
 }
 
 type metadataRegistryClient struct {
@@ -48,8 +48,8 @@ func (c *metadataRegistryClient) Put(ctx context.Context, in *message.Object, op
 	return out, nil
 }
 
-func (c *metadataRegistryClient) Delete(ctx context.Context, in *message.ObjectMetadata, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
-	out := new(wrapperspb.BoolValue)
+func (c *metadataRegistryClient) Delete(ctx context.Context, in *message.ObjectMetadata, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/rpcmessage.MetadataRegistry/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -75,8 +75,8 @@ func (c *metadataRegistryClient) GetByObjectID(ctx context.Context, in *ObjectMe
 	return out, nil
 }
 
-func (c *metadataRegistryClient) FindMetadataOnPath(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*ObjectMetadataList, error) {
-	out := new(ObjectMetadataList)
+func (c *metadataRegistryClient) FindMetadataOnPath(ctx context.Context, in *ObjectMetadataRequest, opts ...grpc.CallOption) (*message.ObjectMetadataList, error) {
+	out := new(message.ObjectMetadataList)
 	err := c.cc.Invoke(ctx, "/rpcmessage.MetadataRegistry/FindMetadataOnPath", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -89,10 +89,10 @@ func (c *metadataRegistryClient) FindMetadataOnPath(ctx context.Context, in *Obj
 // for forward compatibility
 type MetadataRegistryServer interface {
 	Put(context.Context, *message.Object) (*message.ObjectMetadata, error)
-	Delete(context.Context, *message.ObjectMetadata) (*wrapperspb.BoolValue, error)
+	Delete(context.Context, *message.ObjectMetadata) (*emptypb.Empty, error)
 	GetByObjectName(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadata, error)
 	GetByObjectID(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadata, error)
-	FindMetadataOnPath(context.Context, *ObjectMetadataRequest) (*ObjectMetadataList, error)
+	FindMetadataOnPath(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadataList, error)
 	mustEmbedUnimplementedMetadataRegistryServer()
 }
 
@@ -103,7 +103,7 @@ type UnimplementedMetadataRegistryServer struct {
 func (UnimplementedMetadataRegistryServer) Put(context.Context, *message.Object) (*message.ObjectMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
 }
-func (UnimplementedMetadataRegistryServer) Delete(context.Context, *message.ObjectMetadata) (*wrapperspb.BoolValue, error) {
+func (UnimplementedMetadataRegistryServer) Delete(context.Context, *message.ObjectMetadata) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedMetadataRegistryServer) GetByObjectName(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadata, error) {
@@ -112,7 +112,7 @@ func (UnimplementedMetadataRegistryServer) GetByObjectName(context.Context, *Obj
 func (UnimplementedMetadataRegistryServer) GetByObjectID(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByObjectID not implemented")
 }
-func (UnimplementedMetadataRegistryServer) FindMetadataOnPath(context.Context, *ObjectMetadataRequest) (*ObjectMetadataList, error) {
+func (UnimplementedMetadataRegistryServer) FindMetadataOnPath(context.Context, *ObjectMetadataRequest) (*message.ObjectMetadataList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindMetadataOnPath not implemented")
 }
 func (UnimplementedMetadataRegistryServer) mustEmbedUnimplementedMetadataRegistryServer() {}

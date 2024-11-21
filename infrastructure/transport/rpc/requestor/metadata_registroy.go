@@ -28,8 +28,11 @@ import (
 	"github.com/ISSuh/sos/domain/model/message"
 	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/log"
 	sosrpc "github.com/ISSuh/sos/internal/rpc"
+
+	"google.golang.org/grpc/status"
 )
 
 type metadataRegistry struct {
@@ -49,30 +52,53 @@ func NewMetadataRegistry(address string) (rpc.MetadataRegistryRequestor, error) 
 
 func (r *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
-	return r.engine.Put(c, object)
+	msg, err := r.engine.Put(c, object)
+	if err != nil {
+		return nil, r.convertError(err)
+	}
+	return msg, nil
 }
 
-func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
-	res, err := r.engine.Delete(c, metadata)
+	_, err := r.engine.Delete(c, metadata)
 	if err != nil {
-		return false, err
+		return r.convertError(err)
 	}
-
-	return res.Value, nil
+	return nil
 }
 
 func (r *metadataRegistry) GetByObjectName(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
-	return r.engine.GetByObjectName(c, req)
+	msg, err := r.engine.GetByObjectName(c, req)
+	if err != nil {
+		return nil, r.convertError(err)
+	}
+	return msg, nil
 }
 
 func (r *metadataRegistry) GetByObjectID(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectID]")
-	return r.engine.GetByObjectID(c, req)
+	msg, err := r.engine.GetByObjectID(c, req)
+	if err != nil {
+		return nil, r.convertError(err)
+	}
+	return msg, nil
 }
 
-func (r *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*rpcmessage.ObjectMetadataList, error) {
+func (r *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
 	return r.engine.FindMetadataOnPath(c, req)
+}
+
+func (r *metadataRegistry) convertError(err error) error {
+	st, ok := status.FromError(err)
+	if !ok {
+		return err
+	}
+
+	if st.Code() == soserror.NotFoundErrorCode {
+		return soserror.NewNotFoundError(st.Err())
+	}
+	return err
 }

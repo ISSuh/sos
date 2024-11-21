@@ -14,5 +14,6 @@ message Object {
     string path = 4;
     string name = 5;
     int32 size = 6;
-    repeated BlockHeader blockHeaders = 7;
+    int32 versionNum = 7;
+    repeated BlockHeader blockHeaders = 8;
 }

@@ -31,6 +31,7 @@ import (
 
 	"github.com/ISSuh/sos/domain/model/dto"
 	"github.com/ISSuh/sos/domain/model/entity"
+	"github.com/ISSuh/sos/domain/model/message"
 	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	"github.com/ISSuh/sos/internal/crc"
 	"github.com/ISSuh/sos/internal/log"
@@ -68,7 +69,7 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 			blockBuffer.Truncate(totalReadSize)
 
 			block := o.buildBlock(objectID, blockIndex, blockBuffer.Bytes())
-			if err := o.uploadBlock(c, block); err != nil {
+			if err := o.uploadBlock(c, &block); err != nil {
 				return nil, err
 			}
 
@@ -91,7 +92,7 @@ func (o *Uploader) Upload(c context.Context, objectID entity.ObjectID, bodyStrea
 
 		if totalReadSize >= entity.BlockSize {
 			block := o.buildBlock(objectID, blockIndex, blockBuffer.Bytes())
-			if err := o.uploadBlock(c, block); err != nil {
+			if err := o.uploadBlock(c, &block); err != nil {
 				return nil, err
 			}
 
@@ -121,8 +122,8 @@ func (o *Uploader) buildBlock(objectID entity.ObjectID, index int, buffer []byte
 	return block
 }
 
-func (o *Uploader) uploadBlock(c context.Context, block dto.Block) error {
-	msg := block.ToMessage()
+func (o *Uploader) uploadBlock(c context.Context, block *dto.Block) error {
+	msg := message.FromBlockDTO(block)
 	resp, err := o.storageRequestor.Put(c, msg)
 	if err != nil {
 		log.FromContext(c).Errorf("Upload Error: %s", err.Error())

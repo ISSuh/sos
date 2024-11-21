@@ -29,6 +29,7 @@ import (
 
 	"github.com/ISSuh/sos/domain/model/dto"
 	"github.com/ISSuh/sos/domain/model/entity"
+	"github.com/ISSuh/sos/domain/model/message"
 	"github.com/ISSuh/sos/domain/service/object"
 	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
@@ -100,19 +101,18 @@ func (s *explorer) FindObjectMetadataOnPath(c context.Context, req dto.Request) 
 		return nil, errors.New("path is empty")
 	}
 
-	message := rpcmessage.ObjectMetadataRequest{
+	msg := rpcmessage.ObjectMetadataRequest{
 		Group:     req.Group,
 		Partition: req.Partition,
 		Path:      req.Path,
 	}
 
-	resp, err := s.metadataRequestor.FindMetadataOnPath(c, &message)
+	resp, err := s.metadataRequestor.FindMetadataOnPath(c, &msg)
 	if err != nil {
 		return nil, err
 	}
 
-	list := dto.NewMetadataListFromMessage(resp.GetMetadata())
-	return dto.NewItemsFromMetadataList(list), nil
+	return message.ToItemsDTO(resp), nil
 }
 
 func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.ReadCloser) (dto.Item, error) {
@@ -147,7 +147,7 @@ func (s *explorer) Upload(c context.Context, req dto.Request, bodyStream io.Read
 		return empty.Struct[dto.Item](), err
 	}
 
-	newObject := dto.Object{
+	newObject := &dto.Object{
 		ID:           objectID,
 		Group:        req.Group,
 		Partition:    req.Partition,
@@ -256,14 +256,14 @@ func (s *explorer) Delete(c context.Context, req dto.Request, deleteVersion bool
 func (s *explorer) getObjectMetadataByObjectID(
 	c context.Context, objectID entity.ObjectID, group, partition, path string,
 ) (*dto.Metadata, error) {
-	message := rpcmessage.ObjectMetadataRequest{
+	msg := rpcmessage.ObjectMetadataRequest{
 		ObjectID:  objectID.ToInt64(),
 		Group:     group,
 		Partition: partition,
 		Path:      path,
 	}
 
-	resp, err := s.metadataRequestor.GetByObjectID(c, &message)
+	resp, err := s.metadataRequestor.GetByObjectID(c, &msg)
 	if err != nil {
 		return nil, err
 	}
@@ -273,11 +273,7 @@ func (s *explorer) getObjectMetadataByObjectID(
 		return nil, nil
 	}
 
-	dto, err := dto.NewMetadataFromMessage(resp)
-	if err != nil {
-		return nil, err
-	}
-	return dto, nil
+	return message.ToObjectMetadataDTO(resp), nil
 }
 
 func (s *explorer) getObjectMetadataByNameOnPath(
@@ -288,37 +284,27 @@ func (s *explorer) getObjectMetadataByNameOnPath(
 		return nil, errors.New("name is empty")
 	}
 
-	message := rpcmessage.ObjectMetadataRequest{
+	msg := rpcmessage.ObjectMetadataRequest{
 		Group:     group,
 		Partition: partition,
 		Path:      path,
 		Name:      name,
 	}
 
-	resp, err := s.metadataRequestor.GetByObjectName(c, &message)
+	resp, err := s.metadataRequestor.GetByObjectName(c, &msg)
 	if err != nil {
 		return nil, err
 	}
 
-	dto, err := dto.NewMetadataFromMessage(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return dto, nil
+	return message.ToObjectMetadataDTO(resp), nil
 }
 
-func (s *explorer) upsertObjectMetadata(c context.Context, object dto.Object) (*dto.Metadata, error) {
-	message := object.ToMessage()
-	resp, err := s.metadataRequestor.Put(c, message)
+func (s *explorer) upsertObjectMetadata(c context.Context, object *dto.Object) (*dto.Metadata, error) {
+	msg := message.FromObjectDTO(object)
+	resp, err := s.metadataRequestor.Put(c, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	dto, err := dto.NewMetadataFromMessage(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return dto, nil
+	return message.ToObjectMetadataDTO(resp), nil
 }

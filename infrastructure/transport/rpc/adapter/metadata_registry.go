@@ -32,7 +32,7 @@ import (
 	sosrpc "github.com/ISSuh/sos/internal/rpc"
 	"github.com/ISSuh/sos/internal/validation"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type MetadataRegistry struct {
@@ -55,19 +55,23 @@ func (a *MetadataRegistry) Put(c context.Context, object *message.Object) (*mess
 	return a.handler.Put(c, object)
 }
 
-func (a *MetadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (*wrapperspb.BoolValue, error) {
-	res, err := a.handler.Delete(c, metadata)
+func (a *MetadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (*emptypb.Empty, error) {
+	err := a.handler.Delete(c, metadata)
 	if err != nil {
-		return &wrapperspb.BoolValue{Value: false}, err
+		return &emptypb.Empty{}, err
 	}
-	return &wrapperspb.BoolValue{Value: res}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (a *MetadataRegistry) GetByObjectName(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	return a.handler.GetByObjectName(c, req)
 }
 
-func (a *MetadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*rpcmessage.ObjectMetadataList, error) {
+func (a *MetadataRegistry) GetByObjectID(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	return a.handler.GetByObjectID(c, req)
+}
+
+func (a *MetadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadataList, error) {
 	return a.handler.FindMetadataOnPath(c, req)
 }
 

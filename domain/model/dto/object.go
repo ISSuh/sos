@@ -23,11 +23,7 @@
 package dto
 
 import (
-	"errors"
-
 	"github.com/ISSuh/sos/domain/model/entity"
-	"github.com/ISSuh/sos/domain/model/message"
-	"github.com/ISSuh/sos/internal/validation"
 )
 
 type Object struct {
@@ -41,30 +37,6 @@ type Object struct {
 	BlockHeaders BlockHeaders    `json:"block_headers"`
 }
 
-func NewObjectFromMessage(m *message.Object) (*Object, error) {
-	switch {
-	case validation.IsNil(m):
-		return nil, errors.New("message is nil")
-	case validation.IsNil(m.GetId()):
-		return nil, errors.New("message id is nil")
-	}
-
-	headers := make(BlockHeaders, 0, len(m.BlockHeaders))
-	for _, h := range m.BlockHeaders {
-		headers = append(headers, NewBlockHeaderFromMessage(h))
-	}
-
-	return &Object{
-		ID:           entity.ObjectID(m.GetId().Id),
-		Group:        m.Group,
-		Partition:    m.Partition,
-		Name:         m.Name,
-		Path:         m.Path,
-		Size:         int(m.GetSize()),
-		BlockHeaders: headers,
-	}, nil
-}
-
 func (o *Object) ToEntity() entity.ObjectMetadata {
 	return entity.NewObjectMetadataBuilder().
 		ID(o.ID).
@@ -73,17 +45,4 @@ func (o *Object) ToEntity() entity.ObjectMetadata {
 		Name(o.Name).
 		Path(o.Path).
 		Build()
-}
-
-func (o *Object) ToMessage() *message.Object {
-	headers := o.BlockHeaders.ToMessage()
-	return &message.Object{
-		Id:           &message.ObjectID{Id: o.ID.ToInt64()},
-		Group:        o.Group,
-		Partition:    o.Partition,
-		Name:         o.Name,
-		Path:         o.Path,
-		Size:         int32(o.Size),
-		BlockHeaders: headers,
-	}
 }

@@ -72,7 +72,7 @@ func (o *Downloader) Download(c context.Context, version dto.Version, writer htt
 				}
 			}()
 
-			block, err := o.downloadBlock(c, blockHeader)
+			block, err := o.downloadBlock(c, &blockHeader)
 			if err != nil {
 				return
 			}
@@ -104,8 +104,8 @@ func (o *Downloader) Download(c context.Context, version dto.Version, writer htt
 	return nil
 }
 
-func (o *Downloader) downloadBlock(c context.Context, blockHeader dto.BlockHeader) (entity.Block, error) {
-	msg := blockHeader.ToMessage()
+func (o *Downloader) downloadBlock(c context.Context, blockHeader *dto.BlockHeader) (entity.Block, error) {
+	msg := message.FromBlockHeaderDTO(blockHeader)
 	resp, err := o.storageRequestor.GetBlock(c, msg)
 	if err != nil {
 		return empty.Struct[entity.Block](), err

@@ -24,14 +24,18 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ISSuh/sos/domain/model/message"
 	"github.com/ISSuh/sos/domain/service"
 	"github.com/ISSuh/sos/infrastructure/transport/rpc"
 	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	soserror "github.com/ISSuh/sos/internal/error"
 	"github.com/ISSuh/sos/internal/log"
 	"github.com/ISSuh/sos/internal/validation"
+
+	"google.golang.org/grpc/status"
 )
 
 type metadataRegistry struct {
@@ -49,35 +53,118 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 	}, nil
 }
 
-func (h *metadataRegistry) Put(c context.Context, object *message.Object) (*message.ObjectMetadata, error) {
+func (h *metadataRegistry) Put(c context.Context, msg *message.Object) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.Put]")
-	return &message.ObjectMetadata{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(msg):
+		return nil, fmt.Errorf("Object is nil")
+	}
+
+	object := message.ToObjectDTO(msg)
+	metadata, err := h.objectMetadata.Put(c, object)
+	if err != nil {
+		return nil, err
+	}
+
+	return message.FromObjectMetadataDTO(metadata), nil
 }
 
-func (h *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
+func (h *metadataRegistry) Delete(c context.Context, msg *message.ObjectMetadata) error {
 	log.FromContext(c).Debugf("[MetadataRegistry.Delete]")
-	return true, nil
+	switch {
+	case validation.IsNil(c):
+		return fmt.Errorf("Context is nil")
+	case validation.IsNil(msg):
+		return fmt.Errorf("ObjectMetadata is nil")
+	}
+
+	metadata := message.ToObjectMetadataDTO(msg)
+	err := h.objectMetadata.Delete(c, metadata)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (h *metadataRegistry) GetByObjectName(c context.Context, rew *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+func (h *metadataRegistry) GetByObjectName(c context.Context, msg *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectName]")
-	return &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: 1,
-		},
-	}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(msg):
+		return nil, fmt.Errorf("ObjectMetadataRequest is nil")
+	case validation.IsEmpty(msg.Group):
+		return nil, fmt.Errorf("Group is empty")
+	case validation.IsEmpty(msg.Partition):
+		return nil, fmt.Errorf("Partition is empty")
+	case validation.IsEmpty(msg.Path):
+		return nil, fmt.Errorf("Path is empty")
+	case validation.IsEmpty(msg.Name):
+		return nil, fmt.Errorf("Name is empty")
+	}
+
+	metadata, err := h.objectMetadata.MetadataByObjectName(c, msg.Group, msg.Partition, msg.Name, msg.Path)
+	if err != nil {
+		if errors.Is(err, soserror.NotFound) {
+			return nil, status.Errorf(soserror.NotFoundErrorCode, "%v", err)
+		}
+		return nil, err
+	}
+
+	return message.FromObjectMetadataDTO(metadata), nil
 }
 
-func (h *metadataRegistry) GetByObjectID(c context.Context, rew *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+func (h *metadataRegistry) GetByObjectID(c context.Context, msg *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.GetByObjectID]")
-	return &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: 1,
-		},
-	}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(msg):
+		return nil, fmt.Errorf("ObjectMetadataRequest is nil")
+	case validation.IsEmpty(msg.Group):
+		return nil, fmt.Errorf("Group is empty")
+	case validation.IsEmpty(msg.Partition):
+		return nil, fmt.Errorf("Partition is empty")
+	case validation.IsEmpty(msg.Path):
+		return nil, fmt.Errorf("Path is empty")
+	case msg.ObjectID <= 0:
+		return nil, fmt.Errorf("ObjectID is invalid")
+	}
+
+	metadata, err := h.objectMetadata.MetadataByObjectID(c, msg.Group, msg.Partition, msg.Path, msg.ObjectID)
+	if err != nil {
+		if errors.Is(err, soserror.NotFound) {
+			return nil, status.Errorf(soserror.NotFoundErrorCode, "%v", err)
+		}
+		return nil, err
+	}
+
+	return message.FromObjectMetadataDTO(metadata), nil
 }
 
-func (h *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*rpcmessage.ObjectMetadataList, error) {
+func (h *metadataRegistry) FindMetadataOnPath(c context.Context, msg *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadataList, error) {
 	log.FromContext(c).Debugf("[MetadataRegistry.FindMetadataOnPath]")
-	return &rpcmessage.ObjectMetadataList{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(msg):
+		return nil, fmt.Errorf("ObjectMetadataRequest is nil")
+	case validation.IsEmpty(msg.Group):
+		return nil, fmt.Errorf("Group is empty")
+	case validation.IsEmpty(msg.Partition):
+		return nil, fmt.Errorf("Partition is empty")
+	}
+
+	list, err := h.objectMetadata.MetadataListOnPath(c, msg.Group, msg.Partition, msg.Path)
+	if err != nil {
+		if errors.Is(err, soserror.NotFound) {
+			return nil, status.Errorf(soserror.NotFoundErrorCode, "%v", err)
+		}
+		return nil, err
+	}
+
+	return message.FromObjectMetadataListDTO(list), nil
 }

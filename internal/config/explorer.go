@@ -20,39 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package config
 
-import (
-	"github.com/ISSuh/sos/internal/app"
-	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/log"
-
-	"github.com/alexflint/go-arg"
-)
-
-type args struct {
-	Config string `arg:"-c,--config,required"`
+type ExplorerConfig struct {
+	Log     Logger  `yaml:"logger"`
+	Address Address `yaml:"address"`
 }
 
-func main() {
-	args := args{}
-	arg.MustParse(&args)
-
-	config, err := config.NewConfig(args.Config)
-	if err != nil {
-		return
+func (c ExplorerConfig) Validate(isStandalone bool) error {
+	if !isStandalone {
+		if err := c.Address.Validate(); err != nil {
+			return err
+		}
 	}
 
-	l := log.NewZapLogger(config.SOS.Api.Log)
-
-	l.Infof("configure : %+v", config)
-	api, err := app.NewApi(config.SOS, l)
-	if err != nil {
-		return
-	}
-
-	if err := api.Run(); err != nil {
-		l.Errorf(err.Error())
-		return
-	}
+	return nil
 }

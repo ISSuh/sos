@@ -22,6 +22,8 @@
 
 package error
 
+const NotFoundErrorCode = 404
+
 type NotFoundError struct {
 	Error
 }
@@ -29,7 +31,7 @@ type NotFoundError struct {
 func NewNotFoundError(err error) error {
 	notfoundErr := &NotFoundError{
 		Error: Error{
-			Code: 404,
+			Code: NotFoundErrorCode,
 			Err:  err,
 		},
 	}

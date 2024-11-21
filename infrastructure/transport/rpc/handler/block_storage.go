@@ -49,22 +49,104 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageHandl
 	}, nil
 }
 
-func (h *blockStorage) Put(c context.Context, block *message.Block) (*rpcmessage.StorageResponse, error) {
+func (h *blockStorage) Put(c context.Context, dto *message.Block) (*rpcmessage.StorageResponse, error) {
 	log.FromContext(c).Debugf("[BlockStorage.Put]")
-	return &rpcmessage.StorageResponse{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(dto):
+		return nil, fmt.Errorf("Block is nil")
+	case validation.IsNil(dto.Header):
+		return nil, fmt.Errorf("BlockHeader is nil")
+	case validation.IsNil(dto.Header.ObjectID):
+		return nil, fmt.Errorf("ObjectID is nil")
+	case validation.IsNil(dto.Header.BlockID):
+		return nil, fmt.Errorf("BlockID is nil")
+	case validation.IsNil(dto.Data):
+		return nil, fmt.Errorf("Data is nil")
+	case validation.IsNil(dto.Header.Checksum):
+		return nil, fmt.Errorf("Checksum is nil")
+	}
+
+	block := message.ToBlock(dto)
+	if err := h.objectStorage.Put(c, &block); err != nil {
+		return nil, err
+	}
+
+	return &rpcmessage.StorageResponse{
+		Success: true,
+	}, nil
 }
 
-func (h *blockStorage) GetBlock(c context.Context, header *message.BlockHeader) (*message.Block, error) {
+func (h *blockStorage) GetBlock(c context.Context, dto *message.BlockHeader) (*message.Block, error) {
 	log.FromContext(c).Debugf("[BlockStorage.GetBlock]")
-	return &message.Block{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(dto):
+		return nil, fmt.Errorf("Block is nil")
+	case validation.IsNil(dto.ObjectID):
+		return nil, fmt.Errorf("ObjectID is nil")
+	case validation.IsNil(dto.BlockID):
+		return nil, fmt.Errorf("BlockID is nil")
+	case validation.IsNil(dto.Checksum):
+		return nil, fmt.Errorf("Checksum is nil")
+	}
+
+	header := message.ToBlockHeader(dto)
+	block, err := h.objectStorage.GetBlock(c, header.ObjectID(), header.BlockID(), header.Index())
+	if err != nil {
+		return nil, err
+	}
+
+	return message.FromBlock(block), nil
 }
 
-func (h *blockStorage) GetBlockHeader(c context.Context, header *message.BlockHeader) (*message.BlockHeader, error) {
+func (h *blockStorage) GetBlockHeader(c context.Context, dto *message.BlockHeader) (*message.BlockHeader, error) {
 	log.FromContext(c).Debugf("[BlockStorage.GetBlockHeader]")
-	return &message.BlockHeader{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(dto):
+		return nil, fmt.Errorf("Block is nil")
+	case validation.IsNil(dto.ObjectID):
+		return nil, fmt.Errorf("ObjectID is nil")
+	case validation.IsNil(dto.BlockID):
+		return nil, fmt.Errorf("BlockID is nil")
+	case validation.IsNil(dto.Checksum):
+		return nil, fmt.Errorf("Checksum is nil")
+	}
+
+	header := message.ToBlockHeader(dto)
+	blockHeader, err := h.objectStorage.GetBlockHeader(c, header.ObjectID(), header.BlockID(), header.Index())
+	if err != nil {
+		return nil, err
+	}
+
+	return message.FromBlockHeader(blockHeader), nil
 }
 
-func (h *blockStorage) Delete(c context.Context, header *message.BlockHeader) (*rpcmessage.StorageResponse, error) {
+func (h *blockStorage) Delete(c context.Context, dto *message.BlockHeader) (*rpcmessage.StorageResponse, error) {
 	log.FromContext(c).Debugf("[BlockStorage.Delete]")
-	return &rpcmessage.StorageResponse{}, nil
+	switch {
+	case validation.IsNil(c):
+		return nil, fmt.Errorf("Context is nil")
+	case validation.IsNil(dto):
+		return nil, fmt.Errorf("Block is nil")
+	case validation.IsNil(dto.ObjectID):
+		return nil, fmt.Errorf("ObjectID is nil")
+	case validation.IsNil(dto.BlockID):
+		return nil, fmt.Errorf("BlockID is nil")
+	case validation.IsNil(dto.Checksum):
+		return nil, fmt.Errorf("Checksum is nil")
+	}
+
+	header := message.ToBlockHeader(dto)
+	if err := h.objectStorage.Delete(c, header.ObjectID(), header.BlockID(), header.Index()); err != nil {
+		return nil, err
+	}
+
+	return &rpcmessage.StorageResponse{
+		Success: true,
+	}, nil
 }

@@ -6,3 +6,11 @@ sos:
     address:
       ip: 0.0.0.0
       port: 33222
+    db:
+      type: mongodb
+      host: mongodb://localhost:27017
+      database: sos
+      log_level: debug
+      credentials:
+        username: root
+        password: root

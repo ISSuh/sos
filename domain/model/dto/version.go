@@ -27,10 +27,7 @@ import (
 	"time"
 
 	"github.com/ISSuh/sos/domain/model/entity"
-	"github.com/ISSuh/sos/domain/model/message"
 	"github.com/ISSuh/sos/internal/empty"
-	"github.com/ISSuh/sos/internal/validation"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Versions []Version
@@ -43,26 +40,10 @@ func NewVersionsFromModel(v entity.Versions) Versions {
 	return versions
 }
 
-func NewVersionsFromMessage(v []*message.Version) Versions {
-	versions := make(Versions, 0, len(v))
-	for _, version := range v {
-		versions = append(versions, NewVersionFromMessage(version))
-	}
-	return versions
-}
-
 func (v Versions) ToEntity() entity.Versions {
 	versions := make(entity.Versions, 0, len(v))
 	for _, version := range v {
 		versions = append(versions, version.ToEntity())
-	}
-	return versions
-}
-
-func (v Versions) ToMessage() []*message.Version {
-	versions := make([]*message.Version, 0, len(v))
-	for _, version := range v {
-		versions = append(versions, version.ToMessage())
 	}
 	return versions
 }
@@ -119,26 +100,6 @@ func NewVersionFromModel(v entity.Version) Version {
 	}
 }
 
-func NewVersionFromMessage(m *message.Version) Version {
-	switch {
-	case validation.IsNil(m):
-		return empty.Struct[Version]()
-	}
-
-	headers := make(BlockHeaders, 0, len(m.BlockHeaders))
-	for _, h := range m.BlockHeaders {
-		headers = append(headers, NewBlockHeaderFromMessage(h))
-	}
-
-	return Version{
-		Number:       int(m.Number),
-		Size:         int(m.Size),
-		BlockHeaders: headers,
-		CreatedAt:    m.CreatedAt.AsTime(),
-		ModifiedAt:   m.ModifiedAt.AsTime(),
-	}
-}
-
 func (v *Version) ToEntity() entity.Version {
 	headers := v.BlockHeaders.ToEntity()
 	return entity.NewVersionBuilder().
@@ -148,17 +109,6 @@ func (v *Version) ToEntity() entity.Version {
 		CreatedAt(v.CreatedAt).
 		ModifiedAt(v.ModifiedAt).
 		Build()
-}
-
-func (v *Version) ToMessage() *message.Version {
-	headers := v.BlockHeaders.ToMessage()
-	return &message.Version{
-		Number:       int32(v.Number),
-		Size:         int32(v.Size),
-		BlockHeaders: headers,
-		CreatedAt:    timestamppb.New(v.CreatedAt),
-		ModifiedAt:   timestamppb.New(v.ModifiedAt),
-	}
 }
 
 func (v *Version) IsValid() bool {

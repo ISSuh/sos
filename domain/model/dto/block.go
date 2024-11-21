@@ -26,10 +26,6 @@ import (
 	"time"
 
 	"github.com/ISSuh/sos/domain/model/entity"
-	"github.com/ISSuh/sos/domain/model/message"
-	"github.com/ISSuh/sos/internal/empty"
-	"github.com/ISSuh/sos/internal/validation"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type BlockHeaders []BlockHeader
@@ -42,14 +38,6 @@ func (h BlockHeaders) ToEntity() entity.BlockHeaders {
 	headers := make(entity.BlockHeaders, 0, len(h))
 	for _, header := range h {
 		headers = append(headers, header.ToEntity())
-	}
-	return headers
-}
-
-func (h BlockHeaders) ToMessage() []*message.BlockHeader {
-	headers := make([]*message.BlockHeader, 0, len(h))
-	for _, header := range h {
-		headers = append(headers, header.ToMessage())
 	}
 	return headers
 }
@@ -74,26 +62,6 @@ func NewBlockHeaderFromModel(h entity.BlockHeader) BlockHeader {
 	}
 }
 
-func NewBlockHeaderFromMessage(h *message.BlockHeader) BlockHeader {
-	switch {
-	case validation.IsNil(h):
-		return empty.Struct[BlockHeader]()
-	case validation.IsNil(h.GetObjectID()):
-		return empty.Struct[BlockHeader]()
-	case validation.IsNil(h.GetBlockID()):
-		return empty.Struct[BlockHeader]()
-	}
-
-	return BlockHeader{
-		BlockID:   entity.BlockID(h.BlockID.Id),
-		ObjectID:  entity.ObjectID(h.ObjectID.Id),
-		Index:     int(h.Index),
-		Size:      int(h.Size),
-		Checksum:  h.Checksum,
-		Timestamp: h.Timestamp.AsTime(),
-	}
-}
-
 func NewEmptyBlockHeader() BlockHeader {
 	return BlockHeader{}
 }
@@ -113,25 +81,7 @@ func (d BlockHeader) ToEntity() entity.BlockHeader {
 		Build()
 }
 
-func (d BlockHeader) ToMessage() *message.BlockHeader {
-	return &message.BlockHeader{
-		ObjectID:  message.FromObjectID(d.ObjectID),
-		BlockID:   message.FromBlockID(d.BlockID),
-		Index:     int32(d.Index),
-		Size:      int32(d.Size),
-		Checksum:  d.Checksum,
-		Timestamp: timestamppb.New(d.Timestamp),
-	}
-}
-
 type Block struct {
 	Header BlockHeader
 	Data   []byte
-}
-
-func (d Block) ToMessage() *message.Block {
-	return &message.Block{
-		Header: d.Header.ToMessage(),
-		Data:   d.Data,
-	}
 }

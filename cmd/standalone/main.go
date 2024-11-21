@@ -43,7 +43,7 @@ func main() {
 
 	generator.InitIdentifier(1)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.Standalone)
 	if err != nil {
 		fmt.Printf("failed to load config : %v\n", err)
 		return

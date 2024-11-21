@@ -38,7 +38,7 @@ func main() {
 	args := args{}
 	arg.MustParse(&args)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.BlockStorage)
 	if err != nil {
 		return
 	}

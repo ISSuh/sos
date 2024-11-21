@@ -23,32 +23,12 @@
 package dto
 
 import (
-	"errors"
 	"time"
 
 	"github.com/ISSuh/sos/domain/model/entity"
-	"github.com/ISSuh/sos/domain/model/message"
-	"github.com/ISSuh/sos/internal/validation"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MetadataList []Metadata
-
-func NewMetadataListFromMessage(m []*message.ObjectMetadata) MetadataList {
-	list := make(MetadataList, 0, len(m))
-	for _, metadata := range m {
-		dto, err := NewMetadataFromMessage(metadata)
-		if err != nil {
-			continue
-		}
-		list = append(list, *dto)
-	}
-	return list
-}
-
-func (m MetadataList) Empty() bool {
-	return len(m) == 0
-}
 
 type Metadata struct {
 	ID         entity.ObjectID `json:"object_id"`
@@ -74,26 +54,6 @@ func NewMetadataFromModel(m *entity.ObjectMetadata) *Metadata {
 	}
 }
 
-func NewMetadataFromMessage(m *message.ObjectMetadata) (*Metadata, error) {
-	switch {
-	case validation.IsNil(m):
-		return nil, errors.New("metadata is nil")
-	case validation.IsNil(m.GetId()):
-		return nil, errors.New("metadata id is nil")
-	}
-
-	return &Metadata{
-		ID:         entity.ObjectID(m.GetId().Id),
-		Group:      m.Group,
-		Partition:  m.Partition,
-		Name:       m.Name,
-		Path:       m.Path,
-		Versions:   NewVersionsFromMessage(m.Versions),
-		CreatedAt:  m.CreatedAt.AsTime(),
-		ModifiedAt: m.ModifiedAt.AsTime(),
-	}, nil
-}
-
 func (d *Metadata) Empty() bool {
 	return d.Versions.Empty() && d.ID == 0
 }
@@ -109,19 +69,4 @@ func (d *Metadata) ToEntity() entity.ObjectMetadata {
 		CreatedAt(d.CreatedAt).
 		ModifiedAt(d.ModifiedAt).
 		Build()
-}
-
-func (d *Metadata) ToMessage() *message.ObjectMetadata {
-	return &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: d.ID.ToInt64(),
-		},
-		Group:      d.Group,
-		Partition:  d.Partition,
-		Path:       d.Path,
-		Name:       d.Name,
-		Versions:   d.Versions.ToMessage(),
-		CreatedAt:  timestamppb.New(d.CreatedAt),
-		ModifiedAt: timestamppb.New(d.ModifiedAt),
-	}
 }

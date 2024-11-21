@@ -31,15 +31,15 @@ import (
 	"github.com/ISSuh/sos/internal/log"
 )
 
-type Api struct {
+type Explorer struct {
 	logger log.Logger
 
 	config config.SosConfig
 	server http.Server
 }
 
-func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
-	a := Api{
+func NewApi(c config.SosConfig, l log.Logger) (Explorer, error) {
+	a := Explorer{
 		config: c,
 		logger: l,
 		server: http.NewServer(),
@@ -47,15 +47,15 @@ func NewApi(c config.SosConfig, l log.Logger) (Api, error) {
 	return a, nil
 }
 
-func (a *Api) Run() error {
-	a.logger.Infof("[Api.Run]")
+func (a *Explorer) Run() error {
+	a.logger.Infof("[Explorer.Run]")
 	if err := a.init(); err != nil {
 		return err
 	}
 	return a.server.Run(a.config.Api.Address.String())
 }
 
-func (a *Api) init() error {
+func (a *Explorer) init() error {
 	service, err := a.initService()
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (a *Api) init() error {
 	return nil
 }
 
-func (a *Api) initService() (service.Explorer, error) {
+func (a *Explorer) initService() (service.Explorer, error) {
 	metadataRequestor, err := factory.NewMetadataRegistryRequestor(a.config.MetadataRegistry.Address.Host)
 	if err != nil {
 		return nil, err

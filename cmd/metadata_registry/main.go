@@ -23,6 +23,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/log"
@@ -38,8 +40,9 @@ func main() {
 	args := args{}
 	arg.MustParse(&args)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.MetadataRegistry)
 	if err != nil {
+		fmt.Printf("config error : %v", err)
 		return
 	}
 

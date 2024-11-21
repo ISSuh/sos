@@ -1,6 +1,6 @@
 sos:
   standalone: true
-  api:
+  explorer:
     logger:
       level: debug
       format: text
@@ -12,10 +12,10 @@ sos:
       type: mongodb
       host: mongodb://localhost:27017
       database: sos
+      log_level: debug
       credentials:
         username: root
         password: root
-      log_level: debug
   block_storage:
     db:
       type: leveldb
