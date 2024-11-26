@@ -26,7 +26,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/config"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -50,6 +52,8 @@ func ConnectMongoDB(c context.Context, dbConfig config.Database) (*MongoDB, erro
 			ApplyURI(dbConfig.Host).
 			SetAuth(credential).
 			SetLoggerOptions(logger)
+
+	options.Monitor = apm.WrapDatabaseMonitor()
 
 	client, err := mongo.Connect(c, options)
 	if err != nil {

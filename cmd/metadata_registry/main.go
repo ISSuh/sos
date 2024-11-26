@@ -25,6 +25,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/log"
@@ -47,8 +48,15 @@ func main() {
 	}
 
 	l := log.NewZapLogger(config.SOS.MetadataRegistry.Log)
-
 	l.Infof("configure : %+v", config)
+
+	if config.SOS.MetadataRegistry.APM.Enabled {
+		if err := apm.Initialize(config.SOS.MetadataRegistry.APM); err != nil {
+			l.Errorf(err.Error())
+			return
+		}
+	}
+
 	metadata, err := app.NewMetadata(config.SOS, l)
 	if err != nil {
 		return

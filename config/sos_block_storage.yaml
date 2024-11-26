@@ -1,5 +1,10 @@
 sos:
   block_storage:
+    apm:
+      enabled: true
+      host: http://localhost:8200
+      service_name: sos-block_storage
+      service_version: 0.0.1
     logger:
       level: debug
       format: text

@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,56 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rpc
+package middleware
 
 import (
-	"fmt"
-	"net"
+	gohttp "net/http"
 
 	"github.com/ISSuh/sos/internal/apm"
-	"github.com/ISSuh/sos/internal/validation"
-
-	"google.golang.org/grpc"
 )
 
-type Server struct {
-	engine    Engine
-	registers []RegisterFunc
-}
-
-func NewServer() Server {
-	interceptor := apm.WrapServerInterceptor()
-	return Server{
-		engine: Engine{
-			Server: grpc.NewServer(interceptor),
-		},
-		registers: make([]RegisterFunc, 0),
-	}
-}
-
-func (s *Server) Regist(functions []RegisterFunc) {
-	s.registers = append(s.registers, functions...)
-}
-
-func (s *Server) Run(address string) error {
-	switch {
-	case validation.IsEmpty(address):
-		return fmt.Errorf("address is empty")
-	case len(s.registers) == 0:
-		return fmt.Errorf("register functions is empty")
-	}
-
-	l, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
-	}
-
-	for _, f := range s.registers {
-		f(&s.engine)
-	}
-
-	if err := s.engine.Serve(l); err != nil {
-		return err
-	}
-	return nil
+func APM(next gohttp.HandlerFunc) gohttp.HandlerFunc {
+	return gohttp.HandlerFunc(func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		wrappedHandler := apm.WrapHTTPHandler(next)
+		wrappedHandler.ServeHTTP(w, r)
+	})
 }

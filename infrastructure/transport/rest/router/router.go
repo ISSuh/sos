@@ -49,6 +49,7 @@ const (
 )
 
 func Route(logger log.Logger, s *http.Server, h rest.Explorer) {
+	s.Use(middleware.APM)
 	s.Use(middleware.Recover)
 	s.Use(middleware.WithLog(logger))
 	s.Use(middleware.GenerateRequestID)

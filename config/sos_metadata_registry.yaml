@@ -1,5 +1,10 @@
 sos:
   metadata_registry:
+    apm:
+      enabled: true
+      host: http://localhost:8200
+      service_name: sos-metadata_registry
+      service_version: 0.0.1
     logger:
       level: debug
       format: text

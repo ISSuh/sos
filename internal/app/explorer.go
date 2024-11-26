@@ -52,7 +52,7 @@ func (a *Explorer) Run() error {
 	if err := a.init(); err != nil {
 		return err
 	}
-	return a.server.Run(a.config.Api.Address.String())
+	return a.server.Run(a.config.Explorer.Address.String())
 }
 
 func (a *Explorer) init() error {

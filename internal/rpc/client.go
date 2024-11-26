@@ -25,8 +25,11 @@ package rpc
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/validation"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func NewClientConnection(address string) (grpc.ClientConnInterface, error) {
@@ -34,7 +37,9 @@ func NewClientConnection(address string) (grpc.ClientConnInterface, error) {
 		return nil, fmt.Errorf("address is empty")
 	}
 
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	interceptor := apm.WrapClientInterceptor()
+	credential := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(address, credential, interceptor)
 	if err != nil {
 		return nil, fmt.Errorf("did not connect: %v", err)
 	}

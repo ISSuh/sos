@@ -25,6 +25,7 @@ SOFTWARE.
 package config
 
 type MetadataRegistryConfig struct {
+	APM      APM      `yaml:"apm"`
 	Log      Logger   `yaml:"logger"`
 	Address  Address  `yaml:"address"`
 	Database Database `yaml:"db"`

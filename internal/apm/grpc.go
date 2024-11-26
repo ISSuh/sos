@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,56 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rpc
+package apm
 
 import (
-	"fmt"
-	"net"
-
-	"github.com/ISSuh/sos/internal/apm"
-	"github.com/ISSuh/sos/internal/validation"
-
+	"go.elastic.co/apm/module/apmgrpc"
 	"google.golang.org/grpc"
 )
 
-type Server struct {
-	engine    Engine
-	registers []RegisterFunc
+func WrapServerInterceptor() grpc.ServerOption {
+	if !a.IsUsingAPM() {
+		return nil
+	}
+
+	option := apmgrpc.WithTracer(a.tracer)
+	apmInterceptor := apmgrpc.NewUnaryServerInterceptor(option)
+	return grpc.UnaryInterceptor(apmInterceptor)
 }
 
-func NewServer() Server {
-	interceptor := apm.WrapServerInterceptor()
-	return Server{
-		engine: Engine{
-			Server: grpc.NewServer(interceptor),
-		},
-		registers: make([]RegisterFunc, 0),
-	}
-}
-
-func (s *Server) Regist(functions []RegisterFunc) {
-	s.registers = append(s.registers, functions...)
-}
-
-func (s *Server) Run(address string) error {
-	switch {
-	case validation.IsEmpty(address):
-		return fmt.Errorf("address is empty")
-	case len(s.registers) == 0:
-		return fmt.Errorf("register functions is empty")
+func WrapClientInterceptor() grpc.DialOption {
+	if !a.IsUsingAPM() {
+		return nil
 	}
 
-	l, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
-	}
-
-	for _, f := range s.registers {
-		f(&s.engine)
-	}
-
-	if err := s.engine.Serve(l); err != nil {
-		return err
-	}
-	return nil
+	apmInterceptor := apmgrpc.NewUnaryClientInterceptor()
+	dialOption := grpc.WithUnaryInterceptor(apmInterceptor)
+	return dialOption
 }

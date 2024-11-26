@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,56 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package rpc
+package apm
 
 import (
-	"fmt"
-	"net"
+	"os"
+	"sync"
 
-	"github.com/ISSuh/sos/internal/apm"
-	"github.com/ISSuh/sos/internal/validation"
-
-	"google.golang.org/grpc"
+	"github.com/ISSuh/sos/internal/config"
+	"go.elastic.co/apm"
 )
 
-type Server struct {
-	engine    Engine
-	registers []RegisterFunc
+type agent struct {
+	tracer *apm.Tracer
+	isInit bool
 }
 
-func NewServer() Server {
-	interceptor := apm.WrapServerInterceptor()
-	return Server{
-		engine: Engine{
-			Server: grpc.NewServer(interceptor),
-		},
-		registers: make([]RegisterFunc, 0),
-	}
+func (a *agent) IsUsingAPM() bool {
+	return isInitialized
 }
 
-func (s *Server) Regist(functions []RegisterFunc) {
-	s.registers = append(s.registers, functions...)
-}
+var a *agent
+var once sync.Once
+var isInitialized bool
 
-func (s *Server) Run(address string) error {
-	switch {
-	case validation.IsEmpty(address):
-		return fmt.Errorf("address is empty")
-	case len(s.registers) == 0:
-		return fmt.Errorf("register functions is empty")
-	}
+func Initialize(config config.APM) error {
+	os.Setenv("ELASTIC_APM_SERVER_URL", config.Host)
+	os.Setenv("ELASTIC_APM_SERVICE_NAME", config.ServiceName)
+	os.Setenv("ELASTIC_APM_SERVICE_VERSION", config.ServiceVersion)
 
-	l, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
-	}
+	once.Do(func() {
+		a = &agent{
+			tracer: apm.DefaultTracer,
+			isInit: true,
+		}
+	})
 
-	for _, f := range s.registers {
-		f(&s.engine)
-	}
-
-	if err := s.engine.Serve(l); err != nil {
-		return err
-	}
+	isInitialized = true
 	return nil
 }

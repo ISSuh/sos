@@ -1,4 +1,4 @@
-/*
+﻿/*
 MIT License
 
 Copyright (c) 2024 ISSuh
@@ -24,18 +24,27 @@ SOFTWARE.
 
 package config
 
-type BlockStorageConfig struct {
-	Log      Logger   `yaml:"logger"`
-	Address  Address  `yaml:"address"`
-	Database Database `yaml:"db"`
+import "fmt"
+
+type APM struct {
+	Enabled        bool   `yaml:"enabled"`
+	Host           string `yaml:"host"`
+	ServiceName    string `yaml:"service_name"`
+	ServiceVersion string `yaml:"service_version"`
 }
 
-func (c BlockStorageConfig) Validate(isStandalone bool) error {
-	if !isStandalone {
-		if err := c.Address.Validate(); err != nil {
-			return err
+func (c APM) Validate() error {
+	if c.Enabled {
+		if c.Host == "" {
+			return fmt.Errorf("apm host is empty")
+		}
+
+		if c.ServiceName == "" {
+			return fmt.Errorf("apm service name is empty")
+		}
+		if c.ServiceVersion == "" {
+			return fmt.Errorf("apm service version is empty")
 		}
 	}
-
 	return nil
 }

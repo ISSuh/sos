@@ -23,6 +23,7 @@
 package config
 
 type ExplorerConfig struct {
+	APM     APM     `yaml:"apm"`
 	Log     Logger  `yaml:"logger"`
 	Address Address `yaml:"address"`
 }

@@ -39,7 +39,7 @@ const (
 )
 
 type SosConfig struct {
-	Api              ExplorerConfig         `yaml:"explorer"`
+	Explorer         ExplorerConfig         `yaml:"explorer"`
 	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
 	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
 	Standalone       bool                   `yaml:"standalone"`
@@ -52,7 +52,7 @@ type Config struct {
 func (c Config) Validate(appType ApplicationType) error {
 	switch appType {
 	case Explorer:
-		if err := c.SOS.Api.Validate(c.SOS.Standalone); err != nil {
+		if err := c.SOS.Explorer.Validate(c.SOS.Standalone); err != nil {
 			return err
 		}
 	case MetadataRegistry:
@@ -64,7 +64,7 @@ func (c Config) Validate(appType ApplicationType) error {
 			return err
 		}
 	default:
-		if err := c.SOS.Api.Validate(c.SOS.Standalone); err != nil {
+		if err := c.SOS.Explorer.Validate(c.SOS.Standalone); err != nil {
 			return err
 		}
 		if err := c.SOS.MetadataRegistry.Validate(c.SOS.Standalone); err != nil {

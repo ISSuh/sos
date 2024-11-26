@@ -25,6 +25,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/generator"
@@ -49,9 +50,16 @@ func main() {
 		return
 	}
 
-	l := log.NewZapLogger(config.SOS.Api.Log)
-
+	l := log.NewZapLogger(config.SOS.Explorer.Log)
 	l.Infof("configure : %+v", config)
+
+	if config.SOS.Explorer.APM.Enabled {
+		if err := apm.Initialize(config.SOS.Explorer.APM); err != nil {
+			l.Errorf(err.Error())
+			return
+		}
+	}
+
 	standalone, err := app.NewStandalone(config.SOS, l)
 	if err != nil {
 		return

@@ -13,7 +13,11 @@
             "program": "${workspaceFolder}/cmd/explorer/main.go",
             "args": [
                 "--config=${workspaceFolder}/config/sos_explorer.yaml"
-            ]
+            ],
+            "env": {
+                "ELASTIC_APM_SERVICE_NAME": "sos-explorer",
+                "ELASTIC_APM_SERVER_URL": "http://localhost:8200"
+            }
         },
         {
             "name": "MetadataRegistry",
@@ -24,7 +28,11 @@
             "program": "${workspaceFolder}/cmd/metadata_registry/main.go",
             "args": [
                 "--config=${workspaceFolder}/config/sos_metadata_registry.yaml"
-            ]
+            ],
+            "env": {
+                "ELASTIC_APM_SERVICE_NAME": "sos-metadata_registry",
+                "ELASTIC_APM_SERVER_URL": "http://localhost:8200"
+            }
         },
         {
             "name": "BlockStorage",
@@ -35,7 +43,11 @@
             "program": "${workspaceFolder}/cmd/block_storage/main.go",
             "args": [
                 "--config=${workspaceFolder}/config/sos_block_storage.yaml"
-            ]
+            ],
+            "env": {
+                "ELASTIC_APM_SERVICE_NAME": "sos-block_storage",
+                "ELASTIC_APM_SERVER_URL": "http://localhost:8200"
+            }
         },
         {
             "name": "Standalone",
@@ -46,7 +58,11 @@
             "program": "${workspaceFolder}/cmd/standalone/main.go",
             "args": [
                 "--config=${workspaceFolder}/config/sos_standalone.yaml"
-            ]
+            ],
+            "env": {
+                "ELASTIC_APM_SERVICE_NAME": "sos-standalone",
+                "ELASTIC_APM_SERVER_URL": "http://localhost:8200"
+            }
         },
         {
             "name": "temp_download",
