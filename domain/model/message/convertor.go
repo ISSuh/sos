@@ -300,6 +300,7 @@ func ToObjectDTO(object *Object) *dto.Object {
 		Group:        object.Group,
 		Partition:    object.Partition,
 		Name:         object.Name,
+		Path:         object.Path,
 		Size:         int(object.Size),
 		VersionNum:   int(object.VersionNum),
 		BlockHeaders: blockHeaders,

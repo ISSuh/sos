@@ -29,6 +29,7 @@ import (
 	"github.com/ISSuh/sos/domain/model/dto"
 	"github.com/ISSuh/sos/domain/service"
 	"github.com/ISSuh/sos/infrastructure/transport/rest"
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/http"
 	"github.com/ISSuh/sos/internal/log"
 	"github.com/ISSuh/sos/internal/validation"
@@ -82,10 +83,17 @@ func (h *explorer) List() http.Handler {
 		c := r.Context()
 		log.FromContext(c).Debugf("[explorer.List]")
 
-		dto := dto.RequestFromContext(c, http.RequestContextKey)
-		log.FromContext(c).Debugf("Request: %+v\n", dto)
+		req := dto.RequestFromContext(c, http.RequestContextKey)
+		log.FromContext(c).Debugf("Request: %+v\n", req)
 
-		items, err := h.explorerService.FindObjectMetadataOnPath(c, dto)
+		span := apm.SpanStart(c, "List", "explorer", nil)
+		defer span.End()
+
+		span.Context.SetLabel("group", req.Group)
+		span.Context.SetLabel("partition", req.Partition)
+		span.Context.SetLabel("path", req.Path)
+
+		items, err := h.explorerService.FindObjectMetadataOnPath(c, req)
 		if err != nil {
 			log.FromContext(c).Errorf("List Error: %s\n", err.Error())
 			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
@@ -108,6 +116,9 @@ func (h *explorer) Upload() http.Handler {
 		req := dto.RequestFromContext(c, http.RequestContextKey)
 		log.FromContext(c).Debugf("Request: %+v\n", req)
 		log.FromContext(c).Debugf("content type: %s\n", r.Header.Get("Content-Type"))
+
+		span := apm.SpanStart(c, "List", "explorer", nil)
+		defer span.End()
 
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
 			gohttp.Error(w, err.Error(), gohttp.StatusInternalServerError)
@@ -132,6 +143,14 @@ func (h *explorer) Upload() http.Handler {
 				req.Name = fileHeader.Filename
 				req.Size = int(fileHeader.Size)
 
+				subSpan := apm.SpanStart(c, "List", "explorer", span)
+
+				subSpan.Context.SetLabel("group", req.Group)
+				subSpan.Context.SetLabel("partition", req.Partition)
+				subSpan.Context.SetLabel("path", req.Path)
+				subSpan.Context.SetLabel("name", req.Name)
+				subSpan.Context.SetLabel("size", req.Size)
+
 				item, err := h.explorerService.Upload(c, req, f)
 				if err != nil {
 					log.FromContext(c).Errorf("Upload Error: %s\n", err.Error())
@@ -141,6 +160,8 @@ func (h *explorer) Upload() http.Handler {
 
 				items = append(items, item)
 				f.Close()
+
+				subSpan.End()
 			}
 		}
 

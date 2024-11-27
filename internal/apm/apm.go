@@ -58,3 +58,10 @@ func Initialize(config config.APM) error {
 	isInitialized = true
 	return nil
 }
+
+func Tracer() *apm.Tracer {
+	if a == nil {
+		return nil
+	}
+	return a.tracer
+}

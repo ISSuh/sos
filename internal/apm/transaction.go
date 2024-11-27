@@ -28,17 +28,23 @@ import (
 	"go.elastic.co/apm"
 )
 
-type TransactionTask func(context.Context)
+type TransactionEnd func()
+type SpanEnd func()
 
-func Transaction(c context.Context, txName, txtype string, task TransactionTask) {
+func TransactionStart(c context.Context, txName, txtype string) TransactionEnd {
 	tx := apm.TransactionFromContext(c)
 	if tx != nil {
 		tx.End()
 	}
 
 	a.tracer.StartTransaction(txName, txtype)
+	return func() {
+		tx.End()
+	}
+}
 
-	task(c)
-
-	tx.End()
+func SpanStart(c context.Context, spanName, spanType string, parent *apm.Span) *apm.Span {
+	span, _ := apm.StartSpan(c, spanName, spanType)
+	apm.StartSpanOptions(c, spanName, spanType, apm.SpanOptions{})
+	return span
 }

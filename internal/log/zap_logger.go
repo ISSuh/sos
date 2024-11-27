@@ -24,6 +24,7 @@ package log
 
 import (
 	"github.com/ISSuh/sos/internal/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
