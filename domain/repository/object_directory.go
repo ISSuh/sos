@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 
 // Copyright (c) 2024 ISSuh
 
@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dto
+package repository
 
 import (
 	"context"
@@ -28,21 +28,12 @@ import (
 	"github.com/ISSuh/sos/domain/model/entity"
 )
 
-type Request struct {
-	ObjectID     entity.ObjectID
-	Group        string
-	Partition    string
-	Path         string
-	Name         string
-	Size         int
-	Version      int
-	Limit        int
-	LastObjectID entity.ObjectID
-}
-
-func RequestFromContext(c context.Context, key any) Request {
-	if val := c.Value(key); val != nil {
-		return val.(Request)
-	}
-	return Request{}
+type ObjectDirectory interface {
+	Create(c context.Context, metadata *entity.Directory) error
+	Delete(c context.Context, metadata *entity.Directory) error
+	AddObject(c context.Context, metadata *entity.Directory) error
+	DeleteObject(c context.Context, metadata *entity.Directory) error
+	AddSubDirectory(c context.Context, metadata *entity.Directory) error
+	DeleteSubDirectory(c context.Context, metadata *entity.Directory) error
+	FindMetadata(c context.Context, group, partition, path string) (*entity.Directory, error)
 }

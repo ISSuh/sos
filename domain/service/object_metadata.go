@@ -45,8 +45,9 @@ type ObjectMetadata interface {
 }
 
 type objectMetadata struct {
-	metadataRepository repository.ObjectMetadata
-	tempID             uint64
+	metadataRepository  repository.ObjectMetadata
+	directoryRepository repository.ObjectDirectory
+	tempID              uint64
 }
 
 func NewObjectMetadata(metadataRepository repository.ObjectMetadata) (ObjectMetadata, error) {

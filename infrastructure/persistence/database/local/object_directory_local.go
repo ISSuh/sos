@@ -20,29 +20,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package dto
+package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ISSuh/sos/domain/model/entity"
+	"github.com/ISSuh/sos/domain/repository"
 )
 
-type Request struct {
-	ObjectID     entity.ObjectID
-	Group        string
-	Partition    string
-	Path         string
-	Name         string
-	Size         int
-	Version      int
-	Limit        int
-	LastObjectID entity.ObjectID
+type localObjectDirectory struct {
 }
 
-func RequestFromContext(c context.Context, key any) Request {
-	if val := c.Value(key); val != nil {
-		return val.(Request)
-	}
-	return Request{}
+func NewLocalObjectDirectory() (repository.ObjectDirectory, error) {
+	return &localObjectDirectory{}, nil
+}
+
+func (r *localObjectDirectory) Create(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) Delete(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) AddObject(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) DeleteObject(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) AddSubDirectory(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) DeleteSubDirectory(c context.Context, metadata *entity.Directory) error {
+	return nil
+}
+
+func (r *localObjectDirectory) FindMetadata(c context.Context, group, partition, path string) (*entity.Directory, error) {
+	return nil, nil
+}
+
+func (d *localObjectDirectory) makeKey(group, partition, path string) string {
+	return fmt.Sprintf("%s:%s:%s", group, partition, path)
 }

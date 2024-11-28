@@ -13,6 +13,7 @@ require (
 	go.elastic.co/apm/module/apmgrpc v1.15.0
 	go.elastic.co/apm/module/apmhttp v1.15.0
 	go.elastic.co/apm/module/apmmongo v1.15.0
+	go.elastic.co/apm/module/apmzap v1.15.0
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.67.1

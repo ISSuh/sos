@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/ISSuh/sos/internal/config"
+
 	"go.elastic.co/apm"
 )
 
@@ -47,6 +48,8 @@ func Initialize(config config.APM) error {
 	os.Setenv("ELASTIC_APM_SERVER_URL", config.Host)
 	os.Setenv("ELASTIC_APM_SERVICE_NAME", config.ServiceName)
 	os.Setenv("ELASTIC_APM_SERVICE_VERSION", config.ServiceVersion)
+	os.Setenv("ELASTIC_APM_LOG_LEVEL", "debug")
+	os.Setenv("ELASTIC_APM_LOG_FILE", "stderr")
 
 	once.Do(func() {
 		a = &agent{

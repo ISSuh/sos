@@ -58,6 +58,14 @@ func (h *explorer) Find() http.Handler {
 		dto := dto.RequestFromContext(c, http.RequestContextKey)
 		log.FromContext(c).Debugf("Request: %+v\n", dto)
 
+		span := apm.SpanStart(c, "List", "explorer", nil)
+		defer span.End()
+
+		span.Context.SetLabel("group", dto.Group)
+		span.Context.SetLabel("partition", dto.Partition)
+		span.Context.SetLabel("path", dto.Path)
+		span.Context.SetLabel("objectID", dto.ObjectID)
+
 		item, err := h.explorerService.GetObjectMetadata(c, dto)
 		if err != nil {
 			log.FromContext(c).Errorf("Find Error: %s\n", err.Error())
@@ -82,6 +90,8 @@ func (h *explorer) List() http.Handler {
 	return func(w gohttp.ResponseWriter, r *gohttp.Request) {
 		c := r.Context()
 		log.FromContext(c).Debugf("[explorer.List]")
+
+		log.Debugf(c, "[explorer.List]")
 
 		req := dto.RequestFromContext(c, http.RequestContextKey)
 		log.FromContext(c).Debugf("Request: %+v\n", req)

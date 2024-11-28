@@ -23,14 +23,17 @@
 package log
 
 import (
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/config"
+	"go.elastic.co/apm/module/apmzap"
+	"golang.org/x/net/context"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 type ZapLogger struct {
-	logger *zap.SugaredLogger
+	logger *zap.Logger
 }
 
 func configLoggerLevelToZapLevel(logLevel string) zapcore.Level {
@@ -69,32 +72,61 @@ func NewZapLogger(c config.Logger) Logger {
 	enccoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	config.EncoderConfig = enccoderConfig
-	logger, err := config.Build(zap.AddCallerSkip(1))
+
+	apmCode := apmzap.Core{
+		Tracer: apm.Tracer(),
+	}
+
+	apmWrapping := zap.WrapCore(apmCode.WrapCore)
+
+	logger, err := config.Build(zap.AddCallerSkip(1), apmWrapping)
 	if err != nil {
 		panic(err)
 	}
 
 	return &ZapLogger{
-		logger: logger.Sugar(),
+		logger: logger,
 	}
 }
 
 func (l *ZapLogger) Debugf(format string, args ...interface{}) {
-	l.logger.Debugf(format, args...)
+	l.logger.Sugar().Debugf(format, args...)
 }
 
 func (l *ZapLogger) Infof(format string, args ...interface{}) {
-	l.logger.Infof(format, args...)
+	l.logger.Sugar().Infof(format, args...)
 }
 
 func (l *ZapLogger) Warnf(format string, args ...interface{}) {
-	l.logger.Warnf(format, args...)
+	l.logger.Sugar().Warnf(format, args...)
 }
 
 func (l *ZapLogger) Errorf(format string, args ...interface{}) {
-	l.logger.Errorf(format, args...)
+	l.logger.Sugar().Errorf(format, args...)
 }
 
 func (l *ZapLogger) Fatalln(args ...interface{}) {
-	l.logger.Fatal(args...)
+	l.logger.Sugar().Fatal(args...)
 }
+
+func Debugf(c context.Context, format string, args ...interface{}) {
+	field := apmzap.TraceContext(c)
+	l := FromContext(c).(*ZapLogger)
+	l.logger.With(field...).Sugar().Debugf(format, args...)
+}
+
+// func Infof(c context.Context, format string, args ...interface{}) {
+// 	l.logger.Sugar().Infof(format, args...)
+// }
+
+// func Warnf(c context.Context, format string, args ...interface{}) {
+// 	l.logger.Sugar().Warnf(format, args...)
+// }
+
+// func Errorf(c context.Context, format string, args ...interface{}) {
+// 	l.logger.Sugar().Errorf(format, args...)
+// }
+
+// func Fatalln(c context.Context, args ...interface{}) {
+// 	l.logger.Sugar().Fatal(args...)
+// }
