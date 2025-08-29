@@ -1,0 +1,19 @@
+sos:
+  explorer:
+    apm:
+      enabled: true
+      host: http://localhost:8200
+      service_name: sos-explorer
+      service_version: 0.0.1
+    logger:
+      level: debug
+      format: text
+    address:
+      ip: 0.0.0.0
+      port: 33221
+  metadata_registry:
+    address:
+      host: 127.0.0.1:33222
+  block_storage:
+    address:
+      host: 127.0.0.1:33223

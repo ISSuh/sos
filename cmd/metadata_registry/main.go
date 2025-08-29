@@ -23,9 +23,12 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/log"
 
 	"github.com/alexflint/go-arg"
 )
@@ -38,14 +41,22 @@ func main() {
 	args := args{}
 	arg.MustParse(&args)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.MetadataRegistry)
 	if err != nil {
+		fmt.Printf("config error : %v", err)
 		return
 	}
 
 	l := log.NewZapLogger(config.SOS.MetadataRegistry.Log)
-
 	l.Infof("configure : %+v", config)
+
+	if config.SOS.MetadataRegistry.APM.Enabled {
+		if err := apm.Initialize(config.SOS.MetadataRegistry.APM); err != nil {
+			l.Errorf(err.Error())
+			return
+		}
+	}
+
 	metadata, err := app.NewMetadata(config.SOS, l)
 	if err != nil {
 		return

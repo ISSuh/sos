@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/ISSuh/sos/domain/model/message";
+
+import "object_id.proto";
+import "block_header.proto";
+
+message Object {
+    ObjectID id  = 1;
+    string group = 2;
+    string partition = 3;
+    string path = 4;
+    string name = 5;
+    int32 size = 6;
+    int32 versionNum = 7;
+    repeated BlockHeader blockHeaders = 8;
+}

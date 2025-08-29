@@ -25,10 +25,10 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/repository"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	"github.com/ISSuh/sos/internal/validation"
 )
 
 func NewExplorerService(metadataRequestor rpc.MetadataRegistryRequestor, storageRequestor rpc.BlockStorageRequestor,

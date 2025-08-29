@@ -25,8 +25,8 @@ package app
 import (
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/rpc"
+	"github.com/ISSuh/sos/internal/log"
+	"github.com/ISSuh/sos/internal/rpc"
 )
 
 type MetadataRegistry struct {
@@ -54,7 +54,7 @@ func (a *MetadataRegistry) Run() error {
 }
 
 func (a *MetadataRegistry) init() error {
-	repository, err := factory.NewObjectMetadataRepository()
+	repository, err := factory.NewObjectMetadataRepository(a.logger, a.config.MetadataRegistry.Database)
 	if err != nil {
 		return err
 	}

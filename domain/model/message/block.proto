@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/ISSuh/sos/domain/model/message";
+
+import "block_header.proto";
+
+message Block {
+    BlockHeader header = 1;
+    bytes data = 2;
+}

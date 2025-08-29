@@ -23,9 +23,10 @@
 package main
 
 import (
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/log"
 
 	"github.com/alexflint/go-arg"
 )
@@ -38,14 +39,21 @@ func main() {
 	args := args{}
 	arg.MustParse(&args)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.BlockStorage)
 	if err != nil {
 		return
 	}
 
 	l := log.NewZapLogger(config.SOS.BlockStorage.Log)
-
 	l.Infof("configure : %+v", config)
+
+	if config.SOS.BlockStorage.APM.Enabled {
+		if err := apm.Initialize(config.SOS.BlockStorage.APM); err != nil {
+			l.Errorf(err.Error())
+			return
+		}
+	}
+
 	blockStorage, err := app.NewBlockStorage(config.SOS, l)
 	if err != nil {
 		return

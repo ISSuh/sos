@@ -26,11 +26,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/model/entity"
+	"github.com/ISSuh/sos/domain/model/message"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	"github.com/ISSuh/sos/internal/validation"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type blockStorage struct {
@@ -48,44 +51,105 @@ func NewBlockStorage(objectStorage service.ObjectStorage) (rpc.BlockStorageReque
 	}, nil
 }
 
-func (r *blockStorage) Put(ctx context.Context, msg *message.Block) (*rpc.StorageResponse, error) {
-	blockHeader := r.blockHeaderFromMessage(msg)
-	blockBuilder := entity.NewBlockBuilder()
-	blockBuilder.
-		Buffer(msg.Data).
-		Header(blockHeader)
+func (s *blockStorage) Put(
+	ctx context.Context, blockMessage *message.Block,
+) (*rpcmessage.StorageResponse, error) {
+	header :=
+		entity.NewBlockHeaderBuilder().
+			BlockID(entity.BlockID(blockMessage.Header.BlockID.Id)).
+			ObjectID(entity.ObjectID(blockMessage.Header.ObjectID.Id)).
+			Index(int(blockMessage.Header.Index)).
+			Size(int(blockMessage.Header.Size)).
+			Checksum(blockMessage.Header.Checksum).
+			Timestamp(blockMessage.Header.Timestamp.AsTime()).
+			Build()
 
-	err := r.objectStorage.Put(ctx, blockBuilder.Build())
+	block :=
+		entity.NewBlockBuilder().
+			Buffer(blockMessage.Data).
+			Header(header).
+			Build()
+
+	if err := s.objectStorage.Put(ctx, &block); err != nil {
+		return &rpcmessage.StorageResponse{
+			Success: false,
+			Message: err.Error(),
+		}, err
+	}
+
+	return &rpcmessage.StorageResponse{
+		Success: true,
+	}, nil
+}
+
+func (s *blockStorage) GetBlock(
+	ctx context.Context, headerMessage *message.BlockHeader,
+) (*message.Block, error) {
+	block, err := s.objectStorage.GetBlock(
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
+	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &rpc.StorageResponse{
-		Success: true,
+	blockHeader := block.Header()
+	return &message.Block{
+		Header: &message.BlockHeader{
+			ObjectID: &message.ObjectID{
+				Id: blockHeader.ObjectID().ToInt64(),
+			},
+			BlockID: &message.BlockID{
+				Id: blockHeader.ObjectID().ToInt64(),
+			},
+			Index:     int32(blockHeader.Index()),
+			Timestamp: timestamppb.New(blockHeader.Timestamp()),
+		},
+		Data: block.Buffer(),
+	}, nil
+}
+
+func (s *blockStorage) GetBlockHeader(
+	ctx context.Context, headerMessage *message.BlockHeader,
+) (*message.BlockHeader, error) {
+	blockHeader, err := s.objectStorage.GetBlockHeader(
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
+	)
+
+	if err != nil {
+		return nil, err
 	}
-	return resp, nil
+
+	return &message.BlockHeader{
+		ObjectID: &message.ObjectID{
+			Id: blockHeader.ObjectID().ToInt64(),
+		},
+		BlockID: &message.BlockID{
+			Id: blockHeader.BlockID().ToInt64(),
+		},
+		Index:     int32(blockHeader.Index()),
+		Size:      int32(blockHeader.Size()),
+		Timestamp: timestamppb.New(blockHeader.Timestamp()),
+	}, nil
 }
 
-func (r *blockStorage) Get(ctx context.Context, msg *message.BlockHeader) (*message.Block, error) {
+func (s *blockStorage) Delete(
+	ctx context.Context, headerMessage *message.BlockHeader,
+) (*rpcmessage.StorageResponse, error) {
+	err := s.objectStorage.Delete(
+		ctx, entity.ObjectID(headerMessage.ObjectID.Id),
+		entity.BlockID(headerMessage.BlockID.Id), int(headerMessage.Index),
+	)
 
-	return nil, nil
-}
-
-func (r *blockStorage) Delete(ctx context.Context, msg *message.BlockHeader) (*rpc.StorageResponse, error) {
-	return nil, nil
-}
-
-func (r *blockStorage) blockHeaderFromMessage(msg *message.Block) entity.BlockHeader {
-	header := msg.GetHeader()
-	headerBuilder := entity.NewBlockHeaderBuilder()
-	headerBuilder.
-		BlockID(entity.BlockID(header.BlockID.Id)).
-		ObjectID(entity.ObjectID(header.ObjectID.Id)).
-		Index(int(header.Index)).
-		Size(int(header.Size)).
-		Timestamp(header.Timestamp.AsTime()).
-		Checksum(header.Checksum)
-
-	return headerBuilder.Build()
-
+	if err != nil {
+		return &rpcmessage.StorageResponse{
+			Success: false,
+			Message: err.Error(),
+		}, err
+	}
+	return &rpcmessage.StorageResponse{
+		Success: true,
+	}, nil
 }

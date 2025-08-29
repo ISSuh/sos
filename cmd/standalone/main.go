@@ -23,10 +23,13 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/ISSuh/sos/internal/apm"
 	"github.com/ISSuh/sos/internal/app"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/pkg/generator"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/generator"
+	"github.com/ISSuh/sos/internal/log"
 
 	"github.com/alexflint/go-arg"
 )
@@ -41,14 +44,22 @@ func main() {
 
 	generator.InitIdentifier(1)
 
-	config, err := config.NewConfig(args.Config)
+	config, err := config.NewConfig(args.Config, config.Standalone)
 	if err != nil {
+		fmt.Printf("failed to load config : %v\n", err)
 		return
 	}
 
-	l := log.NewZapLogger(config.SOS.Api.Log)
-
+	l := log.NewZapLogger(config.SOS.Explorer.Log)
 	l.Infof("configure : %+v", config)
+
+	if config.SOS.Explorer.APM.Enabled {
+		if err := apm.Initialize(config.SOS.Explorer.APM); err != nil {
+			l.Errorf(err.Error())
+			return
+		}
+	}
+
 	standalone, err := app.NewStandalone(config.SOS, l)
 	if err != nil {
 		return

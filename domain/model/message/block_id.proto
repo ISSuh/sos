@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/ISSuh/sos/domain/model/message";
+
+message BlockID {
+    int64 id = 1;
+}

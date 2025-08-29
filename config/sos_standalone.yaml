@@ -1,8 +1,27 @@
 sos:
-  api:
+  standalone: true
+  explorer:
+    apm:
+      enabled: true
+      host: http://localhost:8200
+      service_name: sos-standalone
+      service_version: 0.0.1
     logger:
       level: debug
       format: text
     address:
       ip: 0.0.0.0
       port: 33221
+  metadata_registry:
+    db:
+      type: mongodb
+      host: mongodb://localhost:27017
+      database: sos
+      log_level: debug
+      credentials:
+        username: root
+        password: root
+  block_storage:
+    db:
+      type: leveldb
+      path: /Users/issuh/workspace/git/issuh/sos/test

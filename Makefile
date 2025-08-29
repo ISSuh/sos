@@ -1,10 +1,10 @@
 # Makefile for sos
 
-message_proto_dir := internal/domain/model/message
+message_proto_dir := domain/model/message
 message_proto_files := $(wildcard $(message_proto_dir)/*.proto)
 
-gprc_proto_dir := internal/infrastructure/transport/rpc/proto
-gprc_service_dir := internal/infrastructure/transport/rpc
+gprc_proto_dir := infrastructure/transport/rpc/message
+gprc_service_dir := infrastructure/transport/rpc
 gprc_proto_files := $(wildcard $(gprc_proto_dir)/*.proto)
 
 proto_gen_files := $(shell find . -name '*.pb.go')
@@ -17,12 +17,14 @@ else
 endif
 
 generate: 
-	protoc -I=internal \
-    --go_out=internal \
+	protoc -I=${message_proto_dir} \
+    --go_out=${message_proto_dir} \
     --go_opt=paths=source_relative \
     $(message_proto_files)
 
-	protoc -I=${gprc_proto_dir} -I=internal \
+	protoc \
+	-I=${message_proto_dir} \
+	-I=${gprc_service_dir} \
     --go_out=${gprc_service_dir} \
     --go_opt=paths=source_relative \
     --go-grpc_out=${gprc_service_dir} \

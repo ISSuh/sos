@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rpcmessage;
+
+option go_package = "github.com/ISSuh/sos/infrastructure/transport/message";
+
+import "block.proto";
+import "block_header.proto";
+
+message StorageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+service BlockStorage {
+  rpc Put(message.Block) returns (StorageResponse) {}
+  rpc GetBlock(message.BlockHeader) returns (message.Block) {}
+  rpc GetBlockHeader(message.BlockHeader) returns (message.BlockHeader) {}
+  rpc Delete(message.BlockHeader) returns (StorageResponse) {}
+}

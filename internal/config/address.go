@@ -24,7 +24,10 @@ SOFTWARE.
 
 package config
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Address struct {
 	Host string `yaml:"host"`
@@ -32,7 +35,18 @@ type Address struct {
 	Port int    `yaml:"port"`
 }
 
-func (a Address) String() string {
-	portStr := strconv.Itoa(a.Port)
-	return a.Ip + ":" + portStr
+func (c Address) Validate() error {
+	if c.Host == "" && c.Ip == "" {
+		return fmt.Errorf("address host and ip is empty")
+	}
+
+	if c.Port < 0 && c.Port > 65535 {
+		return fmt.Errorf("address port is invalid. port: %d", c.Port)
+	}
+	return nil
+}
+
+func (c Address) String() string {
+	portStr := strconv.Itoa(c.Port)
+	return c.Ip + ":" + portStr
 }

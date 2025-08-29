@@ -26,12 +26,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ISSuh/sos/internal/domain/model/dto"
-	"github.com/ISSuh/sos/internal/domain/model/entity"
-	"github.com/ISSuh/sos/internal/domain/model/message"
-	"github.com/ISSuh/sos/internal/domain/service"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rpc"
-	"github.com/ISSuh/sos/pkg/validation"
+	"github.com/ISSuh/sos/domain/model/message"
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rpc"
+	rpcmessage "github.com/ISSuh/sos/infrastructure/transport/rpc/message"
+	"github.com/ISSuh/sos/internal/validation"
 )
 
 type metadataRegistry struct {
@@ -49,106 +48,47 @@ func NewMetadataRegistry(objectMetadata service.ObjectMetadata) (rpc.MetadataReg
 	}, nil
 }
 
-func (s *metadataRegistry) Put(c context.Context, metadata *message.ObjectMetadata) (*message.ObjectMetadata, error) {
-	d := dto.Request{
-		ObjectID:  entity.NewObjectIDFrom(metadata.GetId().Id),
-		Name:      metadata.GetName(),
-		Group:     metadata.GetGroup(),
-		Partition: metadata.GetPartition(),
-		Path:      metadata.GetPath(),
-		Size:      int(metadata.GetSize()),
-	}
-
-	err := s.objectMetadata.Create(c, d)
+func (s *metadataRegistry) Put(c context.Context, dto *message.Object) (*message.ObjectMetadata, error) {
+	object := message.ToObjectDTO(dto)
+	metadata, err := s.objectMetadata.Put(c, object)
 	if err != nil {
 		return nil, err
 	}
 
-	return metadata, nil
+	return message.FromObjectMetadataDTO(metadata), nil
 }
 
-func (r *metadataRegistry) Delete(c context.Context, metadata *message.ObjectMetadata) (bool, error) {
-	return false, nil
-}
-
-func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
-	d := dto.Request{
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-		Name:      req.GetName(),
+func (r *metadataRegistry) Delete(c context.Context, dto *message.ObjectMetadata) error {
+	metadata := message.ToObjectMetadataDTO(dto)
+	if err := r.objectMetadata.Delete(c, metadata); err != nil {
+		return err
 	}
+	return nil
+}
 
-	item, err := s.objectMetadata.MetadataByObjectName(c, d)
+func (s *metadataRegistry) GetByObjectName(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	item, err := s.objectMetadata.MetadataByObjectName(c, req.Group, req.Partition, req.Path, req.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: item.ID.ToInt64(),
-		},
-		Name:      item.Name,
-		Group:     item.Group,
-		Partition: item.Partition,
-		Path:      item.Path,
-		Size:      int32(item.Size),
-	}, nil
+	return message.FromObjectMetadataDTO(item), nil
 }
 
-func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpc.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
-	d := dto.Request{
-		ObjectID:  entity.NewObjectIDFrom(req.GetObjectID()),
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-		Name:      req.GetName(),
-	}
-
-	item, err := s.objectMetadata.MetadataByObjectID(c, d)
+func (s *metadataRegistry) GetByObjectID(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadata, error) {
+	item, err := s.objectMetadata.MetadataByObjectID(c, req.Group, req.Partition, req.Path, req.GetObjectID())
 	if err != nil {
 		return nil, err
 	}
 
-	return &message.ObjectMetadata{
-		Id: &message.ObjectID{
-			Id: item.ID.ToInt64(),
-		},
-		Name:      item.Name,
-		Group:     item.Group,
-		Partition: item.Partition,
-		Path:      item.Path,
-		Size:      int32(item.Size),
-	}, nil
+	return message.FromObjectMetadataDTO(item), nil
 }
 
-func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpc.ObjectMetadataRequest) (*rpc.ObjectMetadataList, error) {
-	d := dto.Request{
-		Group:     req.GetGroup(),
-		Partition: req.GetPartition(),
-		Path:      req.GetPath(),
-	}
-
-	items, err := s.objectMetadata.MetadataListOnPath(c, d)
+func (s *metadataRegistry) FindMetadataOnPath(c context.Context, req *rpcmessage.ObjectMetadataRequest) (*message.ObjectMetadataList, error) {
+	items, err := s.objectMetadata.MetadataListOnPath(c, req.Group, req.Partition, req.Path)
 	if err != nil {
 		return nil, err
 	}
 
-	list := make([]*message.ObjectMetadata, len(items))
-	for i, item := range items {
-		list[i] = &message.ObjectMetadata{
-			Id: &message.ObjectID{
-				Id: item.ID.ToInt64(),
-			},
-			Name:      item.Name,
-			Group:     item.Group,
-			Partition: item.Partition,
-			Path:      item.Path,
-			Size:      int32(item.Size),
-		}
-	}
-
-	return &rpc.ObjectMetadataList{
-		Metadata: list,
-	}, err
+	return message.FromObjectMetadataListDTO(items), err
 }

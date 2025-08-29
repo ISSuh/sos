@@ -23,23 +23,49 @@
 package factory
 
 import (
-	"github.com/ISSuh/sos/internal/domain/repository"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/database"
-	"github.com/ISSuh/sos/internal/infrastructure/persistence/objectstorage"
+	"context"
+	"fmt"
+
+	"github.com/ISSuh/sos/domain/repository"
+	local "github.com/ISSuh/sos/infrastructure/persistence/database/local"
+	mongo "github.com/ISSuh/sos/infrastructure/persistence/database/mongodb"
+	leveldb "github.com/ISSuh/sos/infrastructure/persistence/objectstorage/leveldb"
+	memorystorage "github.com/ISSuh/sos/infrastructure/persistence/objectstorage/memory"
+	"github.com/ISSuh/sos/internal/config"
+	"github.com/ISSuh/sos/internal/log"
+	"github.com/ISSuh/sos/internal/persistence"
 )
 
-func NewObjectMetadataRepository() (repository.ObjectMetadata, error) {
-	objectMetadata, err := database.NewLocalObjectMetadata()
-	if err != nil {
-		return nil, err
+func NewObjectMetadataRepository(l log.Logger, dbConfig config.Database) (repository.ObjectMetadata, error) {
+	switch dbConfig.Type {
+	case config.DatabaseTypeLocal:
+		l.Infof("[NewObjectMetadataRepository] use local db")
+		return local.NewLocalObjectMetadata()
+	case config.DatabaseTypeMongoDB:
+		l.Infof("[NewObjectMetadataRepository] use mongodb. host: %s database: %s")
+		db, err := persistence.ConnectMongoDB(context.Background(), dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		return mongo.NewMongoDBObjectMetadata(db)
+	default:
+		return nil, fmt.Errorf("invalid database type")
 	}
-	return objectMetadata, nil
 }
 
-func NewObjectStorageRepository() (repository.ObjectStorage, error) {
-	objectStorage, err := objectstorage.NewLocalObjectStorage()
-	if err != nil {
-		return nil, err
+func NewObjectStorageRepository(l log.Logger, dbConfig config.Database) (repository.ObjectStorage, error) {
+	switch dbConfig.Type {
+	case config.DatabaseTypeLocal:
+		l.Infof("[NewObjectStorageRepository] use memory storage")
+		return memorystorage.NewLocalObjectStorage()
+	case config.DatabaseTypeLevelDB:
+		l.Infof("[NewObjectStorageRepository] use leveldb storage. path: %s", dbConfig.Path)
+		storage, err := persistence.NewLevelDB(dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		return leveldb.NewLevelDBObjectStorage(storage)
+	default:
+		return nil, fmt.Errorf("invalid database type")
 	}
-	return objectStorage, nil
 }

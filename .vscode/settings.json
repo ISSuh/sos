@@ -15,12 +15,17 @@
     "bwmarrin",
     "blockheaders",
     "wrapperspb",
-    "Deleter"
+    "Deleter",
+    "timestamppb",
+    "rpcmessage",
+    "bson",
   ],
 
   "protoc": {
     "options": [
-        "--proto_path=${workspaceFolder}/internal",
+        "--proto_path=${workspaceFolder}",  
+        "--proto_path=${workspaceFolder}/domain/model/message",
+        "--proto_path=${workspaceFolder}/infrastructure/transport/rpc/proto",
     ]
   },
 

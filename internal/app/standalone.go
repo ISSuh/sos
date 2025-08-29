@@ -23,13 +23,13 @@
 package app
 
 import (
+	"github.com/ISSuh/sos/domain/service"
+	"github.com/ISSuh/sos/infrastructure/transport/rest/router"
 	"github.com/ISSuh/sos/internal/app/standalone"
 	"github.com/ISSuh/sos/internal/config"
-	"github.com/ISSuh/sos/internal/domain/service"
 	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/internal/infrastructure/transport/rest/router"
-	"github.com/ISSuh/sos/pkg/http"
-	"github.com/ISSuh/sos/pkg/log"
+	"github.com/ISSuh/sos/internal/http"
+	"github.com/ISSuh/sos/internal/log"
 )
 
 type Standalone struct {
@@ -53,7 +53,7 @@ func (a *Standalone) Run() error {
 	if err := a.init(); err != nil {
 		return err
 	}
-	return a.server.Run(a.config.Api.Address.String())
+	return a.server.Run(a.config.Explorer.Address.String())
 }
 
 func (a *Standalone) init() error {
@@ -72,7 +72,7 @@ func (a *Standalone) init() error {
 }
 
 func (a *Standalone) initService() (service.Explorer, error) {
-	metadataRepo, err := factory.NewObjectMetadataRepository()
+	metadataRepo, err := factory.NewObjectMetadataRepository(a.logger, a.config.MetadataRegistry.Database)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (a *Standalone) initService() (service.Explorer, error) {
 		return nil, err
 	}
 
-	storageRepo, err := factory.NewObjectStorageRepository()
+	storageRepo, err := factory.NewObjectStorageRepository(a.logger, a.config.BlockStorage.Database)
 	if err != nil {
 		return nil, err
 	}

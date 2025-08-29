@@ -29,17 +29,56 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type ApplicationType string
+
+const (
+	Standalone       ApplicationType = "standalone"
+	Explorer         ApplicationType = "exploer"
+	MetadataRegistry ApplicationType = "metadata_registry"
+	BlockStorage     ApplicationType = "block_storage"
+)
+
 type SosConfig struct {
-	Api              ApiConfig              `yaml:"api"`
+	Explorer         ExplorerConfig         `yaml:"explorer"`
 	MetadataRegistry MetadataRegistryConfig `yaml:"metadata_registry"`
 	BlockStorage     BlockStorageConfig     `yaml:"block_storage"`
+	Standalone       bool                   `yaml:"standalone"`
 }
 
 type Config struct {
 	SOS SosConfig `yaml:"sos"`
 }
 
-func NewConfig(path string) (Config, error) {
+func (c Config) Validate(appType ApplicationType) error {
+	switch appType {
+	case Explorer:
+		if err := c.SOS.Explorer.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+	case MetadataRegistry:
+		if err := c.SOS.MetadataRegistry.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+	case BlockStorage:
+		if err := c.SOS.BlockStorage.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+	default:
+		if err := c.SOS.Explorer.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+		if err := c.SOS.MetadataRegistry.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+		if err := c.SOS.BlockStorage.Validate(c.SOS.Standalone); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func NewConfig(path string, appType ApplicationType) (Config, error) {
 	if len(path) == 0 {
 		return Config{}, errors.New("can not found config file")
 	}
@@ -53,6 +92,11 @@ func NewConfig(path string) (Config, error) {
 	if err = yaml.Unmarshal(buffer, &config); err != nil {
 		return Config{}, nil
 	}
+
+	if err = config.Validate(appType); err != nil {
+		return Config{}, err
+	}
+
 	return config, nil
 }
 

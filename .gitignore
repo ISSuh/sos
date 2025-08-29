@@ -21,6 +21,7 @@
 go.work
 
 vendor
+test
 
-internal/infrastructure/transport/rpc/*.pb.go
-internal/domain/model/message/*.pb.go
+infrastructure/transport/rpc/*.pb.go
+domain/model/message/*.pb.go

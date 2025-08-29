@@ -25,8 +25,8 @@ package app
 import (
 	"github.com/ISSuh/sos/internal/config"
 	"github.com/ISSuh/sos/internal/factory"
-	"github.com/ISSuh/sos/pkg/log"
-	"github.com/ISSuh/sos/pkg/rpc"
+	"github.com/ISSuh/sos/internal/log"
+	"github.com/ISSuh/sos/internal/rpc"
 )
 
 type BlockStorage struct {
@@ -54,7 +54,7 @@ func (a *BlockStorage) Run() error {
 }
 
 func (a *BlockStorage) init() error {
-	repository, err := factory.NewObjectStorageRepository()
+	repository, err := factory.NewObjectStorageRepository(a.logger, a.config.BlockStorage.Database)
 	if err != nil {
 		return err
 	}
